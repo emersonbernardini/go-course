@@ -125,10 +125,12 @@ export const Router = {
          if (!a) return
          const href = a.getAttribute('href')
          if (!href) return
-         // Só intercepta rotas internas conhecidas
-         if (ROUTES[href] !== undefined) {
+         // Separa path do hash antes de checar as rotas —
+         // sem isso, '/ambiente#continuar' não bate em ROUTES e cai no fallback da home
+         const [hrefPath, hrefHash] = href.split('#')
+         if (ROUTES[hrefPath] !== undefined) {
             e.preventDefault()
-            Router.navigate(href)
+            Router.navigate(hrefPath + (hrefHash ? '#' + hrefHash : ''))
          }
       })
 
@@ -140,7 +142,8 @@ export const Router = {
          Router._showResetModal()
          return
       }
-      history.pushState({}, '', path)
+      const [cleanPath, hash] = path.split('#')
+      history.pushState({}, '', cleanPath + (hash ? '#' + hash : ''))
       Router._resolve()
    },
 
