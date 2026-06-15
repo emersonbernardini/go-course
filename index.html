@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR" data-page="home">
+   <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" href="https://go.dev/favicon.ico" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link
+         rel="icon"
+         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2300adb5' d='M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6z'/></svg>"
+      />
+      <meta
+         name="description"
+         content="Aprenda Go do zero ao avançado com uma plataforma educacional completa, gratuita e offline."
+      />
+      <title>GoCourse — Aprenda Go do zero ao avançado</title>
+      <link
+         rel="stylesheet"
+         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      />
+      <link rel="stylesheet" href="css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <!-- Header é injetado pelo app.js -->
+
+         <main class="app-main">
+            <!-- HERO -->
+            <section class="hero">
+               <div class="container content-body">
+                  <div class="hero__eyebrow">
+                     <span>Curso completo</span>
+                     <span>·</span>
+                     <span>34 módulos</span>
+                     <span>·</span>
+                     <span>Do zero ao avançado</span>
+                  </div>
+
+                  <h1 class="hero__title">
+                     Aprenda <em>Go</em> do absoluto<br />zero ao nível avançado
+                  </h1>
+
+                  <p class="hero__subtitle">
+                     Uma jornada progressiva e sem lacunas. Cada conceito
+                     construído sobre o anterior, do ambiente de desenvolvimento
+                     até concorrência, generics e profiling.
+                  </p>
+
+                  <div class="hero__actions">
+                     <a
+                        href="/intro"
+                        class="btn btn-primary btn-lg"
+                     >
+                        Começar agora <i class="fa-solid fa-circle-play"></i>
+                     </a>
+                     <a href="#modulos" class="btn btn-secondary btn-lg">
+                        Ver todos os módulos
+                     </a>
+                  </div>
+               </div>
+            </section>
+
+            <!-- STATS -->
+            <section class="container content-body">
+               <div class="stats-row">
+                  <div class="stat-card">
+                     <div class="stat-card__value" id="stat-total-modules">
+                        34
+                     </div>
+                     <div class="stat-card__label">Módulos</div>
+                  </div>
+                  <div class="stat-card">
+                     <div class="stat-card__value" id="stat-completed">0</div>
+                     <div class="stat-card__label">Concluídos</div>
+                  </div>
+                  <div class="stat-card">
+                     <div class="stat-card__value" id="stat-exercises">0</div>
+                     <div class="stat-card__label">Exercícios</div>
+                  </div>
+                  <div class="stat-card">
+                     <div class="stat-card__value" id="stat-streak">0</div>
+                     <div class="stat-card__label">Dias seguidos</div>
+                  </div>
+               </div>
+            </section>
+
+            <!-- MÓDULOS -->
+            <section class="modules-section" id="modulos">
+               <div class="container content-body">
+                  <div class="section-header">
+                     <h2 class="section-title">Jornada de aprendizado</h2>
+                     <p class="section-subtitle">
+                        Cada bloco depende do anterior. Não existe salto de
+                        dificuldade.
+                     </p>
+                  </div>
+
+                  <!-- BLOCO 0 — FUNDAÇÃO -->
+                  <div class="block-label">Bloco 0 — Fundação</div>
+                  <div class="modules-grid" data-block="Fundação"></div>
+
+                  <!-- BLOCO 1 — FUNDAMENTOS -->
+                  <div class="block-label">
+                     Bloco 1 — Fundamentos da Linguagem
+                  </div>
+                  <div class="modules-grid" data-block="Fundamentos"></div>
+
+                  <!-- BLOCO 2 — CONTROLE DE FLUXO -->
+                  <div class="block-label">Bloco 2 — Controle de Fluxo</div>
+                  <div
+                     class="modules-grid"
+                     data-block="Controle de Fluxo"
+                  ></div>
+
+                  <!-- BLOCO 3 — ESTRUTURAS DE DADOS -->
+                  <div class="block-label">Bloco 3 — Estruturas de Dados</div>
+                  <div
+                     class="modules-grid"
+                     data-block="Estruturas de Dados"
+                  ></div>
+
+                  <!-- BLOCO 4 — FUNÇÕES -->
+                  <div class="block-label">Bloco 4 — Funções</div>
+                  <div class="modules-grid" data-block="Funções"></div>
+
+                  <!-- BLOCO 5 — TIPOS COMPOSTOS -->
+                  <div class="block-label">
+                     Bloco 5 — Tipos Compostos e Abstração
+                  </div>
+                  <div class="modules-grid" data-block="Tipos Compostos"></div>
+
+                  <!-- BLOCO 6 — ERROS -->
+                  <div class="block-label">Bloco 6 — Tratamento de Erros</div>
+                  <div class="modules-grid" data-block="Erros"></div>
+
+                  <!-- BLOCO 7 — PACOTES -->
+                  <div class="block-label">Bloco 7 — Pacotes e Módulos</div>
+                  <div
+                     class="modules-grid"
+                     data-block="Pacotes e Módulos"
+                  ></div>
+
+                  <!-- BLOCO 8 — CONCORRÊNCIA -->
+                  <div class="block-label">Bloco 8 — Concorrência</div>
+                  <div class="modules-grid" data-block="Concorrência"></div>
+
+                  <!-- BLOCO 9 — STDLIB -->
+                  <div class="block-label">Bloco 9 — Stdlib Essencial</div>
+                  <div class="modules-grid" data-block="Stdlib Essencial"></div>
+
+                  <!-- BLOCO 10 — AVANÇADO -->
+                  <div class="block-label">Bloco 10 — Tópicos Avançados</div>
+                  <div class="modules-grid" data-block="Avançado"></div>
+               </div>
+            </section>
+         </main>
+      </div>
+
+      <script type="module" src="app/main.js"></script>
+   </body>
+</html>

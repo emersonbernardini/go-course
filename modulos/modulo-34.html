@@ -1,0 +1,2012 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Profiling e otimização em Go: pprof, benchmarks, escape analysis, sync.Pool, alocações evitáveis e ferramentas de análise."
+      />
+      <title>Módulo 34 — Profiling e otimização · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="34">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 10 — Tópicos Avançados
+                        </div>
+                        <h1 class="module-header__title">
+                           Profiling e otimização
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 34</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Avançado</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — pprof: CPU e memória profiling
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>pprof — CPU e memória profiling</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A regra fundamental de otimização é:
+                              <strong>nunca otimize sem medir primeiro</strong>.
+                              O instinto sobre onde está o gargalo quase sempre
+                              está errado. O Go oferece
+                              <code>runtime/pprof</code> e
+                              <code>net/http/pprof</code>
+                              como ferramentas de profiling embutidas — sem
+                              dependências externas, prontas para uso em
+                              produção.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              CPU profiling — onde o tempo é gasto
+                           </h4>
+                           <p>
+                              O CPU profiler interrompe o programa a cada 10ms e
+                              registra a stack de chamadas ativa. Após muitas
+                              amostras, emerge um mapa estatístico de onde o
+                              tempo de CPU é consumido:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >CPU profiling em programa standalone</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "os"
+    "runtime/pprof"
+)
+
+func main() {
+    // Criar arquivo de perfil
+    f, err := os.Create("cpu.pprof")
+    if err != nil {
+        panic(err)
+    }
+    defer f.Close()
+
+    // Iniciar coleta de CPU
+    if err := pprof.StartCPUProfile(f); err != nil {
+        panic(err)
+    }
+    defer pprof.StopCPUProfile()  // SEMPRE parar antes de analisar
+
+    // ... código a ser perfilado
+    processarDados(carregarEntrada())
+}
+
+// Analisar depois:
+// go tool pprof cpu.pprof
+// (pprof) top10        → top 10 funções por CPU
+// (pprof) web          → abre gráfico de chama no browser (requer graphviz)
+// (pprof) list minhafunc → código anotado com amostras por linha</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Memory profiling — onde as alocações acontecem
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >heap profiling</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    "os"
+    "runtime"
+    "runtime/pprof"
+)
+
+func capturarHeap(nome string) {
+    f, _ := os.Create(nome)
+    defer f.Close()
+
+    runtime.GC()  // forçar GC antes de capturar para dados mais limpos
+    pprof.WriteHeapProfile(f)
+}
+
+// Em pontos estratégicos do programa:
+capturarHeap("antes.pprof")
+processarDados(entrada)
+capturarHeap("depois.pprof")
+
+// Comparar dois perfis (mostra delta de alocações):
+// go tool pprof -base antes.pprof depois.pprof
+// (pprof) top         → funções com maior crescimento de alocações</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              pprof via HTTP — profiling de servidores em
+                              produção
+                           </h4>
+                           <p>
+                              Para servidores HTTP, o subpacote
+                              <code>net/http/pprof</code> registra endpoints de
+                              profiling no <code>DefaultServeMux</code>
+                              com apenas um import. Permite capturar perfis de
+                              um servidor em execução sem reiniciá-lo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >servidor com pprof endpoints</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    "net/http"
+    _ "net/http/pprof"  // import por efeito colateral — registra os handlers
+)
+
+func main() {
+    // Servidor de diagnóstico em porta separada — NUNCA expor na porta pública
+    go func() {
+        http.ListenAndServe("localhost:6060", nil)
+    }()
+
+    // Servidor de aplicação normal
+    srv := configurarServidor()
+    srv.ListenAndServe()
+}
+
+// Comandos para capturar perfis do servidor em execução:
+// go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+//   → 30s de CPU profiling
+//
+// go tool pprof http://localhost:6060/debug/pprof/heap
+//   → snapshot atual do heap
+//
+// go tool pprof http://localhost:6060/debug/pprof/goroutine
+//   → todas as goroutines (detecta leaks)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nunca expor pprof em porta pública
+                                 </div>
+                                 <div class="callout__body">
+                                    Os endpoints
+                                    <code>/debug/pprof/</code> expõem informação
+                                    interna do processo — stack traces,
+                                    goroutines, variáveis de ambiente. Sempre
+                                    sirva em
+                                    <code>localhost:porta-separada</code> e use
+                                    SSH tunneling ou acesso restrito por rede
+                                    para acessar em produção. O import
+                                    <code>_ "net/http/pprof"</code>
+                                    no pacote main garante que ele só exista em
+                                    binários que você construiu explicitamente
+                                    para isso.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Benchmarks com testing.B
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Benchmarks com testing.B</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Benchmarks são a ferramenta para medir o
+                              desempenho de funções específicas de forma
+                              reproduzível. O pacote
+                              <code>testing</code> os suporta nativamente: basta
+                              nomear funções com prefixo
+                              <code>Benchmark</code> no mesmo arquivo
+                              <code>_test.go</code> dos testes unitários. O
+                              runner calibra automaticamente o número de
+                              iterações necessário para uma medição
+                              estatisticamente válida.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >benchmark_test.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package processador_test
+
+import (
+    "strings"
+    "testing"
+    "unicode"
+)
+
+// b.N é ajustado automaticamente pelo runner para atingir ~1s de execução
+func BenchmarkNormalizarV1(b *testing.B) {
+    entrada := "  Olá, Mundo!  com ESPAÇOS extras  "
+    b.ResetTimer()  // desconta setup do tempo medido
+
+    for i := 0; i < b.N; i++ {
+        normalizarV1(entrada)  // implementação com strings.TrimSpace + loop
+    }
+}
+
+func BenchmarkNormalizarV2(b *testing.B) {
+    entrada := "  Olá, Mundo!  com ESPAÇOS extras  "
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+        normalizarV2(entrada)  // implementação com strings.Map + Fields
+    }
+}
+
+// Benchmark com sub-benchmarks para diferentes tamanhos de entrada:
+func BenchmarkProcessar(b *testing.B) {
+    casos := []struct {
+        nome    string
+        tamanho int
+    }{
+        {"pequeno", 100},
+        {"medio", 10_000},
+        {"grande", 1_000_000},
+    }
+
+    for _, tc := range casos {
+        entrada := gerarEntrada(tc.tamanho)
+        b.Run(tc.nome, func(b *testing.B) {
+            b.SetBytes(int64(tc.tamanho))  // reporta throughput em B/s
+            b.ResetTimer()
+            for i := 0; i < b.N; i++ {
+                processar(entrada)
+            }
+        })
+    }
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Executando benchmarks e interpretando resultados
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >comandos e saída</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Rodar todos os benchmarks do pacote:
+go test -bench=. -benchmem ./...
+
+# Rodar apenas benchmarks que correspondem ao padrão:
+go test -bench=BenchmarkNormalizar -benchmem -benchtime=5s
+
+# Saída típica:
+# BenchmarkNormalizarV1-8    3_412_089    351.2 ns/op    96 B/op    3 allocs/op
+# BenchmarkNormalizarV2-8    8_901_234    134.6 ns/op    32 B/op    1 allocs/op
+#
+# Colunas:
+# -8          → GOMAXPROCS (núcleos usados)
+# 3_412_089   → iterações executadas (b.N final)
+# 351.2 ns/op → nanosegundos por operação
+# 96 B/op     → bytes alocados por operação (-benchmem)
+# 3 allocs/op → número de alocações por operação (-benchmem)
+
+# Comparar duas versões com benchstat (ferramenta oficial):
+go test -bench=. -count=10 -benchmem > antes.txt
+# (aplicar mudança)
+go test -bench=. -count=10 -benchmem > depois.txt
+go tool benchstat antes.txt depois.txt</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Medindo alocações com AllocsPerRun
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >assertion de alocações em teste
+                                    unitário</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func TestFormatarSemAlocacao(t *testing.T) {
+    entrada := Usuario{Nome: "Ana", ID: 42}
+
+    // Garante que formatar() não aloca no caminho crítico
+    allocs := testing.AllocsPerRun(100, func() {
+        _ = formatar(entrada)
+    })
+
+    if allocs > 0 {
+        t.Errorf("formatar alocou %.0f vez(es), esperado 0", allocs)
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    -count=10 para resultados confiáveis
+                                 </div>
+                                 <div class="callout__body">
+                                    Uma única execução de benchmark pode ser
+                                    ruidosa por interferência do scheduler, GC
+                                    ou cache da CPU. Use
+                                    <code>-count=10</code> para executar cada
+                                    benchmark dez vezes e passe a saída para
+                                    <code>benchstat</code> (<code
+                                       >go install
+                                       golang.org/x/perf/cmd/benchstat@latest</code
+                                    >), que calcula média, desvio padrão e
+                                    detecta se a diferença entre duas versões é
+                                    estatisticamente significativa.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Escape analysis e alocações
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Escape analysis e alocações</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, cada variável vive ou na
+                              <strong>stack</strong> (alocação zero-cost,
+                              desalocada ao retornar da função) ou no
+                              <strong>heap</strong> (alocação cara, pressiona o
+                              GC). O compilador decide onde cada variável vai
+                              através da <strong>escape analysis</strong>: se
+                              uma variável pode sobreviver ao escopo da função
+                              que a criou, ela "escapa" para o heap.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Visualizando decisões de escape
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >flag de diagnóstico do compilador</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># -gcflags="-m" imprime decisões de escape analysis:
+go build -gcflags="-m" ./...
+
+# Saída típica:
+# ./main.go:12:6: moved to heap: u        → u escapou para o heap
+# ./main.go:18:14: &Config{} escapes to heap
+# ./main.go:24:16: buf does not escape    → buf fica na stack (bom)
+
+# -m -m para detalhes extras:
+go build -gcflags="-m -m" ./...</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Causas comuns de escape — e como evitar
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrões que causam escape vs
+                                    alternativas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Retornar ponteiro para variável local → escapa para heap
+func novoUsuario(nome string) *Usuario {
+    u := Usuario{Nome: nome}  // u escapa: retornamos &u implicitamente
+    return &u
+}
+// Alternativa: retornar por valor quando o tipo é pequeno
+func novoUsuario(nome string) Usuario {
+    return Usuario{Nome: nome}  // fica na stack do chamador
+}
+
+// 2. Armazenar em interface{} → escapa para heap (boxing)
+func exemplo() {
+    var x int = 42
+    var i any = x  // x é copiado e boxed no heap para caber na interface
+    fmt.Println(i)
+}
+
+// 3. Closure capturando variável local → variável escapa
+func contadorFactory() func() int {
+    n := 0   // n escapa para o heap: a closure pode sobreviver a esta função
+    return func() int {
+        n++
+        return n
+    }
+}
+
+// 4. Slices crescendo além da capacidade inicial → realocação no heap
+func processarIDs(ids []int) []string {
+    // Se não pre-alocar, cada append que ultrapassar a cap gera nova alocação:
+    result := make([]string, 0, len(ids))  // pré-alocar: sem realocação
+    for _, id := range ids {
+        result = append(result, strconv.Itoa(id))
+    }
+    return result
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Interface vs tipo concreto no caminho crítico
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >custo de interfaces em hot paths</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Interface implica: dispatch indireto (vtable) + possível boxing
+type Processador interface {
+    Processar([]byte) []byte
+}
+
+func executarLoop(p Processador, dados [][]byte) {
+    for _, d := range dados {
+        p.Processar(d)  // chamada indireta por vtable — sem inlining
+    }
+}
+
+// Em hot path com tipo conhecido: use tipo concreto ou genérico
+func executarLoopConcreto(p *ProcessadorRapido, dados [][]byte) {
+    for _, d := range dados {
+        p.Processar(d)  // o compilador pode inline esta chamada
+    }
+}
+
+// Ou com generics (Go 1.18+): mantém polimorfismo sem dispatch indireto
+func executarLoopGenerico[P interface{ Processar([]byte) []byte }](p P, dados [][]byte) {
+    for _, d := range dados {
+        p.Processar(d)  // monomorphized em compile-time → inlineable
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não otimize escape prematuro
+                                 </div>
+                                 <div class="callout__body">
+                                    Forçar variáveis para a stack (evitando
+                                    ponteiros, evitando interfaces) tem custo de
+                                    legibilidade e manutenibilidade. Escapes
+                                    para o heap são baratos em Go — o GC é
+                                    eficiente. Só invista nessa otimização
+                                    quando o benchmark confirmar que a alocação
+                                    específica é o gargalo. O compilador já faz
+                                    escape analysis corretamente — confie nele
+                                    primeiro.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — sync.Pool: reutilização de objetos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>sync.Pool — reutilização de objetos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>sync.Pool</code> é um cache thread-safe de
+                              objetos temporários que pode ser reutilizados —
+                              evitando alocações repetidas de objetos que têm
+                              vida curta mas são criados em alta frequência. O
+                              GC pode limpar o pool a qualquer momento, então
+                              objetos no pool não têm garantia de persistência —
+                              isso é o comportamento correto: o pool é uma
+                              otimização de alocação, não um cache de dados.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso de uso real: pool de bytes.Buffer
+                           </h4>
+                           <p>
+                              Um dos usos mais comuns em servidores HTTP:
+                              reutilizar
+                              <code>bytes.Buffer</code> para serializar
+                              respostas, evitando uma alocação por requisição:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pool de bytes.Buffer para
+                                    serialização</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var bufPool = sync.Pool{
+    New: func() any {
+        // New é chamado apenas quando o pool está vazio
+        return new(bytes.Buffer)
+    },
+}
+
+func serializarResposta(dados any) ([]byte, error) {
+    // Pegar um buffer do pool (ou criar novo se pool vazio)
+    buf := bufPool.Get().(*bytes.Buffer)
+    buf.Reset()  // SEMPRE resetar antes de usar — buffer pode ter estado anterior
+    defer bufPool.Put(buf)  // devolver ao pool ao terminar
+
+    if err := json.NewEncoder(buf).Encode(dados); err != nil {
+        return nil, fmt.Errorf("serializar: %w", err)
+    }
+
+    // Copiar o resultado ANTES de devolver o buffer ao pool
+    resultado := make([]byte, buf.Len())
+    copy(resultado, buf.Bytes())
+    return resultado, nil
+}
+
+// Sem pool: cada chamada aloca um novo bytes.Buffer no heap
+// Com pool: a maioria das chamadas reutiliza um buffer existente
+// Em um servidor com 10k req/s, isso elimina ~10k alocações/s</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Pool de structs pesadas — exemplo com parser
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pool de parsers com estado
+                                    inicializável</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Parser struct {
+    buf     [64 * 1024]byte  // buffer interno de 64KB — caro de alocar
+    estado  int
+    erros   []string
+}
+
+func (p *Parser) Reset() {
+    p.estado = 0
+    p.erros = p.erros[:0]  // reutiliza o slice sem realocar
+}
+
+var parserPool = sync.Pool{
+    New: func() any { return new(Parser) },
+}
+
+func parsearDocumento(dados []byte) (*Resultado, error) {
+    p := parserPool.Get().(*Parser)
+    p.Reset()
+    defer parserPool.Put(p)
+
+    return p.Parse(dados)
+}
+
+// O benchmark mostra a diferença:
+// Sem pool: 1 alloc/op (64KB), ~2.1µs/op
+// Com pool: 0 allocs/op (após warmup), ~0.3µs/op</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Três regras obrigatórias do sync.Pool
+                                 </div>
+                                 <div class="callout__body">
+                                    (1) Sempre <strong>Reset</strong> o objeto
+                                    após <code>Get</code> — ele pode ter estado
+                                    da última utilização. (2) Nunca guardar
+                                    referências ao objeto após
+                                    <code>Put</code> — outro goroutine pode
+                                    estar usando. (3) Nunca colocar objetos com
+                                    <strong>finalizers</strong>
+                                    no pool — o GC pode coletar objetos do pool
+                                    e acionar o finalizer enquanto o pool ainda
+                                    o referencia.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Strings, slices e alocações evitáveis
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Strings, slices e alocações evitáveis</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A maioria das alocações desnecessárias em código
+                              Go de produção vem de dois lugares: concatenação
+                              de strings em loop e conversões desnecessárias
+                              entre <code>string</code> e <code>[]byte</code>.
+                              Reconhecer esses padrões é o passo mais prático de
+                              otimização — frequentemente mais impactante do que
+                              qualquer mudança algorítmica.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Concatenação de strings — o antipadrão clássico
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >concatenação em loop — 3 abordagens</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">nomes := []string{"Ana", "Bob", "Carlos", "Diana", "Eduardo"}
+
+// ❌ Antipadrão: concatenação com + em loop
+// Cada iteração aloca uma nova string — O(n²) alocações
+func juntarV1(nomes []string) string {
+    resultado := ""
+    for _, n := range nomes {
+        resultado += n + ", "  // nova alocação a cada iteração
+    }
+    return resultado
+}
+
+// ✓ Correto: strings.Builder — pré-aloca e cresce internamente
+func juntarV2(nomes []string) string {
+    var sb strings.Builder
+    sb.Grow(estimarTamanho(nomes))  // pré-alocar para evitar realocações
+    for i, n := range nomes {
+        if i > 0 {
+            sb.WriteString(", ")
+        }
+        sb.WriteString(n)
+    }
+    return sb.String()  // única alocação de string no final
+}
+
+// ✓ Mais idiomático para este caso específico:
+func juntarV3(nomes []string) string {
+    return strings.Join(nomes, ", ")  // implementado com Builder internamente
+}
+
+// Benchmark com 1000 nomes:
+// juntarV1: 999 allocs/op,  ~500µs/op
+// juntarV2:   2 allocs/op,  ~2µs/op
+// juntarV3:   1 alloc/op,   ~1.8µs/op</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Conversão string ↔ []byte — quando é zero-cost
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >conversões e otimizações do
+                                    compilador</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Conversão normal: aloca uma cópia
+s := "hello world"
+b := []byte(s)  // aloca — string e slice têm backends separados
+s2 := string(b) // aloca novamente
+
+// O compilador otimiza conversões em contextos específicos (zero-cost):
+// 1. string → []byte apenas para lookup em map:
+m := map[string]int{"chave": 1}
+b2 := []byte("chave")
+_ = m[string(b2)]  // compilador elimina a alocação aqui
+
+// 2. []byte → string em comparação:
+if string(b) == "hello" { ... }  // compilador pode comparar sem alocar
+
+// Para evitar conversões em hot paths, projete as APIs para usar o mesmo tipo
+// ao longo de todo o pipeline — não misture string e []byte sem necessidade.
+
+// strings.Builder.WriteByte/WriteRune vs Write([]byte):
+var sb strings.Builder
+sb.WriteByte('G')   // zero alocação
+sb.WriteRune('o')   // zero alocação
+sb.Write(b)         // zero alocação (copia sem criar nova string)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Pré-alocação de slices — o impacto do append
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >impacto de pré-alocação em append</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem pré-alocação: Go cresce o slice dobrando a capacidade
+// Para n=1000: ~10 realocações (1→2→4→8→...→1024)
+func processarSemPrealloc(entrada []int) []string {
+    resultado := []string{}
+    for _, v := range entrada {
+        resultado = append(resultado, strconv.Itoa(v))
+    }
+    return resultado
+}
+
+// Com pré-alocação: zero realocações
+func processarComPrealloc(entrada []int) []string {
+    resultado := make([]string, 0, len(entrada))  // cap = len(entrada)
+    for _, v := range entrada {
+        resultado = append(resultado, strconv.Itoa(v))
+    }
+    return resultado
+}
+
+// Caso especial: quando o tamanho é conhecido E todos os valores são preenchidos
+func mapearComPrealloc(entrada []int) []string {
+    resultado := make([]string, len(entrada))  // len E cap = len(entrada)
+    for i, v := range entrada {
+        resultado[i] = strconv.Itoa(v)  // acesso direto por índice, sem append
+    }
+    return resultado
+}
+
+// Benchmark com n=10_000:
+// SemPrealloc:  14 allocs/op,  ~210µs/op
+// ComPrealloc:   1 alloc/op,   ~120µs/op
+// MapearCom:     1 alloc/op,   ~105µs/op</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    fmt.Sprintf vs strings.Builder em hot paths
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>fmt.Sprintf</code> é conveniente mas
+                                    usa reflection internamente e aloca ao menos
+                                    uma string por chamada. Para formatação em
+                                    loops críticos,
+                                    <code>strings.Builder</code> com
+                                    <code>WriteString</code> e
+                                    <code>strconv</code> (para números) é
+                                    significativamente mais rápido. Regra
+                                    prática: use <code>fmt.Sprintf</code> fora
+                                    do caminho crítico; use
+                                    <code>strings.Builder</code> +
+                                    <code>strconv</code>
+                                    dentro de loops com alta frequência de
+                                    chamada.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Ferramentas de análise
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod34-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>
+                              Ferramentas de análise: pprof, trace, go vet,
+                              staticcheck
+                           </h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem um ecossistema de ferramentas de análise
+                              estática e dinâmica embutido ou disponível como
+                              primeira parte (<code>golang.org/x</code>).
+                              Conhecê-las elimina categorias inteiras de bugs e
+                              regressões de performance antes de chegarem a
+                              produção.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              go tool trace — concorrência em detalhe
+                           </h4>
+                           <p>
+                              Enquanto <code>pprof</code> responde "onde o tempo
+                              é gasto", <code>trace</code> responde "o que cada
+                              goroutine estava fazendo ao longo do tempo" —
+                              essencial para diagnosticar starvation, contenção
+                              de mutex e problemas de scheduling:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >capturando e analisando traces</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "runtime/trace"
+
+func main() {
+    f, _ := os.Create("trace.out")
+    defer f.Close()
+
+    trace.Start(f)
+    defer trace.Stop()
+
+    // ... programa
+}
+
+// Visualizar no browser (linha do tempo interativa):
+// go tool trace trace.out
+//
+// O viewer mostra:
+// • Timeline de cada goroutine (running / waiting / blocked)
+// • Eventos de GC (quando ocorreu, quanto durou)
+// • Heap ao longo do tempo
+// • Syscalls e network events
+// • Análise de latência P99 por tipo de evento</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              go vet — bugs estáticos que o compilador não pega
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >go vet e o que ele detecta</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash">go vet ./...
+
+# Detecta, entre outros:
+# • printf: fmt.Sprintf("%d", "string")  → tipos errados nos verbos
+# • copylocks: mutex copiado por valor (lock é inválido após cópia)
+# • loopclosure: goroutine capturando variável de loop (bug clássico pre-1.22)
+# • unreachable: código após return nunca executado
+# • structtag: tags de struct mal formadas (`json: "id"` com espaço)
+# • nilness: desreferência de nil detectável estaticamente
+# • sigchanyzer: uso incorreto de os/signal.Notify com canal não-buffered
+
+# go vet é executado automaticamente por go test — sempre</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              staticcheck — análise estática avançada
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >instalação e uso</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash">go install honnef.co/go/tools/cmd/staticcheck@latest
+staticcheck ./...
+
+# Verifica 150+ categorias além do go vet:
+# SA1006: Printf com 0 argumentos extras — use Print
+# SA4006: variável atribuída mas nunca usada após a última atribuição
+# SA9003: bloco if/else vazio
+# S1039: strings.Contains(s, "") — sempre true, provavelmente erro
+# ST1003: convenções de nomenclatura (MixedCaps, acrônimos)
+# QF1003: pode simplificar com strings.Cut em vez de Index+slice manual
+# SA5011: desreferência de ponteiro que pode ser nil (análise mais profunda que vet)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Race detector — races em runtime
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >detector de race conditions</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Compilar e executar com race detector ativo:
+go run -race main.go
+go test -race ./...
+go build -race -o servidor_race ./cmd/servidor
+
+# Quando detecta um race:
+# WARNING: DATA RACE
+# Write at 0x00c000012050 by goroutine 7:
+#   main.incrementar()
+#       /home/user/app/main.go:23
+# Previous read at 0x00c000012050 by goroutine 6:
+#   main.ler()
+#       /home/user/app/main.go:17
+
+# O race detector tem overhead de ~5-10x CPU e ~2-8x memória
+# Use em testes de CI — não em binários de produção
+# Regra: todo pacote com goroutines deve ter go test -race no CI</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Ferramenta
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          O que encontra
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Quando usar
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go vet
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Estática
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Bugs comuns, tags mal formadas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Sempre (automático em go test)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          staticcheck
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Estática
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          150+ categorias, estilo, segurança
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          CI e pré-commit
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go test -race
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Dinâmica
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Race conditions em runtime
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          CI obrigatório para código concorrente
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          pprof
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Dinâmica
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          CPU e alocações de memória
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Após confirmar gargalo com benchmark
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go tool trace
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Dinâmica
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Scheduling, GC, contenção
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Problemas de latência e concorrência
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    O fluxo correto de otimização
+                                 </div>
+                                 <div class="callout__body">
+                                    (1) <strong>Medir</strong> com benchmark ou
+                                    pprof para confirmar onde está o gargalo.
+                                    (2) <strong>Formular hipótese</strong> sobre
+                                    a causa (alocação, algoritmo, contenção de
+                                    lock). (3)
+                                    <strong>Aplicar uma mudança</strong> por
+                                    vez. (4)
+                                    <strong>Medir novamente</strong> para
+                                    confirmar melhora. (5)
+                                    <strong>Verificar corretude</strong> com
+                                    testes e race detector. Pular etapas gera
+                                    código mais complexo sem ganho mensurável —
+                                    o pior dos dois mundos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 34
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod34-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Benchmarks com testing.B'. Preste atenção no que as colunas da saída do benchmark com -benchmem representam — especialmente a diferença entre número de iterações e alocações por operação."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um benchmark produz a seguinte saída. O que
+                              podemos concluir comparando as duas
+                              implementações?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                              </div>
+                              <pre><code data-lang="bash">BenchmarkV1-8    412_089    2_891 ns/op    1_024 B/op    12 allocs/op
+BenchmarkV2-8  4_201_345      285 ns/op       32 B/op     1 allocs/op</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >V2 é ~10x mais rápida apenas porque executa
+                                    mais iterações (4.2M vs 412k)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >V1 aloca mais memória total (1024 × 412k =
+                                    ~422MB) do que V2 (32 × 4.2M = ~134MB) — V1
+                                    é mais eficiente por operação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >V2 é ~10x mais rápida por operação (285ns
+                                    vs 2891ns) e ~32x mais eficiente em
+                                    alocações (1 vs 12 allocs/op) — o número de
+                                    iterações é consequência da calibração
+                                    automática do runner, não causa da
+                                    performance</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Os resultados não são comparáveis porque os
+                                    dois benchmarks executaram números
+                                    diferentes de iterações</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O runner de benchmarks calibra
+                              <code>b.N</code> automaticamente para que cada
+                              benchmark rode por ~1 segundo — implementações
+                              rápidas executam mais iterações para atingir esse
+                              tempo. Portanto, <em>mais iterações</em> indica
+                              <em>implementação mais rápida</em>, não o
+                              contrário. As métricas relevantes são sempre "por
+                              operação": <code>ns/op</code>, <code>B/op</code> e
+                              <code>allocs/op</code>. V2 é objetivamente melhor
+                              nos três.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod34-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'sync.Pool — reutilização de objetos'. Preste atenção nas três regras obrigatórias de uso do Pool — especificamente o que deve acontecer imediatamente após Get() e antes de usar o objeto."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo usa <code>sync.Pool</code> mas tem
+                              um bug que causa corrupção de dados em produção
+                              sob concorrência. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var pool = sync.Pool{
+    New: func() any { return new(bytes.Buffer) },
+}
+
+func processar(dados []byte) []byte {
+    buf := pool.Get().(*bytes.Buffer)
+    defer pool.Put(buf)
+
+    buf.Write(dados)
+    resultado := buf.Bytes()  // retorna slice referenciando o buffer interno
+    return resultado           // bug: buffer devolvido ao pool antes do uso do resultado
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O <code>defer pool.Put(buf)</code> não
+                                    funciona — Put deve ser chamado
+                                    explicitamente, não via defer</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O buffer não é resetado com
+                                    <code>buf.Reset()</code> antes de
+                                    <code>buf.Write</code> — pode ter dados da
+                                    utilização anterior</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Dois bugs: (1) falta
+                                    <code>buf.Reset()</code> antes de usar —
+                                    buffer pode ter estado anterior; (2)
+                                    <code>buf.Bytes()</code> retorna slice que
+                                    aponta para o buffer interno; após
+                                    <code>Put</code>, outro goroutine pode
+                                    sobrescrever esse mesmo buffer — o chamador
+                                    lê dados corrompidos</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O pool não é thread-safe — é necessário um
+                                    <code>sync.Mutex</code> em volta das
+                                    chamadas Get e Put</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Dois problemas distintos. O primeiro:
+                              falta
+                              <code>buf.Reset()</code> após <code>Get</code> — o
+                              buffer pode conter bytes de quem o usou
+                              anteriormente. O segundo (mais grave):
+                              <code>buf.Bytes()</code> retorna um slice que
+                              aponta para o array interno do buffer. O
+                              <code>defer pool.Put(buf)</code> devolve o buffer
+                              <em>ao sair da função</em>, mas o chamador ainda
+                              segura o slice — que agora pode ser sobrescrito
+                              por outra goroutine que chamar
+                              <code>pool.Get()</code>. Corrija copiando o
+                              resultado:
+                              <code
+                                 >resultado := make([]byte, buf.Len());
+                                 copy(resultado, buf.Bytes())</code
+                              >
+                              antes do defer.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod34-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Escape analysis e alocações'. Preste atenção nas causas de escape para o heap — especialmente o que acontece quando uma variável local é armazenada em um tipo interface."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um serviço de alta carga tem um endpoint que
+                              processa 10.000 req/s. O profiling mostra que 40%
+                              das alocações vêm do código abaixo. Qual mudança
+                              elimina essas alocações?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func handleMetrica(w http.ResponseWriter, r *http.Request) {
+    id := r.URL.Query().Get("id")
+    valor := calcularValor(id)
+
+    // Esta linha causa ~3 alocações por requisição:
+    msg := fmt.Sprintf("id=%s valor=%.2f", id, valor)
+    w.Header().Set("X-Debug", msg)
+    w.WriteHeader(http.StatusOK)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Usar
+                                    <code
+                                       >fmt.Fprintf(w, "id=%s valor=%.2f", id,
+                                       valor)</code
+                                    >
+                                    — escreve direto no writer sem criar string
+                                    intermediária</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Declarar <code>msg</code> fora do handler
+                                    como variável global e usar
+                                    <code>sync.Mutex</code> para proteger o
+                                    acesso</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Substituir por
+                                    <code>strings.Builder</code> com
+                                    <code>WriteString</code> e
+                                    <code>strconv.AppendFloat</code> — elimina o
+                                    boxing de <code>id</code> e
+                                    <code>valor</code> em <code>[]any</code> que
+                                    <code>fmt.Sprintf</code> faz internamente, e
+                                    produz a string sem alocações
+                                    intermediárias</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Remover o header
+                                    <code>X-Debug</code> completamente — headers
+                                    de debug nunca devem existir em código de
+                                    produção</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>fmt.Sprintf</code> aceita
+                              <code>...any</code>: cada argumento (<code
+                                 >id</code
+                              >
+                              e <code>valor</code>) é convertido para interface,
+                              causando boxing — o que escapa para o heap. Com
+                              <code>strings.Builder</code>:
+                              <code
+                                 >sb.WriteString("id="); sb.WriteString(id);
+                                 sb.WriteString(" valor=");
+                                 sb.Write(strconv.AppendFloat(nil, valor, 'f',
+                                 2, 64))</code
+                              >
+                              — sem boxing, sem alocações além do resultado
+                              final. A opção A troca uma alocação por outra (a
+                              string ainda é criada internamente pelo fmt). A
+                              opção D resolve o problema eliminando a
+                              funcionalidade — válida em produção real, mas não
+                              responde a pergunta de como otimizar.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 34
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod34-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Diagnóstico de performance</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um serviço Go em produção começa a apresentar
+                              latência crescente ao longo do dia — começando
+                              rápido e degradando progressivamente até ser
+                              reiniciado. O gráfico de memória mostra
+                              crescimento linear sem queda. Qual é a sequência
+                              de investigação correta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Executar <code>go tool trace</code> para
+                                    visualizar o timeline de goroutines —
+                                    crescimento de memória geralmente indica
+                                    problema de scheduling</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Adicionar <code>sync.Pool</code> em todas
+                                    as structs do serviço — pool de objetos é a
+                                    solução padrão para crescimento de
+                                    memória</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Capturar dois heap profiles com intervalo
+                                    de tempo (<code>pprof/heap</code>), comparar
+                                    com
+                                    <code
+                                       >go tool pprof -base antes.pprof
+                                       depois.pprof</code
+                                    >
+                                    para identificar quais alocações crescem;
+                                    verificar também o profile de goroutines
+                                    (<code>/debug/pprof/goroutine</code>) para
+                                    detectar goroutine leak — as duas causas
+                                    mais comuns de crescimento linear de
+                                    memória</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Rodar <code>go test -race ./...</code> no
+                                    código — race conditions frequentemente
+                                    causam vazamentos de memória e degradação de
+                                    performance</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Crescimento linear de memória ao longo
+                              do tempo com recuperação ao reiniciar aponta para
+                              duas causas clássicas: (1)
+                              <strong>memory leak</strong> — objetos acumulados
+                              no heap que o GC não consegue coletar porque ainda
+                              têm referências; (2)
+                              <strong>goroutine leak</strong> — goroutines
+                              bloqueadas que acumulam, cada uma com sua stack
+                              (mínimo 2KB, pode crescer). O heap profile
+                              comparativo identifica (1); o goroutine profile
+                              identifica (2). O trace (<code>go tool trace</code
+                              >) é útil para problemas de latência e scheduling,
+                              não crescimento de memória.
+                              <code>sync.Pool</code> sem diagnóstico é
+                              otimização cega. O race detector é para corretude,
+                              não para memória.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod34-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Decisão de otimização</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um benchmark mostra que a função crítica do
+                              sistema executa em 450ns/op com 8 allocs/op. Um
+                              colega propõe três otimizações diferentes. Qual é
+                              a abordagem correta para decidir qual implementar?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Implementar todas as três em paralelo em
+                                    branches separadas e escolher a mais rápida
+                                    — mais opções, melhor decisão</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Escolher a que reduz mais o número de
+                                    alocações (allocs/op), pois alocações são
+                                    sempre o principal gargalo em Go</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Implementar cada otimização separadamente,
+                                    rodar o benchmark com
+                                    <code>-count=10</code> para cada, usar
+                                    <code>benchstat</code> para comparar com a
+                                    baseline e verificar se a diferença é
+                                    estatisticamente significativa; escolher a
+                                    que trouxer melhora comprovada mantendo
+                                    legibilidade e executar
+                                    <code>go test -race</code> para garantir
+                                    corretude</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Verificar primeiro se 450ns é realmente um
+                                    problema para o SLA do sistema — otimização
+                                    sem requisito de performance é
+                                    prematura</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O processo científico de otimização
+                              exige isolar variáveis: implementar uma mudança
+                              por vez e medir o impacto antes de prosseguir.
+                              <code>-count=10</code> +
+                              <code>benchstat</code> elimina ruído estatístico —
+                              uma diferença de 10% em uma única execução pode
+                              ser ruído do sistema;
+                              <code>benchstat</code> calcula se a diferença é
+                              real. Executar <code>go test -race</code> após
+                              cada mudança garante que a otimização não
+                              introduziu race condition. A opção D levanta um
+                              ponto válido (otimização prematura é real) mas não
+                              responde à pergunta de <em>como</em>
+                              decidir quando a otimização é necessária. A opção
+                              B é errada: alocações são frequentemente o
+                              gargalo, mas não sempre — um algoritmo O(n²) mais
+                              eficiente em alocações pode ser muito mais lento
+                              que um O(n log n) com mais alocações.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

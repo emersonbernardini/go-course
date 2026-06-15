@@ -1,0 +1,1546 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Tipos básicos de Go: inteiros, ponto flutuante, booleano, string, byte, rune e conversão de tipos."
+      />
+      <title>Módulo 05 — Tipos básicos · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="05">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 1 — Fundamentos
+                        </div>
+                        <h1 class="module-header__title">Tipos básicos</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 05</span>
+                           <span class="badge badge-default">7 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Inteiros
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Inteiros</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go oferece uma família completa de tipos inteiros,
+                              com e sem sinal, em tamanhos variados. Cada tipo
+                              define precisamente o intervalo de valores que
+                              pode armazenar.
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tamanho
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Intervalo
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int8
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          8 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          -128 a 127
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int16
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          16 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          -32768 a 32767
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int32
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          32 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          -2147483648 a 2147483647
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int64
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          64 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          -9223372036854775808 a
+                                          9223372036854775807
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          uint8
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          8 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          0 a 255
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          uint16
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          16 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          0 a 65535
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          uint32
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          32 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          0 a 4294967295
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          uint64
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          64 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             font-size: var(--text-xs);
+                                          "
+                                       >
+                                          0 a 18446744073709551615
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          32 ou 64 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Depende da plataforma (64 bits em
+                                          sistemas modernos)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          uint
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          32 ou 64 bits
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Sem sinal, tamanho da plataforma
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Qual usar no dia a dia
+                           </h4>
+                           <p>
+                              Na prática, use <code>int</code> para a maioria
+                              dos casos — contadores, índices, quantidades. Use
+                              os tipos específicos apenas quando o tamanho
+                              importa: protocolos de rede, arquivos binários, ou
+                              interfaces com bibliotecas C que exigem tipos
+                              exatos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">contador := 0           // int — uso geral
+var porta uint16 = 8080 // uint16 — porto de rede (0-65535)
+var flag uint8 = 0xFF   // uint8 — byte, bitmask
+id := int64(123456789)  // int64 — IDs grandes, timestamps Unix</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Integer overflow em Go
+                                 </div>
+                                 <div class="callout__body">
+                                    Go não detecta overflow em tempo de execução
+                                    — o valor simplesmente "enrola" (wrap
+                                    around). Um <code>int8</code> com valor 127,
+                                    incrementado por 1, vira -128. Se isso é um
+                                    problema no seu domínio, use tipos maiores
+                                    ou valide os limites manualmente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Ponto flutuante
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Ponto flutuante</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem dois tipos de ponto flutuante, seguindo o
+                              padrão IEEE 754:
+                              <code>float32</code> (precisão simples, 32 bits) e
+                              <code>float64</code> (precisão dupla, 64 bits).
+                              Literais flutuantes sem tipo explícito são sempre
+                              inferidos como <code>float64</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">pi := 3.14159        // float64 (inferido)
+var e float32 = 2.71 // float32 explícito
+
+// Notação científica
+avogadro := 6.022e23  // 6.022 × 10²³
+electronVolt := 1.6e-19
+
+fmt.Printf("%.2f\n", pi)    // 3.14 — 2 casas decimais
+fmt.Printf("%e\n", avogadro) // 6.022000e+23</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              float32 vs float64
+                           </h4>
+                           <p>
+                              Use sempre <code>float64</code> por padrão. Ele
+                              oferece precisão suficiente para quase todos os
+                              casos e é o tipo nativo dos processadores de 64
+                              bits modernos — não há custo de performance. Use
+                              <code>float32</code>
+                              apenas quando há restrição explícita de memória
+                              (ex: gráficos 3D, processamento de sinais com
+                              milhões de samples).
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Ponto flutuante não é exato
+                                 </div>
+                                 <div class="callout__body">
+                                    Esta não é uma peculiaridade de Go — é uma
+                                    limitação do padrão IEEE 754.
+                                    <code>0.1 + 0.2</code> em Go resulta em
+                                    <code>0.30000000000000004</code>. Para
+                                    valores monetários, nunca use
+                                    <code>float64</code>. Use inteiros em
+                                    centavos (<code>int64</code>) ou uma
+                                    biblioteca de decimal de precisão arbitrária
+                                    como <code>shopspring/decimal</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — bool
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>bool</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O tipo <code>bool</code> armazena um de dois
+                              valores: <code>true</code> ou <code>false</code>.
+                              Zero value é <code>false</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ativo := true
+var logado bool  // false (zero value)
+
+// Resultado de comparações é sempre bool
+maior := 10 > 5        // true
+igual := "a" == "b"   // false
+diferente := 1 != 2   // true
+
+// Operadores lógicos
+ambos := ativo && logado   // AND — false
+algum := ativo || logado   // OR  — true
+negado := !ativo           // NOT — false</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go não converte outros tipos para bool
+                                 </div>
+                                 <div class="callout__body">
+                                    Em C, <code>if (1)</code> é verdadeiro e
+                                    <code>if (0)</code> é falso. Em Go isso não
+                                    existe — o <code>if</code> exige uma
+                                    expressão booleana explícita.
+                                    <code>if x { }</code> só compila se
+                                    <code>x</code> for do tipo
+                                    <code>bool</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — string
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>string — imutável e UTF-8</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, <code>string</code> é uma sequência de
+                              bytes imutável. O encoding padrão é UTF-8 — o que
+                              significa que um caractere pode ocupar de 1 a 4
+                              bytes. Isso tem implicações importantes que
+                              veremos no tópico sobre <code>rune</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >strings básicas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Aspas duplas — string interpretada (aceita \n, \t, etc.)
+s1 := "Olá, Mundo!\n"
+
+// Backtick — string raw (literal, sem interpretação de escape)
+s2 := `Olá, Mundo!\n`  // \n é literal aqui, não quebra de linha
+
+// Concatenação com +
+nome := "Go"
+versao := "1.23"
+completo := nome + " " + versao  // "Go 1.23"
+
+// Comprimento em bytes (não em caracteres!)
+fmt.Println(len("Go"))    // 2
+fmt.Println(len("Olá"))   // 4 (ó ocupa 2 bytes em UTF-8)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Strings são imutáveis
+                           </h4>
+                           <p>
+                              Uma vez criada, uma string não pode ser
+                              modificada. Operações que "modificam" strings na
+                              verdade criam novas strings. Isso é importante
+                              para performance — concatenar strings em loop com
+                              <code>+</code> é ineficiente; use
+                              <code>strings.Builder</code> para isso:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Ineficiente — cria uma nova string a cada iteração
+resultado := ""
+for i := 0; i < 1000; i++ {
+    resultado += "x"  // 1000 alocações de string
+}
+
+// Eficiente — strings.Builder reutiliza o buffer interno
+import "strings"
+
+var b strings.Builder
+for i := 0; i < 1000; i++ {
+    b.WriteString("x")
+}
+resultado := b.String()  // uma única alocação no final</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Acessando bytes individuais
+                           </h4>
+                           <p>
+                              O operador de índice <code>s[i]</code> retorna o
+                              byte na posição <code>i</code> — não o caractere.
+                              Para iterar sobre caracteres (runes), use
+                              <code>range</code>, que estudaremos no Módulo 08:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := "Olá"
+
+fmt.Println(s[0])         // 79 — valor do byte 'O' (tipo byte/uint8)
+fmt.Println(string(s[0])) // "O"
+
+// Substrings via slicing — opera em bytes
+fmt.Println(s[0:2])  // "Ol" — bytes 0 e 1
+// ATENÇÃO: s[0:3] pode partir um caractere multibyte ao meio</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — byte e rune
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>byte e rune</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem dois tipos especiais intimamente
+                              relacionados com strings:
+                              <code>byte</code> e <code>rune</code>. Ambos são
+                              aliases — nomes alternativos para tipos
+                              existentes.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              byte — alias de uint8
+                           </h4>
+                           <p>
+                              <code>byte</code> é exatamente o mesmo que
+                              <code>uint8</code> — um inteiro sem sinal de 8
+                              bits (0 a 255). Representa um único byte de dados.
+                              É o tipo retornado ao indexar uma string
+                              (<code>s[i]</code>).
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var b byte = 65
+fmt.Println(b)         // 65
+fmt.Println(string(b)) // "A" — byte 65 é o caractere ASCII 'A'
+
+// []byte — slice de bytes, muito comum para I/O
+dados := []byte{72, 101, 108, 108, 111}
+fmt.Println(string(dados)) // "Hello"</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              rune — alias de int32
+                           </h4>
+                           <p>
+                              <code>rune</code> é exatamente o mesmo que
+                              <code>int32</code>. Representa um
+                              <strong>ponto de código Unicode</strong> — um
+                              caractere, não um byte. Um rune pode representar
+                              qualquer caractere humano, de 'A' a '漢' a '🚀'.
+                           </p>
+                           <p>
+                              Literais de caractere entre aspas simples são
+                              runes:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var r rune = 'A'
+fmt.Println(r)         // 65 — valor Unicode de 'A'
+fmt.Println(string(r)) // "A"
+
+r2 := '漢'
+fmt.Println(r2)         // 28450 — ponto de código Unicode
+fmt.Println(string(r2)) // "漢"
+
+// Iterando sobre caracteres com range — retorna runes
+s := "Olá"
+for i, r := range s {
+    fmt.Printf("posição %d: %c (%d bytes)\n", i, r, /* varia */)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    len() conta bytes, não caracteres
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>len("Olá")</code> retorna
+                                    <code>4</code>, não <code>3</code>, porque
+                                    <code>á</code> ocupa 2 bytes em UTF-8. Para
+                                    contar caracteres (runes), use
+                                    <code>utf8.RuneCountInString("Olá")</code>
+                                    do pacote <code>unicode/utf8</code>, que
+                                    retorna <code>3</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Conversão de tipos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Conversão de tipos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go é <strong>estritamente tipado</strong>: não
+                              existem conversões implícitas entre tipos
+                              numéricos. Mesmo que a conversão seja "óbvia" (de
+                              <code>int</code> para <code>float64</code>), você
+                              deve fazê-la explicitamente. Isso pode parecer
+                              verboso, mas elimina bugs silenciosos de
+                              truncamento e perda de precisão.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >conversão explícita</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var i int = 42
+var f float64 = float64(i)  // conversão explícita
+var u uint = uint(f)        // conversão explícita
+
+// ERRO: tipos diferentes sem conversão
+var x int = 10
+var y float64 = 3.14
+// soma := x + y  // ERRO: mismatched types int and float64
+soma := float64(x) + y  // OK: converte x para float64</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Truncamento ao converter
+                           </h4>
+                           <p>
+                              Conversões que reduzem o tamanho do tipo
+                              simplesmente descartam os bits mais significativos
+                              — sem erro, sem pânico. É sua responsabilidade
+                              garantir que o valor cabe no tipo destino:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var grande int = 300
+pequeno := int8(grande)   // 300 não cabe em int8 (-128 a 127)
+fmt.Println(pequeno)      // 44 — resultado do truncamento (300 % 256 = 44)
+
+// float para int trunca (não arredonda)
+pi := 3.99
+inteiro := int(pi)
+fmt.Println(inteiro)  // 3 — não 4</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Conversão string ↔ números
+                           </h4>
+                           <p>
+                              Converter entre string e tipos numéricos
+                              <em>não</em> é feito com cast direto — é feito com
+                              funções do pacote <code>strconv</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "strconv"
+
+// int → string
+n := 42
+s := strconv.Itoa(n)        // "42"
+
+// string → int
+n2, err := strconv.Atoi("123")
+if err != nil {
+    // "abc" não é um número válido
+}
+
+// string → float64
+f, err := strconv.ParseFloat("3.14", 64)
+
+// ARMADILHA: string(42) não converte para "42"
+// Converte o int para o caractere com aquele ponto de código Unicode
+fmt.Println(string(42))   // "*" — não "42"!</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 7 — Tipagem estática na prática
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod05-t07">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Tipagem estática na prática</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Agora que conhecemos os tipos básicos, vale
+                              consolidar o que a tipagem estática de Go
+                              significa na prática — seus benefícios, suas
+                              exigências e os erros mais comuns que ela previne.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O que o compilador verifica
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >erros detectados em compilação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Atribuição de tipo incompatível
+var x int = "olá"    // ERRO: cannot use "olá" (type string) as type int
+
+// 2. Operação entre tipos diferentes
+a := 10
+b := 3.14
+c := a + b           // ERRO: mismatched types int and float64
+
+// 3. Comparação entre tipos diferentes
+if 1 == "1" { }      // ERRO: mismatched types int and string
+
+// 4. Retorno de tipo errado
+func soma() int {
+    return "resultado"  // ERRO: cannot use "resultado" as type int
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tipos definidos pelo usuário
+                           </h4>
+                           <p>
+                              Go permite criar novos tipos a partir de tipos
+                              existentes com
+                              <code>type NomeNovo TipoBase</code>. Mesmo que o
+                              tipo base seja idêntico, os dois tipos são
+                              distintos para o compilador:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Celsius float64
+type Fahrenheit float64
+
+var temp Celsius = 100
+// var tempF Fahrenheit = temp  // ERRO: tipos distintos, mesmo base float64
+
+// Conversão explícita necessária
+tempF := Fahrenheit(temp*9/5 + 32)
+fmt.Println(tempF)  // 212</code></pre>
+                           </div>
+
+                           <p>
+                              Esse padrão é muito útil para dar semântica a
+                              valores primitivos —
+                              <code>Celsius</code> e <code>Fahrenheit</code> são
+                              claramente tipos diferentes, e o compilador impede
+                              que você os misture acidentalmente. Estudaremos
+                              tipos definidos com mais profundidade nos módulos
+                              sobre structs e interfaces.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 05
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod05-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'byte e rune'. A diferença entre os dois está em o que cada um representa — byte de dado vs ponto de código Unicode."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é a diferença entre <code>byte</code> e
+                              <code>rune</code> em Go?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >São sinônimos — ambos representam um único
+                                    caractere ASCII</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>byte</code> é alias de
+                                    <code>uint8</code> e representa um único
+                                    byte de dado; <code>rune</code> é alias de
+                                    <code>int32</code> e representa um ponto de
+                                    código Unicode (caractere completo)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>byte</code> é para strings ASCII;
+                                    <code>rune</code> é para strings
+                                    UTF-16</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>byte</code> tem sinal (int8);
+                                    <code>rune</code> não tem sinal
+                                    (uint32)</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>byte = uint8</code> (1 byte,
+                              0–255) e <code>rune = int32</code> (4 bytes, ponto
+                              de código Unicode). A distinção importa ao
+                              trabalhar com strings multilíngues:
+                              <code>len("Olá")</code> retorna 4 (bytes), mas a
+                              string tem 3 caracteres (runes).
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod05-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Conversão de tipos'. Lembre-se da armadilha de converter int para string diretamente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que
+                              <code>fmt.Println(string(65))</code> imprime?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>"65"</code> — converte o inteiro para
+                                    sua representação textual</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>"A"</code> — converte o inteiro para
+                                    o caractere Unicode com aquele ponto de
+                                    código (65 = 'A')</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — int não pode ser
+                                    convertido para string diretamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>"0x41"</code> — imprime a
+                                    representação hexadecimal</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>string(65)</code> interpreta 65
+                              como um ponto de código Unicode e retorna o
+                              caractere correspondente: "A". Para converter o
+                              número 65 para a string "65", use
+                              <code>strconv.Itoa(65)</code> ou
+                              <code>fmt.Sprintf("%d", 65)</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod05-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Conversão de tipos'. Go é estritamente tipado — observe o que acontece com a expressão misturando tipos diferentes."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">O código abaixo compila?</p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var x int32 = 10
+var y int64 = 20
+fmt.Println(x + y)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim — Go promove automaticamente
+                                    <code>int32</code> para
+                                    <code>int64</code> na operação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não — <code>int32</code> e
+                                    <code>int64</code> são tipos distintos; Go
+                                    não faz conversão implícita e gera erro de
+                                    compilação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Sim — como ambos são inteiros, Go os trata
+                                    como compatíveis</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Depende do sistema — em sistemas 32-bit
+                                    falha, em 64-bit funciona</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Go não faz promoção automática de tipos
+                              numéricos.
+                              <code>int32</code> e <code>int64</code> são tipos
+                              distintos mesmo sendo ambos inteiros. O compilador
+                              rejeita a operação com "mismatched types". A
+                              solução é converter explicitamente:
+                              <code>int64(x) + y</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 05
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod05-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Escolha de tipo</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um sistema precisa armazenar o preço de produtos
+                              em centavos (ex: R$ 19,90 = 1990 centavos). Preços
+                              podem chegar a R$ 999.999,99. Qual tipo é mais
+                              adequado para essa variável?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>float64</code> — tipo padrão para
+                                    valores monetários em Go</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>float32</code> — suficiente para
+                                    valores até 999.999</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>int64</code> — inteiros são exatos,
+                                    sem risco de erro de ponto flutuante; int64
+                                    comporta até ~9,2 × 10¹⁸, mais que
+                                    suficiente para centavos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>int32</code> — suficiente pois o
+                                    máximo é 99.999.999 centavos</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Valores monetários nunca devem usar
+                              ponto flutuante devido à imprecisão do IEEE 754.
+                              Armazenar em centavos como
+                              <code>int64</code> é a abordagem correta — exata,
+                              sem surpresas. R$ 999.999,99 = 99.999.999
+                              centavos, que cabe em <code>int32</code>, mas
+                              <code>int64</code> é mais seguro para crescimento
+                              futuro.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod05-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — len() e strings UTF-8</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual é o valor retornado por
+                              <code>len("café")</code>?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>4</code> — "café" tem 4 letras</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>5</code> — <code>len()</code> conta
+                                    bytes, não caracteres; o
+                                    <code>é</code> ocupa 2 bytes em UTF-8</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>8</code> — cada caractere ocupa 2
+                                    bytes em UTF-8</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Erro em tempo de execução — strings com
+                                    acentos não são suportadas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! "café" tem 4 caracteres mas 5 bytes:
+                              c(1) + a(1) + f(1) + é(2). O acento
+                              <code>é</code> é o ponto de código U+00E9, que em
+                              UTF-8 é codificado em 2 bytes (0xC3 0xA9). Para
+                              contar caracteres use
+                              <code>utf8.RuneCountInString("café")</code> → 4.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Ponteiros em Go: & e *, nil pointer, passagem por valor vs referência e quando usar ponteiros."
+      />
+      <title>Módulo 15 — Ponteiros · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="15">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 5 — Tipos Compostos
+                        </div>
+                        <h1 class="module-header__title">Ponteiros</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 15</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é um ponteiro
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod15-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é um ponteiro</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um ponteiro é uma variável que armazena o
+                              <strong>endereço de memória</strong> de outra
+                              variável — não o valor em si. Em vez de conter
+                              <code>42</code>, contém "o valor está no endereço
+                              <code>0xc0000b4010</code>".
+                           </p>
+                           <p>
+                              O tipo de um ponteiro para <code>int</code> é
+                              <code>*int</code>. Para <code>string</code> é
+                              <code>*string</code>. Para uma struct
+                              <code>Pessoa</code> é <code>*Pessoa</code>. O
+                              asterisco faz parte do tipo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ponteiro na memória</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 42          // variável int — contém o valor 42
+p := &x          // ponteiro *int — contém o endereço de x
+
+fmt.Println(x)   // 42        — valor de x
+fmt.Println(p)   // 0xc000b4010 — endereço de x (varia a cada execução)
+fmt.Println(*p)  // 42        — valor no endereço apontado por p (derreferência)</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go não tem aritmética de ponteiros
+                                 </div>
+                                 <div class="callout__body">
+                                    Em C é possível fazer <code>p++</code> para
+                                    avançar um ponteiro para o próximo elemento
+                                    de um array. Em Go isso não existe —
+                                    ponteiros só podem ser dereferenciados ou
+                                    comparados com <code>nil</code>. Isso
+                                    elimina uma categoria inteira de bugs de
+                                    corrupção de memória.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — & e *
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod15-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>&amp; e * — os dois operadores de ponteiro</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Há dois operadores para trabalhar com ponteiros:
+                           </p>
+
+                           <ul>
+                              <li>
+                                 <code>&amp;x</code> —
+                                 <strong>endereço de</strong>: retorna um
+                                 ponteiro para <code>x</code>
+                              </li>
+                              <li>
+                                 <code>*p</code> —
+                                 <strong>derreferência</strong>: retorna o valor
+                                 no endereço apontado por <code>p</code>
+                              </li>
+                           </ul>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+p := &x      // p aponta para x
+
+// Leitura via ponteiro
+fmt.Println(*p)  // 10
+
+// Escrita via ponteiro — modifica x diretamente
+*p = 99
+fmt.Println(x)   // 99 — x foi modificado via ponteiro
+fmt.Println(*p)  // 99
+
+// & e * são inversos
+fmt.Println(*&x == x)  // true — &x → ponteiro, * → volta ao valor</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              new() — outra forma de criar ponteiros
+                           </h4>
+                           <p>
+                              A função built-in <code>new(T)</code> aloca
+                              memória para um valor do tipo <code>T</code>,
+                              inicializa com zero value e retorna um ponteiro
+                              <code>*T</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">p := new(int)       // *int, *p == 0
+fmt.Println(*p)     // 0
+
+*p = 42
+fmt.Println(*p)     // 42
+
+// new(T) é equivalente a:
+// var v T
+// p := &v
+// Na prática, &T{} ou &v são mais usados que new()</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ponteiro para struct literal
+                           </h4>
+                           <p>
+                              A forma mais comum de criar um ponteiro para
+                              struct é com
+                              <code>&amp;NomeTipo{...}</code> — mais conciso que
+                              declarar e depois tirar o endereço:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pessoa struct{ Nome string; Idade int }
+
+// Verboso
+p1 := Pessoa{Nome: "Alice", Idade: 30}
+ptr1 := &p1
+
+// Idiomático — direto no literal
+ptr2 := &Pessoa{Nome: "Bob", Idade: 25}
+
+// Acesso via ponteiro — Go derreferencia automaticamente
+fmt.Println(ptr2.Nome)   // Bob (equivale a (*ptr2).Nome)</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — nil pointer
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod15-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>nil pointer</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O zero value de qualquer tipo ponteiro é
+                              <code>nil</code> — um ponteiro que não aponta para
+                              nenhum endereço válido. Derreferenciar um nil
+                              pointer causa um
+                              <strong>panic em tempo de execução</strong>:
+                              <code
+                                 >runtime error: invalid memory address or nil
+                                 pointer dereference</code
+                              >.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var p *int  // nil — zero value de *int
+
+fmt.Println(p)   // nil
+fmt.Println(*p)  // PANIC: nil pointer dereference
+
+// Verificar antes de derreferenciar
+if p != nil {
+    fmt.Println(*p)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              nil pointer como valor opcional
+                           </h4>
+                           <p>
+                              Antes dos tipos genéricos e do tipo
+                              <code>Option</code>
+                              popularizado em outras linguagens, ponteiros
+                              nilizáveis eram (e ainda são) a forma de expressar
+                              "valor opcional" em Go — um campo de struct que
+                              pode ou não estar presente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pedido struct {
+    ID          int
+    Desconto    *float64  // nil = sem desconto; não-nil = tem desconto
+    Observacao  *string   // nil = sem observação
+}
+
+p := Pedido{ID: 1}
+
+// Sem desconto
+fmt.Println(p.Desconto)  // nil
+
+// Com desconto
+desc := 0.1
+p.Desconto = &desc
+fmt.Printf("%.0f%% de desconto\n", *p.Desconto*100)  // 10% de desconto
+
+// Verificação segura
+if p.Desconto != nil {
+    aplicarDesconto(*p.Desconto)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nil pointer dereference é o erro mais comum
+                                    em Go
+                                 </div>
+                                 <div class="callout__body">
+                                    Sempre que você trabalha com ponteiros —
+                                    especialmente retornados por funções —
+                                    verifique se são <code>nil</code>
+                                    antes de derreferenciar. Em funções que
+                                    retornam
+                                    <code>(*T, error)</code>, quando
+                                    <code>error != nil</code> o ponteiro
+                                    <em>geralmente</em> é nil — use o erro antes
+                                    de tentar acessar o valor.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Passagem por valor vs referência
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod15-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Passagem por valor vs por referência</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go passa todos os argumentos por valor — sempre. O
+                              que muda é <em>o que</em> está sendo copiado.
+                              Passar um ponteiro copia o endereço (8 bytes em
+                              sistemas 64-bit), não os dados apontados. A
+                              distinção prática:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >valor vs ponteiro</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Config struct {
+    Debug bool
+    Porta int
+}
+
+// Por valor — recebe cópia, original não muda
+func configurarV(c Config) {
+    c.Debug = true  // modifica a cópia local
+}
+
+// Por ponteiro — modifica o original via endereço
+func configurarP(c *Config) {
+    c.Debug = true  // Go derreferencia automaticamente
+}
+
+cfg := Config{Porta: 8080}
+
+configurarV(cfg)
+fmt.Println(cfg.Debug)  // false — original inalterado
+
+configurarP(&cfg)
+fmt.Println(cfg.Debug)  // true — original modificado</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Custo de cópia
+                           </h4>
+                           <p>
+                              Passar structs pequenas por valor é geralmente tão
+                              eficiente quanto por ponteiro — ou mais, pois
+                              evita indireção de memória e pressão no GC. A
+                              heurística prática:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tamanho aproximado
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Preferir
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          ≤ 3-4 words (~32 bytes)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          valor
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          &gt; 32 bytes ou precisa modificar o
+                                          original
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          ponteiro
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Quando usar ponteiros
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod15-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Quando usar ponteiros</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              As quatro razões legítimas para usar ponteiros em
+                              Go:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              1. Modificar o original
+                           </h4>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func resetar(n *int) {
+    *n = 0
+}
+
+x := 42
+resetar(&x)
+fmt.Println(x)  // 0</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              2. Evitar cópia de structs grandes
+                           </h4>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Imagem struct {
+    Pixels [4096][4096][3]byte  // ~50MB
+}
+
+// Copiar 50MB a cada chamada seria inaceitável
+func processar(img *Imagem) { /* ... */ }</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              3. Expressar opcionalidade
+                           </h4>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Filtro struct {
+    Limite   *int    // nil = sem limite
+    DataInicio *time.Time  // nil = sem restrição de data
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              4. Receivers de método que modificam o receptor
+                           </h4>
+                           <p>
+                              Este é o caso mais frequente — estudaremos em
+                              detalhes no próximo módulo. Em resumo: se um
+                              método precisa modificar a struct, o receiver deve
+                              ser um ponteiro:
+                           </p>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Contador struct{ n int }
+
+// Receiver por ponteiro — modifica o Contador original
+func (c *Contador) Incrementar() { c.n++ }
+
+// Receiver por valor — opera em cópia, não modifica o original
+func (c Contador) Valor() int { return c.n }</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando NÃO usar ponteiros
+                           </h4>
+                           <ul>
+                              <li>
+                                 Tipos básicos pequenos (<code>int</code>,
+                                 <code>bool</code>, <code>string</code>) — cópia
+                                 é barata e semântica de valor é mais clara
+                              </li>
+                              <li>
+                                 Structs pequenas sem necessidade de modificação
+                                 — valor é mais simples e mais cache-friendly
+                              </li>
+                              <li>
+                                 Slices e maps — já são tipos de referência
+                                 internamente; ponteiro para slice
+                                 (<code>*[]int</code>) é raramente necessário e
+                                 geralmente sinal de design ruim
+                              </li>
+                           </ul>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Consistência do receiver importa
+                                 </div>
+                                 <div class="callout__body">
+                                    Se qualquer método de um tipo usa receiver
+                                    por ponteiro, todos os métodos deveriam usar
+                                    — mesmo os que não modificam o receptor.
+                                    Misturar receivers por valor e por ponteiro
+                                    no mesmo tipo causa confusão sobre quando o
+                                    Go copia e quando não copia. Estudaremos
+                                    isso no Módulo 16.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 15
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod15-q01"
+                        data-feedback-wrong="✗ Reveja o tópico '&amp; e *'. Preste atenção no que cada operador faz e no que é impresso em cada caso."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que é impresso pelo código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">x := 5
+p := &x
+*p = 10
+fmt.Println(x, *p)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>5 10</code> —
+                                    <code>*p = 10</code> cria uma cópia
+                                    separada</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>10 10</code> — <code>p</code> aponta
+                                    para <code>x</code>; escrever via
+                                    <code>*p</code> modifica
+                                    <code>x</code> diretamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>5 5</code> — ponteiros são read-only
+                                    em Go</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — não é possível
+                                    atribuir via derreferência</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>p := &x</code> faz
+                              <code>p</code> apontar para <code>x</code>.
+                              <code>*p = 10</code> escreve o valor 10 no
+                              endereço apontado por <code>p</code> — que é o
+                              mesmo endereço de <code>x</code>. Resultado:
+                              <code>x</code> e <code>*p</code>
+                              são o mesmo dado, ambos valem 10.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod15-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'nil pointer'. Lembre-se do que acontece ao derreferenciar um ponteiro nil e como prevenir o problema."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Uma função retorna <code>(*Usuario, error)</code>.
+                              O chamador faz <code>u, err := buscar(1)</code> e
+                              imediatamente acessa <code>u.Nome</code> sem
+                              verificar <code>err</code>. O que pode acontecer?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nada — Go retorna o zero value de
+                                    <code>Nome</code> (<code>""</code>) quando o
+                                    ponteiro é nil</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Panic em tempo de execução — se
+                                    <code>err != nil</code>,
+                                    <code>u</code> provavelmente é
+                                    <code>nil</code>, e acessar
+                                    <code>u.Nome</code> derreferencia um nil
+                                    pointer</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — Go exige verificação
+                                    de erro antes de usar o resultado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Comportamento indefinido — depende do
+                                    compilador</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Quando uma função falha e retorna
+                              <code>error != nil</code>, o ponteiro retornado é
+                              convencionalmente <code>nil</code>. Acessar
+                              qualquer campo de um nil pointer causa panic. A
+                              correção é sempre verificar o erro primeiro:
+                              <code>if err != nil { return err }</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod15-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Quando usar ponteiros'. Lembre-se dos casos onde ponteiro para slice é necessário vs desnecessário."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que <code>*[]int</code> (ponteiro para slice)
+                              é raramente necessário em Go?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Porque Go não permite ponteiros para slices
+                                    — é um erro de compilação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Porque slices são imutáveis — não faz
+                                    sentido ter ponteiro para algo que não pode
+                                    mudar</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Porque slices já são tipos de referência
+                                    internamente — modificar elementos via
+                                    <code>[]int</code> já afeta o original;
+                                    <code>*[]int</code> só é necessário se a
+                                    função precisar modificar o próprio header
+                                    (len/cap) do slice do chamador</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Porque o compilador Go automaticamente
+                                    converte <code>*[]int</code> para
+                                    <code>[]int</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Passar <code>[]int</code> já permite
+                              modificar os elementos (backing array
+                              compartilhado). <code>*[]int</code>
+                              é necessário apenas quando a função precisa fazer
+                              o header do slice do chamador apontar para um novo
+                              array — ex: reimplementar
+                              <code>append</code>. Na prática, retornar o slice
+                              modificado é a abordagem idiomática em vez de
+                              <code>*[]int</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 15
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod15-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Valor vs ponteiro</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo tenta trocar os valores de duas
+                              variáveis. Por que não funciona e qual é a
+                              correção?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func trocar(a, b int) {
+    a, b = b, a
+}
+
+x, y := 1, 2
+trocar(x, y)
+fmt.Println(x, y)  // 1 2 — não trocou</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A sintaxe <code>a, b = b, a</code> está
+                                    errada — deve ser feita com variável
+                                    temporária</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>trocar</code> recebe cópias de
+                                    <code>x</code> e <code>y</code> — a troca
+                                    ocorre nas cópias, não nos originais.
+                                    Correção: usar
+                                    <code
+                                       >func trocar(a, b *int) { *a, *b = *b, *a
+                                       }</code
+                                    >
+                                    e chamar com
+                                    <code>trocar(&x, &y)</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Go não suporta atribuição múltipla dentro
+                                    de funções</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A função precisa retornar os valores
+                                    trocados:
+                                    <code
+                                       >func trocar(a, b int) (int, int)</code
+                                    ></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Go passa <code>int</code> por valor — a
+                              função opera em cópias. Duas correções são
+                              válidas: passar ponteiros (<code>*int</code>) ou
+                              retornar os valores trocados (<code
+                                 >return b, a</code
+                              >
+                              e <code>x, y = trocar(x, y)</code>). A versão com
+                              ponteiros é mais didática; a versão com retorno é
+                              mais idiomática em Go.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod15-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Opcionalidade</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma API retorna dados de um produto. O campo
+                              <code>Desconto</code>
+                              pode ou não existir — quando existe, é um valor
+                              entre 0.0 e 1.0. Qual tipo representa isso
+                              corretamente?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>Desconto float64</code> — usa 0.0
+                                    para indicar ausência</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>Desconto float64</code> com um campo
+                                    adicional
+                                    <code>TemDesconto bool</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>Desconto *float64</code> — nil indica
+                                    ausência; valor não-nil indica desconto
+                                    presente; não ambíguo com desconto de
+                                    0%</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>Desconto interface{}</code> — aceita
+                                    nil ou float64</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>*float64</code> representa
+                              opcionalidade sem ambiguidade: <code>nil</code> =
+                              sem desconto; <code>&amp;0.0</code> = desconto de
+                              0% (que pode ser semanticamente diferente de
+                              ausente). Usar <code>float64</code> com
+                              <code>0.0</code> para "ausente" é ambíguo — 0% de
+                              desconto e sem desconto teriam o mesmo valor. Um
+                              campo bool adicional funciona, mas
+                              <code>*float64</code> é mais conciso e o padrão da
+                              stdlib (ex: <code>encoding/json</code>).
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Structs em Go: declaração, campos, literais, structs anônimas, embedding e tags."
+      />
+      <title>Módulo 14 — Structs · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="14">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 5 — Tipos Compostos
+                        </div>
+                        <h1 class="module-header__title">Structs</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 14</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Declaração
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Declaração de structs</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma struct é um tipo composto que agrupa campos
+                              nomeados de tipos possivelmente diferentes. É o
+                              mecanismo principal de Go para modelar dados — não
+                              há classes, herança ou construtores.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >declaração</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pessoa struct {
+    Nome  string
+    Idade int
+    Ativo bool
+}
+
+// Campos do mesmo tipo podem ser agrupados
+type Retangulo struct {
+    Largura, Altura float64
+}
+
+// Struct com tipos variados
+type Servidor struct {
+    Host    string
+    Porta   int
+    TLS     bool
+    Tags    []string
+    Config  map[string]string
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Structs são tipos de valor
+                           </h4>
+                           <p>
+                              Assim como arrays, structs são tipos de valor.
+                              Atribuir uma struct a outra variável copia todos
+                              os campos. Passá-la para uma função copia todos os
+                              campos. Para evitar a cópia, use ponteiro —
+                              estudaremos isso no Módulo 15.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">p1 := Pessoa{Nome: "Alice", Idade: 30}
+p2 := p1       // cópia completa de todos os campos
+
+p2.Nome = "Bob"
+fmt.Println(p1.Nome)  // Alice — p1 não foi afetada
+fmt.Println(p2.Nome)  // Bob</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Visibilidade dos campos
+                           </h4>
+                           <p>
+                              A mesma regra de capitalização se aplica aos
+                              campos: campo com letra maiúscula é exportado
+                              (visível fora do pacote); minúscula é privado ao
+                              pacote.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Conta struct {
+    Titular string  // exportado
+    Saldo   float64 // exportado
+    senha   string  // privado — só acessível dentro do pacote
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Campos e acesso
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Campos e acesso</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Campos são acessados com o operador ponto
+                              (<code>.</code>). Campos não inicializados recebem
+                              o zero value do seu tipo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var p Pessoa  // todos os campos com zero value
+fmt.Println(p.Nome)   // ""
+fmt.Println(p.Idade)  // 0
+fmt.Println(p.Ativo)  // false
+
+// Atribuição de campos
+p.Nome = "Carlos"
+p.Idade = 25
+p.Ativo = true</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Acesso via ponteiro
+                           </h4>
+                           <p>
+                              Ao acessar campos via ponteiro, Go derreferencia
+                              automaticamente. Não é necessário escrever
+                              <code>(*p).Nome</code> —
+                              <code>p.Nome</code> funciona diretamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">p := &Pessoa{Nome: "Diana", Idade: 28}
+
+// Ambas as formas são equivalentes — Go prefere a segunda
+fmt.Println((*p).Nome)  // Diana
+fmt.Println(p.Nome)     // Diana (sintaxe sugar — Go derreferencia automaticamente)
+
+p.Idade = 29  // modifica o campo original via ponteiro</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Structs são comparáveis
+                           </h4>
+                           <p>
+                              Se todos os campos de uma struct forem
+                              comparáveis, a struct inteira é comparável com
+                              <code>==</code> — comparação campo a campo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Ponto struct{ X, Y int }
+
+p1 := Ponto{1, 2}
+p2 := Ponto{1, 2}
+p3 := Ponto{3, 4}
+
+fmt.Println(p1 == p2)  // true
+fmt.Println(p1 == p3)  // false
+
+// Structs comparáveis podem ser chaves de map
+cache := map[Ponto]string{}
+cache[Ponto{0, 0}] = "origem"
+
+// Structs com campos não-comparáveis (slice, map) não são comparáveis
+type Ruim struct { Dados []int }
+// var r1, r2 Ruim
+// r1 == r2  // ERRO de compilação</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Struct literal
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Struct literal</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Structs são inicializadas com literais. Há duas
+                              formas: por posição e por nome de campo. A forma
+                              por nome é fortemente preferida.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >formas de inicialização</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pessoa struct {
+    Nome  string
+    Idade int
+    Ativo bool
+}
+
+// Por posição — frágil, não recomendado
+p1 := Pessoa{"Alice", 30, true}
+
+// Por nome — idiomático, robusto a refatorações
+p2 := Pessoa{
+    Nome:  "Alice",
+    Idade: 30,
+    Ativo: true,
+}
+
+// Inicialização parcial — campos omitidos recebem zero value
+p3 := Pessoa{Nome: "Bob"}  // Idade=0, Ativo=false
+
+// Ponteiro para struct literal
+p4 := &Pessoa{Nome: "Carol", Idade: 25}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não use inicialização por posição em tipos
+                                    exportados
+                                 </div>
+                                 <div class="callout__body">
+                                    Se o tipo for exportado (usado por outros
+                                    pacotes), a inicialização por posição é um
+                                    contrato frágil — qualquer adição ou
+                                    reordenação de campos quebra o código do
+                                    chamador. Inicialização por nome de campo
+                                    compila corretamente mesmo após mudanças na
+                                    struct (novos campos ficam com zero value).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções construtoras
+                           </h4>
+                           <p>
+                              Go não tem construtores, mas o padrão idiomático é
+                              uma função
+                              <code>New*</code> que valida e retorna uma struct
+                              inicializada:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Servidor struct {
+    host string
+    porta int
+}
+
+func NovoServidor(host string, porta int) (*Servidor, error) {
+    if host == "" {
+        return nil, fmt.Errorf("host não pode ser vazio")
+    }
+    if porta < 1 || porta > 65535 {
+        return nil, fmt.Errorf("porta inválida: %d", porta)
+    }
+    return &Servidor{host: host, porta: porta}, nil
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Structs anônimas
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Structs anônimas</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma struct anônima é definida e usada inline, sem
+                              <code>type</code>. É útil para dados temporários,
+                              payloads de teste e configurações locais que não
+                              precisam de um nome reutilizável.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >struct anônima</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Variável de struct anônima
+config := struct {
+    Host  string
+    Porta int
+}{
+    Host:  "localhost",
+    Porta: 8080,
+}
+fmt.Println(config.Host)  // localhost</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Casos de uso reais
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Table-driven tests — padrão muito comum em Go
+testes := []struct {
+    entrada  string
+    esperado int
+    erro     bool
+}{
+    {"42", 42, false},
+    {"abc", 0, true},
+    {"-1", -1, false},
+}
+
+for _, tc := range testes {
+    resultado, err := strconv.Atoi(tc.entrada)
+    if (err != nil) != tc.erro {
+        t.Errorf("entrada %q: erro inesperado", tc.entrada)
+    }
+    if resultado != tc.esperado {
+        t.Errorf("entrada %q: esperado %d, obtido %d", tc.entrada, tc.esperado, resultado)
+    }
+}
+
+// 2. Resposta JSON inline — sem criar tipo nomeado
+w.Header().Set("Content-Type", "application/json")
+json.NewEncoder(w).Encode(struct {
+    Status  string `json:"status"`
+    Versao  string `json:"version"`
+}{
+    Status: "ok",
+    Versao: "1.0",
+})</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Embedding (composição)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Embedding — composição de structs</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go não tem herança. O mecanismo de reutilização de
+                              código é
+                              <strong>composição via embedding</strong>: ao
+                              embutir um tipo em uma struct sem dar nome ao
+                              campo, seus campos e métodos são promovidos à
+                              struct externa — acessíveis diretamente.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >embedding básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Animal struct {
+    Nome string
+}
+
+func (a Animal) Descrever() string {
+    return "Animal: " + a.Nome
+}
+
+type Cachorro struct {
+    Animal       // embedding — sem nome de campo
+    Raca  string
+}
+
+c := Cachorro{
+    Animal: Animal{Nome: "Rex"},
+    Raca:   "Labrador",
+}
+
+// Campos e métodos de Animal são promovidos
+fmt.Println(c.Nome)        // Rex — acesso direto ao campo de Animal
+fmt.Println(c.Descrever()) // Animal: Rex — método promovido
+fmt.Println(c.Animal.Nome) // Rex — acesso explícito também funciona</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Embedding não é herança
+                           </h4>
+                           <p>
+                              A diferença crucial: embedding promove campos e
+                              métodos, mas
+                              <strong
+                                 >não estabelece um relacionamento "é
+                                 um"</strong
+                              >. Um <code>Cachorro</code> não é um
+                              <code>Animal</code> para o sistema de tipos — não
+                              pode ser passado onde um <code>Animal</code>
+                              é esperado. A relação "é um" em Go é estabelecida
+                              por interfaces (Módulo 17).
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func processarAnimal(a Animal) {}
+
+c := Cachorro{Animal: Animal{Nome: "Rex"}}
+
+// processarAnimal(c)       // ERRO — Cachorro não é Animal
+processarAnimal(c.Animal)   // OK — passa o Animal embutido explicitamente</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Múltiplos embeddings e sobreposição
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Logger struct{}
+func (l Logger) Log(msg string) { fmt.Println("[LOG]", msg) }
+
+type DB struct{}
+func (d DB) Query(sql string) {}
+
+type App struct {
+    Logger  // promove Log()
+    DB      // promove Query()
+    Nome string
+}
+
+app := App{Nome: "MeuApp"}
+app.Log("iniciando")   // método de Logger promovido
+app.Query("SELECT 1")  // método de DB promovido
+
+// Conflito: se Logger e DB tivessem um método com o mesmo nome,
+// seria necessário acesso explícito: app.Logger.MetodoConflitante()</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Composição sobre herança
+                                 </div>
+                                 <div class="callout__body">
+                                    Embedding encoraja o padrão "composição
+                                    sobre herança" — um princípio amplamente
+                                    reconhecido como superior à herança para
+                                    código flexível e testável. Em Go, essa é a
+                                    única opção, o que elimina hierarquias de
+                                    herança profundas e frágeis.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Tags de struct
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod14-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Tags de struct</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Tags são metadados associados a campos de struct.
+                              São strings literais (raw strings com backtick)
+                              que ficam após o tipo do campo. Em tempo de
+                              execução, podem ser lidas via reflection. Sua
+                              principal aplicação é controlar serialização
+                              JSON/XML e validação de formulários.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tags de struct</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Usuario struct {
+    ID    int    `json:"id"`
+    Nome  string `json:"nome"`
+    Email string `json:"email,omitempty"`  // omite se vazio
+    Senha string `json:"-"`                // nunca serializa
+    Ativo bool   `json:"ativo"`
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comportamento das opções JSON
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">u := Usuario{
+    ID:   1,
+    Nome: "Alice",
+    // Email vazio, Senha preenchida, Ativo false
+    Senha: "secreto",
+    Ativo: false,
+}
+
+dados, _ := json.Marshal(u)
+fmt.Println(string(dados))
+// {"id":1,"nome":"Alice","ativo":false}
+// Email omitido (omitempty + valor zero)
+// Senha omitida (tag "-")</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Múltiplas tags por campo
+                           </h4>
+                           <p>
+                              Um campo pode ter tags para múltiplos sistemas —
+                              cada tag identificada por sua chave, separadas por
+                              espaço:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Formulario struct {
+    Nome  string `json:"nome"  xml:"nome"  validate:"required,min=2"`
+    Email string `json:"email" xml:"email" validate:"required,email"`
+    Idade int    `json:"idade" xml:"idade" validate:"min=0,max=150"`
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Tags são convenção, não sintaxe especial
+                                 </div>
+                                 <div class="callout__body">
+                                    O compilador não interpreta tags — são
+                                    apenas strings. Quem as lê são bibliotecas
+                                    via <code>reflect.StructTag</code>. O
+                                    formato <code>chave:"valor"</code> é uma
+                                    convenção da comunidade, não uma exigência
+                                    da linguagem. Qualquer biblioteca pode
+                                    definir suas próprias chaves de tag.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 14
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod14-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Embedding'. Lembre-se da diferença entre promoção de campos/métodos e o relacionamento de tipos que embedding estabelece."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que embedding de structs
+                              <strong>não</strong> faz em Go?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Promove campos do tipo embutido para acesso
+                                    direto na struct externa</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Promove métodos do tipo embutido para a
+                                    struct externa</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Estabelece um relacionamento de subtipo — a
+                                    struct externa não pode ser usada onde o
+                                    tipo embutido é esperado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Permite acesso explícito ao tipo embutido
+                                    via nome do tipo</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Embedding não é herança.
+                              <code>Cachorro</code> com
+                              <code>Animal</code> embutido não pode ser passado
+                              onde um <code>Animal</code> é esperado — o sistema
+                              de tipos não reconhece esse relacionamento. Apenas
+                              interfaces criam polimorfismo em Go. O embedding
+                              apenas promove campos e métodos para conveniência.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod14-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Tags de struct'. Lembre-se do que a tag <code>json:&quot;-&quot;</code> faz durante a serialização."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dado o tipo abaixo, qual JSON é produzido ao
+                              serializar
+                              <code
+                                 >Produto{ID: 1, Nome: "Teclado", Preco:
+                                 0.0}</code
+                              >?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Produto struct {
+    ID    int     `json:"id"`
+    Nome  string  `json:"nome"`
+    Preco float64 `json:"preco,omitempty"`
+    Custo float64 `json:"-"`
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code
+                                       >{"id":1,"nome":"Teclado","preco":0,"custo":0}</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code
+                                       >{"id":1,"nome":"Teclado","preco":0}</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>{"id":1,"nome":"Teclado"}</code> —
+                                    <code>preco</code> omitido (omitempty + zero
+                                    value); <code>Custo</code> omitido (tag
+                                    "-")</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>{"ID":1,"Nome":"Teclado"}</code> —
+                                    sem tags, usa o nome do campo</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>omitempty</code> omite o campo se
+                              for o zero value do tipo (<code>0.0</code> para
+                              float64). A tag <code>"-"</code>
+                              omite o campo sempre, independente do valor. Os
+                              campos restantes usam os nomes definidos nas tags.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod14-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Declaração' e 'Campos e acesso'. Lembre-se do que acontece com os campos ao copiar uma struct."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que é impresso pelo código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Config struct {
+    Debug bool
+    Tags  []string
+}
+
+a := Config{Debug: true, Tags: []string{"prod"}}
+b := a
+
+b.Debug = false
+b.Tags[0] = "dev"
+
+fmt.Println(a.Debug, a.Tags[0])</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>false dev</code> — structs são
+                                    referências, tudo é compartilhado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>true prod</code> — structs são
+                                    copiadas completamente, incluindo
+                                    slices</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>true dev</code> —
+                                    <code>Debug</code> é copiado (bool é valor);
+                                    <code>Tags</code> compartilha o backing
+                                    array (slice é referência)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>false prod</code> — o inverso</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Ao copiar a struct, campos de tipo
+                              valor (<code>bool</code>) são copiados
+                              independentemente. Campos de tipo referência
+                              (<code>[]string</code>) têm o header copiado, mas
+                              o backing array é compartilhado. Modificar
+                              <code>b.Tags[0]</code> afeta
+                              <code>a.Tags[0]</code>; modificar
+                              <code>b.Debug</code> não afeta
+                              <code>a.Debug</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 14
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod14-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Table-driven test</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Por que structs anônimas são o padrão para
+                              table-driven tests em Go, em vez de criar um tipo
+                              nomeado para cada conjunto de casos?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Porque structs anônimas são mais rápidas em
+                                    tempo de execução que structs nomeadas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Porque a struct é definida exatamente onde
+                                    é usada, com os campos que o teste precisa —
+                                    sem poluir o pacote com tipos usados em
+                                    apenas um lugar, e sem precisar navegar para
+                                    outra declaração</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Porque Go não permite usar structs nomeadas
+                                    em slices de testes</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Porque structs anônimas são automaticamente
+                                    descartadas pelo GC após o teste</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Structs anônimas para table-driven
+                              tests mantêm a definição do schema de teste
+                              co-localizada com os casos de teste. O leitor vê
+                              imediatamente quais campos cada caso usa, sem
+                              precisar procurar uma declaração de tipo em outro
+                              lugar. Tipos nomeados para dados usados em um
+                              único lugar são desnecessários e poluem o pacote.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod14-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Comparabilidade</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Quais dos tipos abaixo podem ser usados como chave
+                              de map?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type A struct { X, Y int }
+type B struct { Nome string; Tags []string }
+type C struct { ID int; Config map[string]int }
+type D struct { Lat, Lng float64 }</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Todos os quatro — structs são sempre
+                                    comparáveis em Go</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Apenas <code>A</code> e <code>D</code> —
+                                    <code>B</code> contém slice e
+                                    <code>C</code> contém map; ambos tornam a
+                                    struct não-comparável</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Apenas <code>A</code> — apenas structs com
+                                    campos inteiros são comparáveis</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>A</code>, <code>B</code> e
+                                    <code>D</code> — maps não são comparáveis
+                                    mas slices são</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Uma struct é comparável somente se
+                              todos os seus campos forem comparáveis.
+                              <code>A</code> (int, int) e <code>D</code>
+                              (float64, float64) são comparáveis — podem ser
+                              chaves de map.
+                              <code>B</code> tem <code>[]string</code> (slice
+                              não-comparável) e <code>C</code> tem
+                              <code>map[string]int</code>
+                              (map não-comparável) — ambos tornam a struct não
+                              comparável.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

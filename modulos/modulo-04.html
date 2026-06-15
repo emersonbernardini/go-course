@@ -1,0 +1,1593 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Aprenda a declarar variáveis e constantes em Go: var, :=, zero values, const, iota e escopo."
+      />
+      <title>Módulo 04 — Variáveis e constantes · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="04">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 1 — Fundamentos
+                        </div>
+                        <h1 class="module-header__title">
+                           Variáveis e constantes
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 04</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — var: declaração explícita
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>var — declaração explícita</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma variável é um nome que referencia um valor
+                              armazenado na memória. Em Go, a forma mais
+                              explícita de declarar uma variável é com a
+                              palavra-chave <code>var</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe de var</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var nome tipo
+var nome tipo = valor
+var nome = valor  // tipo inferido pelo compilador</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >exemplos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    var idade int           // declarada sem valor: recebe zero value (0)
+    var nome string         // zero value de string é ""
+    var ativo bool          // zero value de bool é false
+    var preco float64 = 9.99 // declarada com valor explícito
+    var cidade = "São Paulo" // tipo inferido como string
+
+    fmt.Println(idade, nome, ativo, preco, cidade)
+    // Saída: 0  false 9.99 São Paulo
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Declaração em bloco
+                           </h4>
+                           <p>
+                              Assim como <code>import</code>, múltiplas
+                              variáveis podem ser declaradas em bloco. Isso é
+                              comum para variáveis no nível do pacote:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var (
+    host    string = "localhost"
+    porta   int    = 8080
+    debug   bool   = false
+    versao  = "1.0.0"  // tipo inferido
+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar var
+                           </h4>
+                           <p>
+                              A declaração <code>var</code> é preferida em dois
+                              contextos: variáveis no
+                              <strong>nível do pacote</strong> (fora de
+                              funções), e variáveis dentro de funções quando
+                              você quer declarar sem atribuir valor
+                              imediatamente — deixando o zero value ser o estado
+                              inicial intencional.
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Variável declarada e não usada é erro
+                                 </div>
+                                 <div class="callout__body">
+                                    Assim como importações não usadas, Go não
+                                    compila se você declarar uma variável local
+                                    com <code>var</code> ou <code>:=</code> e
+                                    nunca a usar. Isso não se aplica a variáveis
+                                    no nível do pacote — apenas às locais de
+                                    funções.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — := declaração curta
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>:= — declaração curta</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O operador <code>:=</code> é a forma mais comum de
+                              declarar variáveis <em>dentro de funções</em> em
+                              Go. Ele declara e atribui em uma única expressão,
+                              inferindo o tipo automaticamente.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >declaração curta</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    nome := "Emerson"       // string
+    idade := 30             // int
+    altura := 1.75          // float64
+    ativo := true           // bool
+
+    fmt.Println(nome, idade, altura, ativo)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Declaração múltipla
+                           </h4>
+                           <p>
+                              <code>:=</code> pode declarar múltiplas variáveis
+                              de uma vez. Isso é especialmente útil ao capturar
+                              múltiplos retornos de funções — padrão muito comum
+                              em Go:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Múltiplas variáveis em uma linha
+x, y := 10, 20
+
+// Capturando múltiplos retornos (padrão Go)
+resultado, err := fazerAlgo()
+if err != nil {
+    // trata erro
+}
+
+// Troca de valores sem variável temporária
+a, b := 1, 2
+a, b = b, a  // a=2, b=1 (note: = não :=, pois já foram declaradas)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Regra de redeclaração
+                           </h4>
+                           <p>
+                              Uma pegadinha importante: <code>:=</code> em um
+                              bloco que já tem a variável declarada é um erro.
+                              Mas existe uma exceção: se
+                              <em>pelo menos uma</em> das variáveis do lado
+                              esquerdo for nova, Go reutiliza as existentes e
+                              declara apenas as novas.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >redeclaração</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+x := 20  // ERRO: x já foi declarada neste bloco
+
+// OK: err já existe, mas resultado2 é nova
+resultado, err := primeiraChamada()
+resultado2, err := segundaChamada()  // err é reatribuída, resultado2 é nova</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Restrição: apenas dentro de funções
+                           </h4>
+                           <p>
+                              <code>:=</code>
+                              <strong
+                                 >não pode ser usado no nível do pacote</strong
+                              >
+                              — fora de funções. Nesse escopo,
+                              <code>var</code> é obrigatório. Tentar usar
+                              <code>:=</code> fora de uma função é erro de
+                              compilação.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+// ERRO: := não é permitido fora de funções
+config := "producao"  // syntax error
+
+// CORRETO: use var no nível do pacote
+var config = "producao"
+
+func main() {
+    // Aqui := funciona normalmente
+    local := "variável local"
+    _ = local
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Zero values
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Zero values — o valor padrão de tudo</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, toda variável declarada sem valor inicial
+                              recebe automaticamente o
+                              <strong>zero value</strong> do seu tipo. Isso é
+                              garantido pela linguagem — não existe variável
+                              não-inicializada em Go. Esse detalhe elimina uma
+                              categoria inteira de bugs presentes em C, onde
+                              variáveis locais não-inicializadas contêm lixo de
+                              memória.
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Zero value
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Observação
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int, int64...
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          0
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Todos os tipos numéricos inteiros
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          float32, float64
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          0.0
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Ponto flutuante
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          bool
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          false
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Booleano
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          string
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          ""
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          String vazia (não nil)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          pointer
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          nil
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Ponteiro nulo
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          slice, map, chan
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          nil
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Nil não é o mesmo que vazio
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          struct
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          {campos zerados}
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Cada campo recebe seu próprio zero
+                                          value
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >zero values em prática</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    var i int
+    var f float64
+    var b bool
+    var s string
+
+    fmt.Printf("%d %f %t %q\n", i, f, b, s)
+    // Saída: 0 0.000000 false ""
+}
+
+// Zero value de struct: cada campo recebe o seu
+type Pessoa struct {
+    Nome  string
+    Idade int
+    Ativo bool
+}
+
+var p Pessoa
+// p.Nome  == ""
+// p.Idade == 0
+// p.Ativo == false</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Zero value como design intencional
+                                 </div>
+                                 <div class="callout__body">
+                                    A stdlib de Go é projetada para que os zero
+                                    values sejam úteis. Um
+                                    <code>sync.Mutex</code> com zero value já
+                                    está pronto para uso — não precisa de
+                                    constructor. Um
+                                    <code>bytes.Buffer</code> zerado já funciona
+                                    como buffer vazio. Esse padrão é chamado de
+                                    <em>"zero value useful"</em> e é considerado
+                                    boa prática em Go.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — const
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>const — valores imutáveis</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Constantes são valores que nunca mudam durante a
+                              execução do programa. Em Go, são declaradas com
+                              <code>const</code> e avaliadas
+                              <strong>em tempo de compilação</strong> — não em
+                              tempo de execução. Isso as torna mais eficientes
+                              que variáveis e permite usos que variáveis não
+                              permitem, como tamanhos de arrays.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >declaração de constantes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">const Pi = 3.14159265358979
+const Linguagem = "Go"
+const MaxConexoes = 100
+const Versao = 1
+
+// Em bloco
+const (
+    StatusOK    = 200
+    StatusErro  = 500
+    NomeApp     = "MeuServico"
+)
+
+// Constantes são avaliadas em tempo de compilação:
+const Dobro = MaxConexoes * 2  // 200 — válido
+// var x = 10
+// const Triple = x * 3  // ERRO: x não é constante</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Constantes sem tipo explícito
+                           </h4>
+                           <p>
+                              Constantes em Go podem ser
+                              <strong>não-tipadas</strong> (<em>untyped</em>).
+                              Uma constante não-tipada tem precisão arbitrária e
+                              seu tipo é determinado apenas no momento em que é
+                              usada. Isso permite que a mesma constante seja
+                              usada em contextos de tipos diferentes sem
+                              conversão explícita:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">const N = 100  // não-tipada — funciona como int, float64, etc.
+
+var i int     = N  // OK: N vira int
+var f float64 = N  // OK: N vira float64
+var b byte    = N  // OK: N vira byte
+
+// Constante tipada — mais restrita
+const M int = 100
+var g float64 = M  // ERRO: M é int, não pode ir para float64 sem conversão</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Quando usar const vs var
+                                 </div>
+                                 <div class="callout__body">
+                                    Use <code>const</code> para valores que são
+                                    conhecidos em tempo de compilação e nunca
+                                    mudam: limites, códigos de status, nomes
+                                    fixos, valores matemáticos. Use
+                                    <code>var</code> para tudo que pode mudar ou
+                                    que depende de lógica em tempo de execução.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — iota
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>iota — enumerações em Go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go não tem uma palavra-chave
+                              <code>enum</code> como Java ou C#. Em vez disso,
+                              usa <code>iota</code> — um contador especial
+                              disponível apenas em blocos <code>const</code>,
+                              que começa em <code>0</code>
+                              e incrementa automaticamente a cada constante do
+                              bloco.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >iota básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type DiaSemana int
+
+const (
+    Domingo  DiaSemana = iota  // 0
+    Segunda                    // 1  (iota incrementa automaticamente)
+    Terca                      // 2
+    Quarta                     // 3
+    Quinta                     // 4
+    Sexta                      // 5
+    Sabado                     // 6
+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              iota em expressões
+                           </h4>
+                           <p>
+                              <code>iota</code> pode participar de expressões,
+                              tornando possível criar enumerações com valores
+                              não-lineares:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >iota em expressões</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Potências de 2 — comum para bitmasks e permissões
+type Permissao int
+
+const (
+    Leitura   Permissao = 1 << iota  // 1 << 0 = 1
+    Escrita                           // 1 << 1 = 2
+    Execucao                          // 1 << 2 = 4
+)
+
+// Combinando permissões com operador bitwise |
+minhasPermissoes := Leitura | Escrita  // 1 | 2 = 3
+
+// Verificando permissão
+temLeitura := minhasPermissoes&Leitura != 0  // true</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Pulando o primeiro valor com _
+                           </h4>
+                           <p>
+                              O identificador <code>_</code> (blank identifier)
+                              descarta um valor. É comum usar
+                              <code>_ = iota</code> para pular o zero e começar
+                              as enumerações em 1:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Nivel int
+
+const (
+    _       Nivel = iota  // descarta o 0 — evita confusão com zero value
+    Basico                // 1
+    Intermediario         // 2
+    Avancado              // 3
+)
+
+// Agora um Nivel com zero value não é um nível válido — é o zero value
+var n Nivel  // n == 0 — claramente não-inicializado</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Escopo de variáveis
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod04-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Escopo de variáveis</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O <strong>escopo</strong> de uma variável é a
+                              região do código onde ela existe e pode ser
+                              acessada. Em Go, o escopo é determinado pelos
+                              blocos delimitados por chaves <code>{ }</code>.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Níveis de escopo
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >escopos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+// Escopo de pacote — visível em todos os arquivos do pacote
+var contadorGlobal = 0
+
+func main() {
+    // Escopo de função — visível apenas dentro de main
+    mensagem := "olá"
+
+    if true {
+        // Escopo de bloco — visível apenas dentro deste if
+        resultado := 42
+        fmt.Println(mensagem, resultado)  // OK: mensagem é do escopo externo
+    }
+
+    // fmt.Println(resultado)  // ERRO: resultado não existe aqui
+    fmt.Println(mensagem)  // OK
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Shadowing — sobreposição de variáveis
+                           </h4>
+                           <p>
+                              Um escopo interno pode declarar uma variável com o
+                              mesmo nome de um escopo externo. A variável
+                              interna <strong>sobrepõe</strong> (shadow) a
+                              externa dentro do seu bloco. Isso é válido em Go,
+                              mas é uma fonte comum de bugs sutis — use com
+                              cuidado:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >shadowing</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+fmt.Println(x)  // 10
+
+if true {
+    x := 20  // nova variável x, sobrepõe a externa
+    fmt.Println(x)  // 20
+}
+
+fmt.Println(x)  // 10 — a variável externa não foi modificada!</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Pegadinha clássica com := e err
+                           </h4>
+                           <p>
+                              O shadowing mais frequente em código Go real
+                              acontece com a variável
+                              <code>err</code> dentro de blocos <code>if</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >shadowing de err — bug sutil</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">err := primeiraOperacao()
+
+if err != nil {
+    // Aqui err é a do escopo externo — correto
+    fmt.Println("erro:", err)
+}
+
+if resultado, err := segundaOperacao(); err != nil {
+    // ATENÇÃO: este err é uma nova variável, local a este if
+    // O err do escopo externo não foi tocado
+    fmt.Println("erro:", err)
+}
+
+// err aqui ainda é o resultado de primeiraOperacao()
+// A segunda operação não alterou o err externo</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    go vet e staticcheck detectam shadowing
+                                 </div>
+                                 <div class="callout__body">
+                                    Ferramentas de análise estática como
+                                    <code>go vet</code> e
+                                    <code>staticcheck</code> avisam sobre
+                                    shadowing problemático. Em editores com
+                                    suporte a Go (VS Code + gopls, GoLand), o
+                                    highlighting visual já diferencia variáveis
+                                    sobrepostas.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 04
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod04-q01"
+                        data-feedback-wrong="✗ Não exatamente. Reveja o tópico ':= — declaração curta'. Preste atenção na restrição de onde esse operador pode ser usado."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que o código abaixo não compila?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+config := "producao"
+
+func main() {}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Variáveis de pacote precisam ser exportadas
+                                    (começar com maiúscula)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O operador <code>:=</code> só pode ser
+                                    usado dentro de funções — no nível do pacote
+                                    é obrigatório usar <code>var</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Strings não podem ser declaradas no nível
+                                    do pacote em Go</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Falta o tipo explícito — Go não infere
+                                    tipos no nível do pacote</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>:=</code> é exclusivo de funções.
+                              No nível do pacote use
+                              <code>var config = "producao"</code>. Essa
+                              restrição existe porque <code>:=</code> é uma
+                              instrução, e instruções só podem existir dentro de
+                              funções em Go.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod04-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Zero values'. Cada tipo em Go tem um zero value específico — e nenhuma variável fica sem inicialização."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do programa abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    var n int
+    var s string
+    var b bool
+    fmt.Println(n, s, b)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Erro de compilação — variáveis não podem
+                                    ser declaradas sem valor inicial</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Comportamento indefinido — os valores
+                                    dependem do que estava na memória</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>0 false</code> — Go inicializa todas
+                                    as variáveis com o zero value do tipo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>nil nil nil</code> — o zero value de
+                                    todos os tipos é nil em Go</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A saída é <code>0 false</code> (com
+                              dois espaços entre <code>0</code> e
+                              <code>false</code> porque
+                              <code>fmt.Println</code> coloca espaço entre os
+                              argumentos, e a string vazia <code>""</code>
+                              não ocupa espaço visível). Em Go, não existe
+                              variável não-inicializada.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod04-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'iota'. Preste atenção em como iota incrementa e em como expressões com iota funcionam."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Quais são os valores de <code>A</code>,
+                              <code>B</code> e <code>C</code>?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">const (
+    A = iota + 1
+    B
+    C
+)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >A=0, B=1, C=2 — iota começa em zero</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >A=1, B=2, C=3 — a expressão
+                                    <code>iota + 1</code> é repetida
+                                    implicitamente para B e C com iota
+                                    incrementando</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >A=1, B=1, C=1 — a expressão
+                                    <code>iota + 1</code> é fixada em 1 para
+                                    todas</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — iota não pode ser
+                                    usado em expressões aritméticas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Quando a primeira constante usa
+                              <code>iota + 1</code>, as seguintes repetem a
+                              mesma expressão com iota incrementado: A = 0+1 =
+                              1, B = 1+1 = 2, C = 2+1 = 3. A expressão é
+                              herdada, mas o valor de iota avança a cada linha
+                              do bloco const.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 04
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod04-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de código</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Quantos erros de compilação existem no código
+                              abaixo, e quais são?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+func main() {
+    var x int = 10
+    y := 20
+    z := x + y
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Nenhum erro — o código compila e executa
+                                    normalmente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Um erro:
+                                    <code>var x int = 10</code> deveria usar
+                                    <code>:=</code> dentro de funções</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Três erros: <code>x</code>,
+                                    <code>y</code> e <code>z</code> são
+                                    declaradas mas nunca usadas — Go não compila
+                                    com variáveis locais não utilizadas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Um erro: <code>z := x + y</code> precisa
+                                    declarar o tipo explicitamente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! As três variáveis são declaradas mas o
+                              resultado nunca é utilizado (ex: impresso ou
+                              retornado). Go não compila código com variáveis
+                              locais não usadas. A solução seria adicionar
+                              <code>fmt.Println(z)</code> ou usar
+                              <code>_ = z</code> para descartar o valor
+                              intencionalmente.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod04-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Shadowing</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual é o output do programa abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    x := 1
+    {
+        x := 2
+        fmt.Println(x)
+    }
+    fmt.Println(x)
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>2</code> seguido de <code>2</code> —
+                                    o bloco interno modifica o x externo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>2</code> seguido de <code>1</code> —
+                                    o bloco interno cria um novo x que sobrepõe
+                                    o externo sem modificá-lo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Erro de compilação — não é possível
+                                    declarar x duas vezes no mesmo escopo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>1</code> seguido de <code>2</code> —
+                                    Go imprime na ordem em que as variáveis
+                                    foram declaradas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O <code>x := 2</code> dentro do bloco
+                              cria uma variável nova que só existe dentro
+                              daquele bloco. O <code>x</code> externo permanece
+                              com valor <code>1</code>. Isso é shadowing —
+                              válido em Go, mas fonte frequente de bugs quando
+                              não intencional.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

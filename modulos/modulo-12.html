@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Funções em Go: declaração, parâmetros, retorno, múltiplos retornos, retornos nomeados e funções como valores."
+      />
+      <title>Módulo 12 — Funções: fundamentos · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="12">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 4 — Funções
+                        </div>
+                        <h1 class="module-header__title">
+                           Funções — fundamentos
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 12</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Declaração
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod12-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Declaração de funções</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Funções são declaradas com a palavra-chave
+                              <code>func</code>, seguida do nome, lista de
+                              parâmetros entre parênteses, tipo de retorno e
+                              corpo entre chaves. Em Go, a chave de abertura
+                              fica na mesma linha da assinatura — como em todos
+                              os blocos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func nomeDaFuncao(parametros) tipoDeRetorno {
+    // corpo
+    return valor
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >exemplos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem parâmetros, sem retorno
+func saudar() {
+    fmt.Println("Olá!")
+}
+
+// Com parâmetros e retorno
+func somar(a int, b int) int {
+    return a + b
+}
+
+// Parâmetros do mesmo tipo — tipo pode ser declarado uma vez
+func subtrair(a, b int) int {
+    return a - b
+}
+
+// Sem retorno (void em outras linguagens)
+func logar(msg string) {
+    fmt.Println("[LOG]", msg)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Visibilidade: maiúscula exporta, minúscula não
+                           </h4>
+                           <p>
+                              A mesma regra de capitalização que vimos para
+                              variáveis e constantes se aplica a funções.
+                              <code>Calcular</code> é visível fora do pacote;
+                              <code>calcular</code> é privada ao pacote.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ordem de declaração não importa
+                           </h4>
+                           <p>
+                              Como vimos no Módulo 03, o compilador faz duas
+                              passagens. Funções podem ser chamadas antes de
+                              serem declaradas no arquivo — sem necessidade de
+                              protótipos como em C.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    fmt.Println(dobrar(5))  // chama dobrar antes de declará-la — OK
+}
+
+func dobrar(n int) int {
+    return n * 2
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Parâmetros e retorno
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod12-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Parâmetros e retorno</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, todos os argumentos são passados
+                              <strong>por valor</strong> — a função recebe uma
+                              cópia do dado. Para tipos de valor (int, string,
+                              bool, array, struct), modificações dentro da
+                              função não afetam o original. Para tipos de
+                              referência (slice, map, channel, ponteiro), a
+                              cópia do header ainda aponta para os mesmos dados
+                              subjacentes — modificações nos elementos afetam o
+                              original.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >passagem por valor</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// int é tipo de valor — cópia, original não muda
+func incrementar(n int) {
+    n++  // modifica apenas a cópia local
+}
+
+x := 10
+incrementar(x)
+fmt.Println(x)  // 10 — não mudou
+
+// slice é referência — elementos compartilhados
+func zerar(s []int) {
+    for i := range s {
+        s[i] = 0  // modifica o backing array original
+    }
+}
+
+nums := []int{1, 2, 3}
+zerar(nums)
+fmt.Println(nums)  // [0 0 0] — mudou!</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Parâmetros do mesmo tipo
+                           </h4>
+                           <p>
+                              Quando múltiplos parâmetros consecutivos têm o
+                              mesmo tipo, o tipo pode ser declarado apenas uma
+                              vez no final do grupo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Verboso — tipo repetido
+func retangulo(largura int, altura int, nome string) {}
+
+// Idiomático — tipo compartilhado entre consecutivos
+func retangulo(largura, altura int, nome string) {}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar ponteiro como parâmetro
+                           </h4>
+                           <p>
+                              Passe um ponteiro quando precisar modificar o
+                              valor original de um tipo de valor, ou quando o
+                              dado for grande e você quiser evitar o custo de
+                              cópia:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Modificar int original via ponteiro
+func incrementarPtr(n *int) {
+    *n++
+}
+
+x := 10
+incrementarPtr(&x)
+fmt.Println(x)  // 11
+
+// Evitar cópia de struct grande
+type Relatorio struct {
+    Dados [10000]float64
+    // ...
+}
+
+func processar(r *Relatorio) {  // ponteiro — sem copiar 80KB
+    r.Dados[0] = 1.0
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Múltiplos retornos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod12-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Múltiplos retornos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go permite que funções retornem múltiplos valores.
+                              Esta é uma funcionalidade central da linguagem — a
+                              principal forma de retornar um resultado junto com
+                              um erro. Os tipos de retorno múltiplo ficam entre
+                              parênteses:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >múltiplos retornos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Retorna resultado e erro — padrão Go
+func dividir(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("divisão por zero")
+    }
+    return a / b, nil
+}
+
+// Usando a função
+resultado, err := dividir(10, 3)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%.4f\n", resultado)  // 3.3333
+
+// Descartando valores com _
+resultado2, _ := dividir(20, 4)  // ignora o erro (só faça se for seguro)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrão (resultado, error)
+                           </h4>
+                           <p>
+                              A convenção em Go é retornar o erro como
+                              <strong>último</strong>
+                              valor de retorno. Quando há erro, os outros
+                              valores de retorno geralmente são zero values —
+                              embora isso não seja tecnicamente obrigatório. O
+                              chamador sempre verifica o erro antes de usar o
+                              resultado.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >convenção error como último retorno</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ Convenção correta — error por último
+func abrirArquivo(nome string) (*os.File, error) {}
+func parsearJSON(dados []byte) (Config, error)   {}
+func buscarUsuario(id int) (*Usuario, error)     {}
+
+// ✗ Fora da convenção — error no meio
+func calcular(a int) (error, int) {}  // evite</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Retornos não relacionados a erro
+                           </h4>
+                           <p>
+                              Múltiplos retornos também são usados para casos
+                              sem erro — como retornar o quociente e o resto de
+                              uma divisão, ou mín e máx:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func minMax(nums []int) (min, max int) {
+    min, max = nums[0], nums[0]
+    for _, n := range nums[1:] {
+        if n < min { min = n }
+        if n > max { max = n }
+    }
+    return min, max
+}
+
+menor, maior := minMax([]int{3, 1, 4, 1, 5, 9, 2, 6})
+fmt.Println(menor, maior)  // 1 9</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Retornos nomeados
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod12-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Retornos nomeados</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go permite dar nomes às variáveis de retorno na
+                              assinatura da função. Elas são declaradas
+                              automaticamente com zero value e um
+                              <code>return</code> sem argumentos (<em
+                                 >naked return</em
+                              >) retorna seus valores atuais:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >retornos nomeados</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func dividirNomeado(a, b float64) (resultado float64, err error) {
+    if b == 0 {
+        err = fmt.Errorf("divisão por zero")
+        return  // naked return — retorna resultado (0.0) e err
+    }
+    resultado = a / b
+    return  // naked return — retorna resultado e err (nil)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar retornos nomeados
+                           </h4>
+                           <p>
+                              A comunidade Go tem opiniões divididas sobre
+                              retornos nomeados. Há dois casos onde há consenso
+                              de que são úteis:
+                           </p>
+
+                           <ul>
+                              <li>
+                                 <strong>Documentação:</strong> nomear os
+                                 retornos deixa claro o significado de cada
+                                 valor sem precisar ler o corpo da função.
+                                 Funções com múltiplos retornos do mesmo tipo se
+                                 beneficiam disso.
+                              </li>
+                              <li>
+                                 <strong
+                                    >Uso com defer para modificar o
+                                    retorno:</strong
+                                 >
+                                 retornos nomeados permitem que funções
+                                 <code>defer</code>
+                                 modifiquem o valor de retorno — padrão útil
+                                 para tratamento de erros. Veremos isso no
+                                 Módulo 13.
+                              </li>
+                           </ul>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >uso documentacional</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem nomes — o que são esses dois ints?
+func limites(s []int) (int, int) {}
+
+// Com nomes — imediatamente claro
+func limites(s []int) (min, max int) {}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Naked returns em funções longas são
+                                    problemáticos
+                                 </div>
+                                 <div class="callout__body">
+                                    Em funções curtas, naked returns são
+                                    aceitáveis. Em funções com mais de ~10
+                                    linhas, eles dificultam a leitura — o leitor
+                                    precisa lembrar quais variáveis nomeadas
+                                    existem e seus estados atuais. Prefira
+                                    <code>return resultado, err</code>
+                                    explícito em funções mais longas.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Funções como valores (first-class)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod12-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Funções como valores — first-class functions</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, funções são
+                              <strong>valores de primeira classe</strong>: podem
+                              ser atribuídas a variáveis, passadas como
+                              argumentos, retornadas por outras funções e
+                              armazenadas em estruturas de dados. Isso habilita
+                              padrões funcionais poderosos sem a necessidade de
+                              objetos ou classes.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Atribuindo funções a variáveis
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Função nomeada
+func quadrado(n int) int { return n * n }
+
+// Atribuindo a uma variável — o tipo é func(int) int
+f := quadrado
+fmt.Println(f(5))   // 25
+
+// Função anônima (literal de função)
+dobrar := func(n int) int { return n * 2 }
+fmt.Println(dobrar(5))  // 10
+
+// Invocação imediata (IIFE)
+resultado := func(a, b int) int { return a + b }(3, 4)
+fmt.Println(resultado)  // 7</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções como parâmetros
+                           </h4>
+                           <p>
+                              O tipo de uma função é declarado como
+                              <code>func(tipos_param) tipos_retorno</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// aplicar recebe uma função como parâmetro
+func aplicar(nums []int, f func(int) int) []int {
+    resultado := make([]int, len(nums))
+    for i, n := range nums {
+        resultado[i] = f(n)
+    }
+    return resultado
+}
+
+nums := []int{1, 2, 3, 4, 5}
+
+quadrados := aplicar(nums, func(n int) int { return n * n })
+fmt.Println(quadrados)  // [1 4 9 16 25]
+
+dobrados := aplicar(nums, func(n int) int { return n * 2 })
+fmt.Println(dobrados)   // [2 4 6 8 10]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções retornando funções
+                           </h4>
+                           <p>
+                              Funções podem retornar outras funções — isso é a
+                              base para closures, que estudaremos no próximo
+                              módulo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// multiplicadorPor retorna uma função que multiplica por n
+func multiplicadorPor(n int) func(int) int {
+    return func(x int) int {
+        return x * n
+    }
+}
+
+dobrar := multiplicadorPor(2)
+triplicar := multiplicadorPor(3)
+
+fmt.Println(dobrar(5))    // 10
+fmt.Println(triplicar(5)) // 15</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tipos de função nomeados
+                           </h4>
+                           <p>
+                              Você pode criar um tipo nomeado para uma
+                              assinatura de função, tornando o código mais
+                              legível — especialmente útil em handlers,
+                              middlewares e callbacks:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem tipo nomeado — verbose e repetitivo
+func executar(f func(string) error) error {}
+var handlers []func(string) error
+
+// Com tipo nomeado — mais claro
+type Handler func(string) error
+
+func executar(f Handler) error {}
+var handlers []Handler
+
+// Exemplo real: http.HandlerFunc na stdlib é exatamente isso
+// type HandlerFunc func(ResponseWriter, *Request)</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 12
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod12-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Parâmetros e retorno'. A distinção entre tipos de valor e tipos de referência é fundamental para entender o que acontece ao passar argumentos."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que é impresso pelo código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func modificar(n int, s []int) {
+    n = 99
+    s[0] = 99
+}
+
+num := 1
+nums := []int{1, 2, 3}
+modificar(num, nums)
+fmt.Println(num, nums[0])</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>99 99</code> — Go passa tudo por
+                                    referência</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>1 1</code> — Go passa tudo por valor,
+                                    incluindo slices</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>1 99</code> — <code>int</code> é
+                                    copiado (modificação não afeta original);
+                                    slice compartilha o backing array
+                                    (modificação afeta original)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>99 1</code> — o inverso ocorre</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>int</code> é um tipo de valor — a
+                              função recebe uma cópia de <code>num</code>, e
+                              modificá-la não afeta o original.
+                              <code>[]int</code> é um tipo de referência — o
+                              header é copiado, mas o ponteiro ainda aponta para
+                              o mesmo backing array. Modificar
+                              <code>s[0]</code> modifica <code>nums[0]</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod12-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Múltiplos retornos'. Lembre-se da convenção Go para a posição do valor de erro na lista de retornos."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual assinatura segue corretamente a convenção de
+                              múltiplos retornos em Go para uma função que busca
+                              um usuário por ID?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code
+                                       >func buscarUsuario(id int) (error,
+                                       *Usuario)</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code
+                                       >func buscarUsuario(id int) (*Usuario,
+                                       error)</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code
+                                       >func buscarUsuario(id int)
+                                       *Usuario</code
+                                    >
+                                    — erros devem ser tratados
+                                    internamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code
+                                       >func buscarUsuario(id int) (*Usuario,
+                                       bool, error)</code
+                                    >
+                                    — bool indica se foi encontrado</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A convenção Go é sempre colocar o
+                              <code>error</code> como último valor de retorno.
+                              Isso é seguido por toda a stdlib e pela esmagadora
+                              maioria dos pacotes Go. Ferramentas de análise
+                              estática como <code>errcheck</code> dependem dessa
+                              convenção para detectar erros ignorados.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod12-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Funções como valores'. Preste atenção em como declarar o tipo de um parâmetro que é uma função."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o tipo correto do parâmetro
+                              <code>f</code> na função abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func filtrar(nums []int, f ???) []int {
+    var resultado []int
+    for _, n := range nums {
+        if f(n) {
+            resultado = append(resultado, n)
+        }
+    }
+    return resultado
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span><code>func</code></span>
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span><code>func(int)</code></span>
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span><code>func(int) bool</code></span>
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span><code>func([]int) bool</code></span>
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O corpo da função chama
+                              <code>f(n)</code> onde <code>n</code> é um
+                              <code>int</code>, e usa o resultado em um
+                              <code>if</code> — portanto <code>f</code> deve
+                              receber um <code>int</code> e retornar um
+                              <code>bool</code>. O tipo completo é
+                              <code>func(int) bool</code>. Esse padrão — filtrar
+                              com predicado — é um dos usos clássicos de funções
+                              como valores.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 12
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod12-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de assinatura</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função precisa receber uma lista de strings,
+                              aplicar uma transformação em cada uma (definida
+                              pelo chamador), e retornar a lista transformada.
+                              Qual assinatura está correta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >func transformar(s []string, f func())
+                                       []string</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code
+                                       >func transformar(s []string, f
+                                       func(string) string) []string</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >func transformar(s []string, f string)
+                                       []string</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >func transformar(s, f []string)
+                                       []string</code
+                                    ></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A função de transformação recebe uma
+                              <code>string</code> (o elemento atual) e retorna
+                              uma <code>string</code> (o valor transformado). O
+                              tipo completo do parâmetro é
+                              <code>func(string) string</code>. O retorno da
+                              função principal é <code>[]string</code> — a lista
+                              com os elementos transformados.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod12-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Retornos nomeados</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual afirmação sobre retornos nomeados em Go está
+                              correta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Retornos nomeados são obrigatórios quando a
+                                    função retorna mais de um valor</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Um naked return (<code>return</code> sem
+                                    argumentos) só é válido em funções com
+                                    retornos nomeados e sempre retorna os zero
+                                    values dos tipos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Retornos nomeados declaram variáveis
+                                    automaticamente com zero value; um naked
+                                    return retorna os valores atuais dessas
+                                    variáveis no momento da execução</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Retornos nomeados são apenas
+                                    documentacionais — não alteram o
+                                    comportamento da função</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Retornos nomeados declaram variáveis
+                              com zero value no início da função. O naked return
+                              retorna os valores <em>atuais</em> dessas
+                              variáveis — que podem ter sido modificadas ao
+                              longo do corpo. Eles não são apenas
+                              documentacionais: afetam o comportamento, e podem
+                              ser modificados por funções <code>defer</code>.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

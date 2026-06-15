@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Arrays em Go: declaração, inicialização, tamanho fixo como parte do tipo, iteração e limitações."
+      />
+      <title>Módulo 09 — Arrays · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="09">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 3 — Estruturas de Dados
+                        </div>
+                        <h1 class="module-header__title">Arrays</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 09</span>
+                           <span class="badge badge-default">4 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <div
+                        class="callout callout--info"
+                        style="margin-bottom: var(--space-8)"
+                     >
+                        <div class="callout__icon">💡</div>
+                        <div class="callout__content">
+                           <div class="callout__title">
+                              Por que estudar arrays antes de slices
+                           </div>
+                           <div class="callout__body">
+                              Na prática, você usará slices com muito mais
+                              frequência que arrays. Mas entender arrays é
+                              <strong>obrigatório</strong> antes de slices, pois
+                              slices são uma abstração construída sobre arrays.
+                              Sem entender o que é um array, os comportamentos
+                              de slice — especialmente o compartilhamento de
+                              memória — parecerão magia e serão fonte de bugs.
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Declaração e inicialização
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod09-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Declaração e inicialização</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um array é uma sequência de elementos do
+                              <strong>mesmo tipo</strong>, armazenados em
+                              posições contíguas de memória. O tamanho é
+                              definido na declaração e faz parte do tipo — não
+                              pode mudar depois.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >declaração</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sintaxe: var nome [tamanho]tipo
+var a [3]int      // [0 0 0] — zero values
+var b [5]string   // ["" "" "" "" ""]
+var c [4]bool     // [false false false false]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Array literal
+                           </h4>
+                           <p>
+                              A forma mais comum de criar um array com valores é
+                              o
+                              <strong>array literal</strong> — todos os valores
+                              listados entre chaves:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Array literal com tamanho explícito
+primos := [5]int{2, 3, 5, 7, 11}
+
+// Tamanho inferido com ... — Go conta os elementos
+vogais := [...]string{"a", "e", "i", "o", "u"}
+// equivalente a [5]string{"a", "e", "i", "o", "u"}
+
+// Inicialização parcial — elementos não especificados recebem zero value
+parcial := [5]int{1, 2}  // [1 2 0 0 0]
+
+// Inicialização por índice — útil para arrays esparsos
+espaco := [5]int{0: 10, 4: 50}  // [10 0 0 0 50]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Acesso a elementos
+                           </h4>
+                           <p>
+                              Elementos são acessados pelo índice entre
+                              colchetes. Índices começam em <code>0</code>.
+                              Acessar um índice fora dos limites causa um
+                              <strong>panic em tempo de execução</strong>
+                              — não um erro de compilação (a menos que o índice
+                              seja uma constante conhecida em compile-time):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">primos := [5]int{2, 3, 5, 7, 11}
+
+fmt.Println(primos[0])   // 2 — primeiro elemento
+fmt.Println(primos[4])   // 11 — último elemento
+fmt.Println(primos[5])   // PANIC: index out of range [5] with length 5
+
+primos[0] = 100          // modificação
+fmt.Println(primos)      // [100 3 5 7 11]
+
+// len() retorna o tamanho do array
+fmt.Println(len(primos)) // 5</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Tamanho fixo como parte do tipo
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod09-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Tamanho fixo como parte do tipo</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, o tamanho de um array faz parte do seu
+                              tipo. Isso significa que <code>[3]int</code> e
+                              <code>[4]int</code> são tipos completamente
+                              distintos — tão distintos quanto
+                              <code>int</code> e <code>string</code>. O
+                              compilador os trata como incompatíveis.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tipos incompatíveis</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var a [3]int
+var b [4]int
+
+a = b  // ERRO: cannot use b (type [4]int) as type [3]int
+
+// Uma função que aceita [3]int não aceita [4]int
+func soma3(arr [3]int) int {
+    return arr[0] + arr[1] + arr[2]
+}
+
+soma3(a)  // OK
+soma3(b)  // ERRO: cannot use b (type [4]int) as type [3]int</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Arrays são valores — não referências
+                           </h4>
+                           <p>
+                              Este é o comportamento mais importante de entender
+                              sobre arrays em Go:
+                              <strong>arrays são tipos de valor</strong>. Quando
+                              você atribui um array a outra variável ou passa
+                              para uma função, uma
+                              <strong>cópia completa</strong> dos dados é feita.
+                              Modificar a cópia não afeta o original.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >arrays são copiados</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := [3]int{1, 2, 3}
+b := a          // b é uma cópia completa de a
+
+b[0] = 100      // modifica b
+fmt.Println(a)  // [1 2 3] — a não foi afetado
+fmt.Println(b)  // [100 2 3]
+
+// O mesmo acontece ao passar para funções
+func dobrarPrimeiro(arr [3]int) {
+    arr[0] *= 2  // modifica a cópia local
+}
+
+dobrarPrimeiro(a)
+fmt.Println(a)  // [1 2 3] — a permanece inalterado</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Cópias de arrays grandes têm custo
+                                 </div>
+                                 <div class="callout__body">
+                                    Copiar um
+                                    <code>[1000000]int</code> significa copiar
+                                    ~8MB de dados (1M × 8 bytes). Se precisar
+                                    passar um array grande para uma função sem
+                                    copiar, use um ponteiro:
+                                    <code>func f(arr *[1000000]int)</code>. Na
+                                    prática, esse é um dos motivos pelos quais
+                                    slices são preferidos a arrays na maioria
+                                    dos casos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comparação de arrays
+                           </h4>
+                           <p>
+                              Como arrays são valores, dois arrays podem ser
+                              comparados com
+                              <code>==</code> se seus elementos forem
+                              comparáveis. A comparação é elemento a elemento:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := [3]int{1, 2, 3}
+b := [3]int{1, 2, 3}
+c := [3]int{1, 2, 4}
+
+fmt.Println(a == b)  // true  — mesmos elementos
+fmt.Println(a == c)  // false — terceiro elemento difere
+// a == [4]int{1,2,3,4}  // ERRO: tipos diferentes</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Iteração
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod09-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Iteração sobre arrays</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Há duas formas de iterar sobre um array: com
+                              <code>for</code> clássico usando índice, e com
+                              <code>for range</code>. O comportamento é análogo
+                              ao que vimos com slices no módulo anterior.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >formas de iteração</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">notas := [5]float64{7.5, 8.0, 6.5, 9.0, 8.5}
+
+// For clássico — quando precisar do índice para cálculos
+for i := 0; i < len(notas); i++ {
+    fmt.Printf("Aluno %d: %.1f\n", i+1, notas[i])
+}
+
+// For range — idiomático, preferido
+for i, nota := range notas {
+    fmt.Printf("Aluno %d: %.1f\n", i+1, nota)
+}
+
+// Apenas os valores (sem índice)
+soma := 0.0
+for _, nota := range notas {
+    soma += nota
+}
+media := soma / float64(len(notas))
+fmt.Printf("Média: %.2f\n", media)  // 7.90</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              range sobre array copia os elementos
+                           </h4>
+                           <p>
+                              Como arrays são tipos de valor, o
+                              <code>range</code> opera sobre uma cópia do array
+                              — mas na prática isso raramente importa para
+                              leitura. O que importa:
+                              <strong
+                                 >modificar <code>v</code> dentro do range não
+                                 modifica o array original</strong
+                              >. Para modificar, use o índice:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">nums := [3]int{1, 2, 3}
+
+// ✗ Não modifica o array — v é uma cópia do elemento
+for _, v := range nums {
+    v *= 2  // modifica a cópia local, nums não muda
+}
+fmt.Println(nums)  // [1 2 3]
+
+// ✓ Modifica o array — usa o índice
+for i := range nums {
+    nums[i] *= 2
+}
+fmt.Println(nums)  // [2 4 6]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Arrays multidimensionais
+                           </h4>
+                           <p>
+                              Go suporta arrays de arrays — arrays
+                              multidimensionais. São declarados aninhando os
+                              tamanhos:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Matriz 3x3
+var matriz [3][3]int
+
+// Inicialização literal
+tabuleiro := [3][3]string{
+    {"X", "O", "X"},
+    {"O", "X", "O"},
+    {"X", "O", "X"},
+}
+
+// Acesso: linha, coluna
+fmt.Println(tabuleiro[1][2])  // "O" — linha 1, coluna 2
+
+// Iteração com range aninhado
+for _, linha := range tabuleiro {
+    for _, celula := range linha {
+        fmt.Printf("%s ", celula)
+    }
+    fmt.Println()
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Limitações e quando usar
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod09-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Limitações e quando usar arrays</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Arrays em Go têm limitações significativas que
+                              explicam por que slices são a estrutura de
+                              sequência padrão na linguagem. Entender essas
+                              limitações é fundamental para tomar a decisão
+                              certa entre array e slice.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Limitação 1: tamanho fixo e imutável
+                           </h4>
+                           <p>
+                              O tamanho de um array é definido em compile-time e
+                              nunca pode mudar. Não é possível adicionar ou
+                              remover elementos. Se você precisa de uma coleção
+                              que cresce ou diminui, precisa de um slice.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := [3]int{1, 2, 3}
+// Não existe append para arrays:
+// a = append(a, 4)  // ERRO: append só funciona com slices</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Limitação 2: tamanho deve ser conhecido em
+                              compile-time
+                           </h4>
+                           <p>
+                              O tamanho de um array precisa ser uma constante —
+                              não pode ser uma variável calculada em tempo de
+                              execução:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">n := 10
+// var a [n]int  // ERRO: non-constant array bound n
+
+const M = 10
+var b [M]int  // OK: M é constante</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Limitação 3: funções inflexíveis
+                           </h4>
+                           <p>
+                              Uma função que aceita <code>[3]int</code> não
+                              aceita <code>[4]int</code>. Isso torna difícil
+                              escrever funções genéricas que operem em arrays de
+                              qualquer tamanho. Slices resolvem isso
+                              elegantemente.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando arrays são a escolha certa
+                           </h4>
+                           <p>
+                              Apesar das limitações, há casos onde arrays são
+                              superiores a slices:
+                           </p>
+
+                           <ul>
+                              <li>
+                                 <strong>Tamanho fixo e conhecido:</strong> uma
+                                 chave criptográfica SHA-256 sempre tem
+                                 exatamente 32 bytes — <code>[32]byte</code>
+                                 expressa isso com precisão e segurança de tipo.
+                              </li>
+                              <li>
+                                 <strong>Sem alocação no heap:</strong> arrays
+                                 pequenos vivem na stack quando possível, sem
+                                 pressão no garbage collector. Slices sempre têm
+                                 um backing array no heap.
+                              </li>
+                              <li>
+                                 <strong>Comparabilidade:</strong> arrays podem
+                                 ser usados como chaves de map (pois são
+                                 comparáveis); slices não.
+                              </li>
+                              <li>
+                                 <strong>Semântica de valor:</strong> quando
+                                 você quer que a atribuição faça uma cópia
+                                 completa por design.
+                              </li>
+                           </ul>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >casos de uso reais</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Chave criptográfica — tamanho fixo por especificação
+type SHA256Hash [32]byte
+type AESKey [16]byte
+
+// Array como chave de map — slice não pode ser chave
+cache := map[[2]int]string{}
+cache[[2]int{1, 2}] = "ponto(1,2)"
+
+// Posição 2D com semântica de valor
+type Ponto [2]float64
+p1 := Ponto{3.0, 4.0}
+p2 := p1  // cópia intencional — p2 é independente</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">Regra prática</div>
+                                 <div class="callout__body">
+                                    Na dúvida, use slice. Arrays são para casos
+                                    específicos onde o tamanho fixo é uma
+                                    propriedade do domínio (chaves cripto,
+                                    coordenadas, protocolos de rede com campos
+                                    de tamanho fixo) ou onde a comparabilidade é
+                                    necessária. Para tudo mais — listas,
+                                    coleções, sequências de tamanho variável —
+                                    slice é a ferramenta certa.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 09
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod09-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Tamanho fixo como parte do tipo'. Lembre-se do que acontece quando você atribui um array a outra variável em Go."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que é impresso pelo código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">a := [3]int{1, 2, 3}
+b := a
+b[0] = 99
+fmt.Println(a[0], b[0])</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>99 99</code> — b e a apontam para o
+                                    mesmo array</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>1 99</code> — a atribuição
+                                    <code>b := a</code> copia todos os dados;
+                                    modificar b não afeta a</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — arrays não podem ser
+                                    atribuídos diretamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>99 1</code> — a cópia vai na direção
+                                    inversa</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Arrays são tipos de valor em Go.
+                              <code>b := a</code> cria uma cópia completa e
+                              independente. Modificar <code>b[0]</code> não tem
+                              nenhum efeito sobre <code>a</code>. Essa é a
+                              diferença fundamental entre arrays e slices — que
+                              estudaremos no próximo módulo.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod09-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Tamanho fixo como parte do tipo'. Preste atenção no que torna dois tipos de array compatíveis ou incompatíveis em Go."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que o código abaixo não compila?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func imprimirTres(a [3]int) {
+    fmt.Println(a)
+}
+
+arr := [4]int{1, 2, 3, 4}
+imprimirTres(arr)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Porque <code>arr</code> tem 4 elementos e a
+                                    função imprimiria apenas 3 — Go protege
+                                    contra perda de dados</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Porque arrays não podem ser passados para
+                                    funções — use ponteiros</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>[3]int</code> e
+                                    <code>[4]int</code> são tipos completamente
+                                    distintos em Go — o tamanho faz parte do
+                                    tipo e não há conversão implícita</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Porque a função precisa declarar
+                                    <code>a [...]int</code> para aceitar arrays
+                                    de qualquer tamanho</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Em Go, <code>[3]int</code> e
+                              <code>[4]int</code> são tipos distintos — tão
+                              distintos quanto <code>int</code> e
+                              <code>string</code>. Isso é precisamente uma das
+                              limitações que tornam slices mais práticos: uma
+                              função que aceita <code>[]int</code> (slice)
+                              funciona com qualquer tamanho.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod09-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Limitações e quando usar arrays'. Pense em qual propriedade de arrays os torna adequados como chaves de map."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que um array pode ser usado como chave de map,
+                              mas um slice não?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Porque arrays são mais eficientes em
+                                    memória que slices</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Porque Go tem suporte nativo a hashing de
+                                    arrays, mas não de slices</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Porque arrays são comparáveis com
+                                    <code>==</code> (podem ser verificados por
+                                    igualdade), e maps exigem que as chaves
+                                    sejam comparáveis. Slices não são
+                                    comparáveis em Go.</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Porque arrays têm tamanho fixo, o que
+                                    facilita o cálculo do hash
+                                    internamente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Maps exigem que as chaves sejam
+                              comparáveis — que possam ser testadas com
+                              <code>==</code>. Arrays são comparáveis (dois
+                              arrays com os mesmos elementos são iguais). Slices
+                              não são comparáveis em Go — não existe
+                              <code>==</code> entre slices (exceto comparação
+                              com <code>nil</code>). Por isso, slices não podem
+                              ser chaves de map.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 09
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod09-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Modificação via range</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um desenvolvedor quer dobrar todos os elementos do
+                              array. O código abaixo funciona como esperado?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">nums := [4]int{1, 2, 3, 4}
+for _, v := range nums {
+    v *= 2
+}
+fmt.Println(nums)</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Sim — imprime <code>[2 4 6 8]</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Não — imprime <code>[1 2 3 4]</code>.
+                                    <code>v</code> é uma cópia do elemento;
+                                    modificar <code>v</code> não altera o array.
+                                    A correção é usar
+                                    <code>nums[i] *= 2</code> com o índice</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Erro de compilação — arrays não podem ser
+                                    iterados com range</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Depende — funciona apenas se o array for
+                                    declarado com <code>var</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>v</code> no range é uma cópia do
+                              elemento — modificá-lo não afeta o array original.
+                              Para modificar, use o índice:
+                              <code>for i := range nums { nums[i] *= 2 }</code>.
+                              Esse é um dos erros mais comuns ao começar com Go.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod09-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Escolha de estrutura</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um sistema criptográfico precisa armazenar e
+                              comparar hashes SHA-256. Cada hash tem sempre
+                              exatamente 32 bytes. O sistema também precisa usar
+                              hashes como chaves em um cache (map). Qual tipo é
+                              mais adequado?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>[]byte</code> (slice de byte) — mais
+                                    flexível e idiomático em Go</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>[32]byte</code> (array de byte) —
+                                    tamanho fixo por especificação, comparável
+                                    com <code>==</code>, e pode ser usado como
+                                    chave de map</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>string</code> — strings são imutáveis
+                                    e mais seguras para dados
+                                    criptográficos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>uint64</code> — inteiro de 64 bits é
+                                    suficiente para um hash</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>[32]byte</code> é a escolha ideal
+                              aqui: o tamanho fixo faz parte do domínio (SHA-256
+                              sempre tem 32 bytes), é comparável com
+                              <code>==</code> (pode verificar igualdade de
+                              hashes diretamente) e pode ser usado como chave de
+                              map. A stdlib do Go usa exatamente esse padrão —
+                              por exemplo, <code>crypto/sha256</code> retorna
+                              <code>[32]byte</code>.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

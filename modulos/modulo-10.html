@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Slices em Go: header interno, backing array, make, append, copy, slicing e gotchas de memória compartilhada."
+      />
+      <title>Módulo 10 — Slices · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="10">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 3 — Estruturas de Dados
+                        </div>
+                        <h1 class="module-header__title">Slices</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 10</span>
+                           <span class="badge badge-default">8 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é um slice: o header interno
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é um slice: o header interno</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um slice não é uma estrutura de dados independente
+                              — é uma
+                              <strong>visão sobre um array</strong>.
+                              Internamente, todo slice é representado por um
+                              header de três campos:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Campo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Significado
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          ptr
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *T
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Ponteiro para o primeiro elemento no
+                                          backing array
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          len
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          int
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Número de elementos visíveis pelo
+                                          slice
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          cap
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          int
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Número de elementos disponíveis no
+                                          backing array a partir de ptr
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <p>
+                              Em termos de código Go, o header de um slice seria
+                              equivalente a:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >representação conceitual do header</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Internamente, []int é como se fosse:
+type SliceHeader struct {
+    Data uintptr // ponteiro para o backing array
+    Len  int     // comprimento atual
+    Cap  int     // capacidade total
+}
+
+// Ao criar um slice, você manipula esse header
+s := []int{1, 2, 3}
+fmt.Println(len(s))  // 3 — Len
+fmt.Println(cap(s))  // 3 — Cap (pelo menos 3)</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que isso importa
+                                 </div>
+                                 <div class="callout__body">
+                                    Entender o header de três campos explica
+                                    todos os comportamentos "surpreendentes" de
+                                    slices: por que modificar um slice pode
+                                    afetar outro, por que <code>append</code> às
+                                    vezes cria um novo array e às vezes não, e
+                                    por que passar um slice para uma função
+                                    funciona diferente de passar um array.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Relação com arrays: o backing array
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Relação com arrays: o backing array</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Todo slice aponta para um
+                              <strong>backing array</strong> — o array
+                              subjacente que de fato armazena os dados. O slice
+                              é apenas uma janela sobre esse array. Você pode
+                              criar um slice diretamente de um array existente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >slice sobre array</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Array com 6 elementos
+arr := [6]int{10, 20, 30, 40, 50, 60}
+
+// Slice que vê do índice 1 ao 3 (exclusive)
+s := arr[1:4]  // [20 30 40]
+
+fmt.Println(s)       // [20 30 40]
+fmt.Println(len(s))  // 3  — vê 3 elementos
+fmt.Println(cap(s))  // 5  — do índice 1 até o fim do array
+
+// Estado interno do slice s:
+// ptr → &arr[1]  (aponta para o segundo elemento do array)
+// len = 3
+// cap = 5        (arr[1] até arr[5])</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Slice e array compartilham memória
+                           </h4>
+                           <p>
+                              Como o slice aponta para o mesmo array, modificar
+                              o slice
+                              <strong>modifica o array original</strong> — e
+                              qualquer outro slice que aponte para a mesma
+                              região:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">arr := [6]int{10, 20, 30, 40, 50, 60}
+s := arr[1:4]  // aponta para arr[1], arr[2], arr[3]
+
+s[0] = 999     // modifica arr[1]
+
+fmt.Println(arr)  // [10 999 30 40 50 60] — arr foi modificado!
+fmt.Println(s)    // [999 30 40]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Slices passados para funções: referência, não
+                              cópia
+                           </h4>
+                           <p>
+                              Quando você passa um slice para uma função, o
+                              header é copiado (ptr, len, cap) — mas o ponteiro
+                              ainda aponta para o mesmo backing array.
+                              Modificações nos elementos dentro da função afetam
+                              o slice original:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func dobrar(s []int) {
+    for i := range s {
+        s[i] *= 2  // modifica o backing array original
+    }
+}
+
+nums := []int{1, 2, 3}
+dobrar(nums)
+fmt.Println(nums)  // [2 4 6] — foi modificado!</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Diferença crucial vs arrays
+                                 </div>
+                                 <div class="callout__body">
+                                    Arrays passados para funções são
+                                    <em>copiados</em> — modificações internas
+                                    não afetam o original. Slices passados para
+                                    funções <em>compartilham</em> o backing
+                                    array — modificações afetam o original. Essa
+                                    é uma das diferenças mais importantes entre
+                                    os dois e fonte frequente de bugs.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — make vs literal
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>make vs literal — criando slices</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Há três formas principais de criar um slice:
+                              literal, <code>make</code>, e a partir de um array
+                              ou outro slice. Cada uma tem seu contexto ideal.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Slice literal
+                           </h4>
+                           <p>Quando você já conhece os valores iniciais:</p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Slice literal — cria o backing array implicitamente
+s := []int{1, 2, 3, 4, 5}
+// len=5, cap=5
+
+// Slice vazio (não nil)
+vazio := []int{}
+fmt.Println(vazio == nil)  // false
+fmt.Println(len(vazio))    // 0
+
+// Slice nil
+var nulo []int
+fmt.Println(nulo == nil)   // true
+fmt.Println(len(nulo))     // 0 — len de nil slice é 0, sem panic</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              make — quando o tamanho é conhecido
+                              antecipadamente
+                           </h4>
+                           <p>
+                              <code>make([]T, len, cap)</code> cria um slice com
+                              backing array alocado, todos os elementos com zero
+                              value. <code>cap</code> é opcional — se omitido,
+                              <code>cap = len</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// make(tipo, len, cap)
+s := make([]int, 5)       // len=5, cap=5, valores=[0 0 0 0 0]
+s2 := make([]int, 3, 10)  // len=3, cap=10, valores=[0 0 0]
+
+fmt.Println(len(s2), cap(s2))  // 3 10
+
+// Por que usar make com cap pré-alocado?
+// Se você sabe que vai crescer até N elementos, pré-alocar evita
+// realocações repetidas durante os appends:
+resultado := make([]int, 0, 1000)  // len=0, cap=1000
+for i := 0; i < 1000; i++ {
+    resultado = append(resultado, i)  // sem realocar até 1000
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              nil slice vs slice vazio — diferença prática
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var nulo []int    // nil slice — ptr=nil, len=0, cap=0
+vazio := []int{}  // slice vazio — ptr válido, len=0, cap=0
+
+// len e append funcionam em ambos
+fmt.Println(len(nulo))  // 0
+nulo = append(nulo, 1)  // OK
+
+// A diferença aparece ao serializar para JSON
+import "encoding/json"
+b1, _ := json.Marshal(nulo)   // null
+b2, _ := json.Marshal(vazio)  // []
+// Em APIs, a diferença entre null e [] pode ser semântica importante</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — append e crescimento
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>append e crescimento do slice</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>append</code> adiciona elementos ao final de
+                              um slice e retorna um novo slice. É uma função
+                              built-in — não um método. O ponto crítico:
+                              <strong
+                                 >você deve sempre usar o slice
+                                 retornado</strong
+                              >, pois <code>append</code> pode ou não criar um
+                              novo backing array.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >uso básico de append</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := []int{1, 2, 3}
+s = append(s, 4)        // adiciona um elemento
+s = append(s, 5, 6, 7)  // adiciona múltiplos
+
+// Append de um slice em outro com ...
+a := []int{1, 2, 3}
+b := []int{4, 5, 6}
+c := append(a, b...)  // [1 2 3 4 5 6]
+// O ... expande b como argumentos individuais</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Como o crescimento funciona internamente
+                           </h4>
+                           <p>
+                              Quando <code>append</code> é chamado, dois
+                              cenários são possíveis:
+                           </p>
+
+                           <ul>
+                              <li>
+                                 <strong>cap &gt; len:</strong> há espaço no
+                                 backing array atual. O novo elemento é inserido
+                                 na próxima posição disponível, len é
+                                 incrementado, o ponteiro permanece o mesmo.
+                                 <strong>Nenhuma alocação ocorre.</strong>
+                              </li>
+                              <li>
+                                 <strong>cap == len:</strong> backing array está
+                                 cheio. Go aloca um novo array maior, copia
+                                 todos os elementos, insere o novo. O slice
+                                 resultante aponta para o
+                                 <strong>novo array</strong>. O array antigo
+                                 eventualmente é coletado pelo GC.
+                              </li>
+                           </ul>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >observando o crescimento</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := make([]int, 0)
+for i := 0; i < 10; i++ {
+    s = append(s, i)
+    fmt.Printf("len=%d cap=%d\n", len(s), cap(s))
+}
+// len=1  cap=1
+// len=2  cap=2
+// len=3  cap=4   ← dobrou ao precisar de mais espaço
+// len=4  cap=4
+// len=5  cap=8   ← dobrou novamente
+// len=6  cap=8
+// len=7  cap=8
+// len=8  cap=8
+// len=9  cap=16  ← dobrou novamente
+// len=10 cap=16</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nunca ignore o retorno de append
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>append(s, x)</code> sem capturar o
+                                    retorno é um bug. Se o backing array for
+                                    realocado, o slice original não é atualizado
+                                    e as modificações se perdem. Sempre:
+                                    <code>s = append(s, x)</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Fator de crescimento
+                           </h4>
+                           <p>
+                              Go aproximadamente dobra a capacidade quando
+                              precisa realocar (para slices pequenos). Para
+                              slices maiores, o fator diminui progressivamente.
+                              Esse comportamento é um detalhe de implementação e
+                              pode variar entre versões do compilador — não
+                              dependa dele para lógica de negócio.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — copy
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>copy — cópia independente de um slice</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>copy(dst, src)</code> copia elementos de
+                              <code>src</code> para <code>dst</code> e retorna o
+                              número de elementos copiados — que é
+                              <code>min(len(dst), len(src))</code>. Os dois
+                              slices ficam com backing arrays independentes.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >uso de copy</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">src := []int{1, 2, 3, 4, 5}
+dst := make([]int, len(src))
+
+n := copy(dst, src)
+fmt.Println(n, dst)  // 5 [1 2 3 4 5]
+
+// dst é independente — modificar dst não afeta src
+dst[0] = 99
+fmt.Println(src)  // [1 2 3 4 5] — inalterado
+fmt.Println(dst)  // [99 2 3 4 5]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              copy com tamanhos diferentes
+                           </h4>
+                           <p>
+                              <code>copy</code> copia apenas o mínimo entre
+                              <code>len(dst)</code> e <code>len(src)</code>.
+                              Elementos excedentes são ignorados; posições não
+                              preenchidas em <code>dst</code> mantêm seus
+                              valores anteriores:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// dst menor que src — copia apenas len(dst) elementos
+src := []int{1, 2, 3, 4, 5}
+dst := make([]int, 3)
+copy(dst, src)
+fmt.Println(dst)  // [1 2 3] — apenas 3 elementos copiados
+
+// dst maior que src — posições extras ficam com zero value
+dst2 := make([]int, 7)
+copy(dst2, src)
+fmt.Println(dst2)  // [1 2 3 4 5 0 0]</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrão: clonar um slice
+                           </h4>
+                           <p>
+                              O padrão idiomático para criar uma cópia
+                              totalmente independente de um slice:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">original := []int{1, 2, 3, 4, 5}
+
+// Clonar
+clone := make([]int, len(original))
+copy(clone, original)
+
+// Alternativa idiomática com append
+clone2 := append([]int{}, original...)
+
+// Ambos produzem cópias independentes do original</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Slicing de slices
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Slicing de slices</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Você pode criar um slice a partir de outro slice
+                              usando a operação de slicing:
+                              <code>s[low:high]</code>. O resultado é um novo
+                              slice que aponta para o
+                              <strong>mesmo backing array</strong>, mas com
+                              <code>ptr</code>, <code>len</code> e
+                              <code>cap</code> diferentes.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operação de slicing</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+//          0  1  2  3  4  5  6  7  8  9
+
+a := s[2:5]   // [2 3 4]       — índices 2, 3, 4
+b := s[:3]    // [0 1 2]       — do início até 3 (exclusive)
+c := s[7:]    // [7 8 9]       — do índice 7 até o fim
+d := s[:]     // [0..9]        — cópia do header, mesmo backing array
+
+fmt.Println(len(a), cap(a))  // 3, 8  (do índice 2 até o fim do array)
+fmt.Println(len(b), cap(b))  // 3, 10 (do início)
+fmt.Println(len(c), cap(c))  // 3, 3  (do índice 7 até o fim)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Slicing de três índices
+                           </h4>
+                           <p>
+                              Go também suporta slicing de três índices:
+                              <code>s[low:high:max]</code>, que limita a
+                              capacidade do slice resultante. Isso é útil para
+                              garantir que <code>append</code> no slice
+                              resultante não afete o array original:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := []int{0, 1, 2, 3, 4, 5}
+
+// Sem limitar cap: append pode sobrescrever elementos de s
+a := s[1:3]        // len=2, cap=5 — enxerga até o fim de s
+a = append(a, 99)  // modifica s[3]!
+fmt.Println(s)     // [0 1 2 99 4 5] — s foi afetado
+
+// Com três índices: cap limitado a 3, append vai realocar
+s2 := []int{0, 1, 2, 3, 4, 5}
+b := s2[1:3:3]     // len=2, cap=2 — cap limitado
+b = append(b, 99)  // realoca — s2 não é afetado
+fmt.Println(s2)    // [0 1 2 3 4 5] — inalterado</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 7 — Gotchas de memória compartilhada
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t07">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Gotchas de memória compartilhada</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O compartilhamento de backing array é a fonte mais
+                              comum de bugs sutis com slices. Veja os casos mais
+                              frequentes:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 1: append em subslice modifica o original
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">original := []int{1, 2, 3, 4, 5}
+sub := original[:3]  // [1 2 3], cap=5
+
+// Há espaço no backing array (cap=5 > len=3)
+// append usa esse espaço — sobrescreve original[3]
+sub = append(sub, 99)
+
+fmt.Println(original)  // [1 2 3 99 5] — SURPRESA!</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 2: loop de closures captura o índice errado
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// PROBLEMA: todas as closures capturam a mesma variável v
+funcs := make([]func(), 3)
+for _, v := range []int{1, 2, 3} {
+    funcs = append(funcs, func() { fmt.Println(v) })
+}
+// Em Go < 1.22: todas imprimem 3 — v é compartilhado
+// Em Go >= 1.22: cada iteração tem seu próprio v — comportamento correto
+
+// SOLUÇÃO compatível: capturar explicitamente
+for _, v := range []int{1, 2, 3} {
+    v := v  // cria nova variável v local à iteração
+    funcs = append(funcs, func() { fmt.Println(v) })
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 3: memory leak por referência ao backing
+                              array
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Carrega 1GB de dados
+dados := carregarArquivoGrande()  // []byte com 1GB
+
+// Extrai apenas os primeiros 10 bytes
+header := dados[:10]
+
+// PROBLEMA: header ainda referencia o backing array de 1GB
+// O GC não pode liberar o array enquanto header existir
+// 1GB fica na memória mesmo que você só precise de 10 bytes
+
+// SOLUÇÃO: copiar apenas o necessário
+header = make([]byte, 10)
+copy(header, dados[:10])
+dados = nil  // agora o array de 1GB pode ser coletado pelo GC</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">Regra prática</div>
+                                 <div class="callout__body">
+                                    Sempre que você retornar um subslice de uma
+                                    função ou armazenar um subslice a longo
+                                    prazo, pergunte-se: "esse subslice vai
+                                    manter um array grande na memória mais tempo
+                                    do que o necessário?" Se sim, use
+                                    <code>copy</code> para criar um slice
+                                    independente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 8 — Slices multidimensionais
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod10-t08">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Slices multidimensionais</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Diferente de arrays multidimensionais (que têm
+                              tamanho fixo em todas as dimensões), slices de
+                              slices (<code>[][]T</code>) permitem que cada
+                              linha tenha um comprimento diferente — são
+                              chamados de
+                              <em>jagged slices</em>. Cada linha é um slice
+                              independente com seu próprio backing array.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >slice de slices</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Matriz 3x4 com make
+linhas := 3
+cols := 4
+matriz := make([][]int, linhas)
+for i := range matriz {
+    matriz[i] = make([]int, cols)
+}
+
+// Acesso
+matriz[1][2] = 42
+
+// Linhas com tamanhos diferentes (jagged)
+triangulo := [][]int{
+    {1},
+    {1, 2},
+    {1, 2, 3},
+    {1, 2, 3, 4},
+}
+
+// Iteração
+for _, linha := range triangulo {
+    for _, v := range linha {
+        fmt.Printf("%d ", v)
+    }
+    fmt.Println()
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar array 2D vs slice de slice
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Critério
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          [N][M]T
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          [][]T
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Tamanho das linhas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Fixo, igual para todas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Variável por linha
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Memória
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Contígua — cache-friendly
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Fragmentada — cada linha aloca
+                                          separado
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Pode crescer
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Não
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Sim (append nas linhas)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Caso de uso
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Matrizes matemáticas fixas
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Grafos, tabelas irregulares, dados
+                                          dinâmicos
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 10
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod10-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'append e crescimento'. Preste atenção no que acontece com o backing array quando append precisa de mais espaço do que o disponível."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece quando <code>append</code> é
+                              chamado em um slice cujo <code>len == cap</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Panic — não é possível adicionar elementos
+                                    a um slice cheio</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O primeiro elemento é descartado para abrir
+                                    espaço para o novo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Go aloca um novo backing array maior, copia
+                                    todos os elementos, e o slice retornado
+                                    aponta para o novo array — o array antigo
+                                    continua existindo até o GC coletá-lo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O slice é redimensionado in-place — o mesmo
+                                    backing array é expandido</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Quando não há capacidade disponível,
+                              <code>append</code>
+                              aloca um novo array (geralmente com o dobro da
+                              capacidade), copia todos os elementos existentes e
+                              adiciona o novo. Por isso o valor retornado pode
+                              ter um ponteiro diferente do original — e por isso
+                              você deve sempre usar o slice retornado:
+                              <code>s = append(s, x)</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod10-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Relação com arrays: o backing array'. Lembre-se do que acontece quando dois slices compartilham o mesmo backing array."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">a := []int{1, 2, 3, 4, 5}
+b := a[1:3]
+b[0] = 99
+fmt.Println(a)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>[1 2 3 4 5]</code> — b é uma cópia
+                                    independente de a</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>[1 99 3 4 5]</code> — b compartilha o
+                                    backing array de a; modificar b[0] modifica
+                                    a[1]</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>[99 2 3 4 5]</code> — b[0]
+                                    corresponde a a[0]</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Panic — modificar um subslice causa erro em
+                                    tempo de execução</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>b := a[1:3]</code> cria um slice
+                              cujo ptr aponta para <code>a[1]</code>. Então
+                              <code>b[0]</code> é o mesmo endereço de memória
+                              que <code>a[1]</code>. Modificar
+                              <code>b[0]</code> modifica <code>a[1]</code>. Para
+                              uma cópia independente, use <code>copy</code> ou
+                              <code>append([]int{}, a[1:3]...)</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod10-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'make vs literal'. A diferença entre nil slice e slice vazio tem implicação concreta em pelo menos um contexto importante."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é a diferença prática entre
+                              <code>var s []int</code> e
+                              <code>s := []int{}</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nenhuma — ambos criam slices vazios
+                                    equivalentes em todos os contextos</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>var s []int</code> causa panic ao
+                                    fazer append; <code>[]int{}</code> não</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>var s []int</code> é nil (<code
+                                       >s == nil</code
+                                    >
+                                    é true) e serializa como
+                                    <code>null</code> em JSON;
+                                    <code>[]int{}</code> não é nil e serializa
+                                    como <code>[]</code> — diferença semântica
+                                    importante em APIs</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>var s []int</code> aloca memória
+                                    imediatamente; <code>[]int{}</code> usa
+                                    alocação lazy</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Ambos têm <code>len == 0</code> e
+                              aceitam <code>append</code> sem panic. A diferença
+                              é que <code>var s []int</code> é um nil slice
+                              (<code>s == nil</code>) e
+                              <code>encoding/json</code> o serializa como
+                              <code>null</code>. <code>[]int{}</code> não é nil
+                              e serializa como <code>[]</code>. Em APIs REST,
+                              essa diferença pode ter semântica importante —
+                              "campo ausente" vs "lista vazia".
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 10
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod10-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Gotcha de append</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo tem um bug sutil. O que acontece e
+                              como corrigir?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">base := []int{1, 2, 3, 4, 5}
+a := base[:3]   // [1 2 3], cap=5
+b := base[:3]   // [1 2 3], cap=5
+
+a = append(a, 99)
+b = append(b, 77)
+
+fmt.Println(base)  // ?
+fmt.Println(a)     // ?
+fmt.Println(b)     // ?</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >base=[1 2 3 4 5], a=[1 2 3 99], b=[1 2 3
+                                    77] — cada append cria um novo array
+                                    independente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >base=[1 2 3 77 5], a=[1 2 3 99], b=[1 2 3
+                                    77] — ambos os appends escrevem em base[3]
+                                    (mesmo endereço); o segundo (b) sobrescreve
+                                    o primeiro (a); a realoca porque len(a)=4
+                                    agora difere</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >base=[1 2 3 99 5], a=[1 2 3 99], b=[1 2 3
+                                    77] — apenas o primeiro append afeta
+                                    base</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Panic — não é possível fazer append em dois
+                                    slices do mesmo array</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Tanto <code>a</code> quanto
+                              <code>b</code> têm cap=5 e apontam para base[3]
+                              como próxima posição disponível.
+                              <code>append(a, 99)</code> escreve 99 em base[3].
+                              <code>append(b, 77)</code> escreve 77 em base[3],
+                              sobrescrevendo. O resultado final em base[3] é 77.
+                              A correção é usar slicing de três índices para
+                              limitar cap: <code>a := base[:3:3]</code> e
+                              <code>b := base[:3:3]</code>, forçando realocação
+                              em ambos os appends.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod10-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Escolha de criação</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função precisa coletar os resultados de 10.000
+                              operações em um slice de strings. Qual é a forma
+                              mais eficiente de inicializar o slice?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>var resultados []string</code> — Go
+                                    otimiza appends automaticamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>resultados := []string{}</code> —
+                                    slice vazio pronto para append</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code
+                                       >resultados := make([]string, 0,
+                                       10000)</code
+                                    >
+                                    — pré-aloca capacidade para 10.000
+                                    elementos, evitando ~13 realocações durante
+                                    os appends</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >resultados := make([]string,
+                                       10000)</code
+                                    >
+                                    — aloca 10.000 strings vazias e usa
+                                    indexação direta</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto!
+                              <code>make([]string, 0, 10000)</code> pré-aloca o
+                              backing array com capacidade para 10.000
+                              elementos. Os appends subsequentes nunca precisam
+                              realocar — zero cópias de array, zero pressão no
+                              GC. <code>make([]string, 10000)</code> também
+                              funcionaria, mas você precisaria usar indexação
+                              (<code>s[i] = v</code>) em vez de append, pois len
+                              já seria 10.000.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

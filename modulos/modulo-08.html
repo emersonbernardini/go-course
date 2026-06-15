@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Laços em Go: for clássico, for como while, for infinito, range, break, continue e labels."
+      />
+      <title>Módulo 08 — Laços · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="08">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 2 — Controle de Fluxo
+                        </div>
+                        <h1 class="module-header__title">Laços</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 08</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — for clássico
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>for clássico</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem apenas uma palavra-chave para laços:
+                              <code>for</code>. Não existe <code>while</code>,
+                              não existe <code>do/while</code>, não existe
+                              <code>foreach</code>. Toda forma de iteração é
+                              expressa com <code>for</code> — em diferentes
+                              configurações. Isso não é uma limitação; é a
+                              filosofia Go de ter uma única forma canônica para
+                              cada coisa.
+                           </p>
+
+                           <p>
+                              A forma clássica tem três componentes separados
+                              por ponto e vírgula: inicialização, condição e
+                              pós-instrução.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">for inicialização; condição; pós-instrução {
+    // corpo
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >exemplos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Contagem crescente
+for i := 0; i < 5; i++ {
+    fmt.Println(i)  // 0 1 2 3 4
+}
+
+// Contagem decrescente
+for i := 10; i > 0; i-- {
+    fmt.Println(i)  // 10 9 8 ... 1
+}
+
+// Passo diferente de 1
+for i := 0; i <= 100; i += 10 {
+    fmt.Println(i)  // 0 10 20 ... 100
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Escopo da variável de controle
+                           </h4>
+                           <p>
+                              A variável declarada na inicialização do
+                              <code>for</code> existe apenas dentro do laço —
+                              incluindo o corpo e as outras duas expressões. Não
+                              vaza para o escopo externo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">for i := 0; i < 3; i++ {
+    fmt.Println(i)
+}
+// fmt.Println(i)  // ERRO: i não existe aqui
+
+// Se precisar de i após o laço, declare fora
+i := 0
+for ; i < 3; i++ {
+    fmt.Println(i)
+}
+fmt.Println("final:", i)  // 3</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Componentes opcionais
+                           </h4>
+                           <p>
+                              Os três componentes do <code>for</code> clássico
+                              são todos opcionais. Você pode omitir qualquer um
+                              deles — mas os ponto e vírgula permanecem enquanto
+                              houver ao menos um dos outros dois:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem inicialização
+i := 0
+for ; i < 5; i++ {
+    fmt.Println(i)
+}
+
+// Sem pós-instrução
+for i := 0; i < 5; {
+    fmt.Println(i)
+    i++
+}
+
+// Sem inicialização e sem pós-instrução (vira um while — próximo tópico)
+for ; condicao; {
+    // ...
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — for como while
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>for como while</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando você omite a inicialização e a
+                              pós-instrução, o
+                              <code>for</code> se comporta exatamente como um
+                              <code>while</code>
+                              de outras linguagens. Os ponto e vírgula também
+                              podem ser omitidos nesse caso — fica só a
+                              condição:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >for como while</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Equivalente a while (condicao) { ... }
+n := 1
+for n < 100 {
+    n *= 2
+}
+fmt.Println(n)  // 128 — primeiro valor >= 100
+
+// Leitura de input até condição
+scanner := bufio.NewScanner(os.Stdin)
+for scanner.Scan() {
+    linha := scanner.Text()
+    if linha == "sair" {
+        break
+    }
+    fmt.Println("lido:", linha)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar for-while vs for clássico
+                           </h4>
+                           <p>
+                              Use o <code>for</code> clássico (com os três
+                              componentes) quando a iteração é baseada em um
+                              contador com incremento previsível — percorrer
+                              índices de um array, repetir N vezes. Use o
+                              <code>for</code> com apenas condição quando a
+                              iteração depende de um estado que muda de forma
+                              não uniforme — aguardar uma conexão, processar até
+                              EOF, repetir enquanto uma flag for true.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — for infinito
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>for infinito</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um <code>for</code> sem nenhum componente cria um
+                              laço infinito. É a forma idiomática em Go para
+                              servidores, workers e qualquer processo que deve
+                              rodar indefinidamente até ser explicitamente
+                              interrompido:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >for infinito</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">for {
+    // executa para sempre — até break, return ou panic
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Na prática, todo laço infinito tem alguma forma de
+                              saída — um <code>break</code> condicional, um
+                              <code>return</code>, ou um canal de cancelamento
+                              (veremos no Bloco 8 de concorrência). Eis padrões
+                              reais:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrões comuns</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Padrão 1: servidor HTTP (simplificado)
+for {
+    conn, err := listener.Accept()
+    if err != nil {
+        log.Println("erro:", err)
+        continue
+    }
+    go handleConn(conn)
+}
+
+// Padrão 2: loop de retry com limite
+tentativas := 0
+for {
+    err := conectar()
+    if err == nil {
+        break  // sucesso — sai do loop
+    }
+    tentativas++
+    if tentativas >= 3 {
+        log.Fatal("falhou após 3 tentativas")
+    }
+    time.Sleep(time.Second)
+}
+
+// Padrão 3: menu interativo
+for {
+    opcao := lerOpcao()
+    switch opcao {
+    case "1":
+        fazerAlgo()
+    case "sair":
+        return  // return também sai do for
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    for {} é diferente de busy-wait
+                                 </div>
+                                 <div class="callout__body">
+                                    Um laço infinito vazio (<code>for {}</code>)
+                                    consome 100% de um núcleo de CPU — é um
+                                    busy-wait. Em código real, sempre deve haver
+                                    uma operação de bloqueio dentro do laço: uma
+                                    leitura de rede, uma leitura de canal, um
+                                    <code>time.Sleep</code> ou similar. Caso
+                                    contrário, você está desperdiçando CPU.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — range
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>range — iteração idiomática</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A forma <code>for range</code> é a maneira
+                              idiomática de iterar sobre coleções em Go.
+                              Funciona com arrays, slices, maps, strings e
+                              channels. Em cada iteração,
+                              <code>range</code> retorna dois valores: o índice
+                              (ou chave) e o valor do elemento atual.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              range sobre slice e array
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">nums := []int{10, 20, 30, 40}
+
+// Índice e valor
+for i, v := range nums {
+    fmt.Printf("nums[%d] = %d\n", i, v)
+}
+// nums[0] = 10
+// nums[1] = 20
+// nums[2] = 30
+// nums[3] = 40
+
+// Apenas índice (omite o valor)
+for i := range nums {
+    fmt.Println(i)  // 0 1 2 3
+}
+
+// Apenas valor (descarta o índice com _)
+for _, v := range nums {
+    fmt.Println(v)  // 10 20 30 40
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              range sobre map
+                           </h4>
+                           <p>
+                              Ao iterar sobre um map, <code>range</code> retorna
+                              chave e valor. A ordem de iteração é
+                              <strong>não determinística</strong> — não há
+                              garantia de ordem entre execuções:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">capitais := map[string]string{
+    "Brasil":   "Brasília",
+    "França":   "Paris",
+    "Japão":    "Tóquio",
+}
+
+for pais, capital := range capitais {
+    fmt.Printf("%s → %s\n", pais, capital)
+}
+// Ordem pode variar a cada execução — isso é intencional</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              range sobre string — itera por rune, não byte
+                           </h4>
+                           <p>
+                              Ao usar <code>range</code> em uma string, Go itera
+                              sobre os <strong>runes</strong> (caracteres
+                              Unicode), não sobre os bytes. O índice é a posição
+                              em bytes do início do rune, e o valor é o rune em
+                              si. Isso é exatamente o comportamento correto para
+                              texto multilíngue:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := "Olá"
+
+// range itera por rune
+for i, r := range s {
+    fmt.Printf("byte[%d] = %c (%d)\n", i, r, r)
+}
+// byte[0] = O (79)
+// byte[1] = l (108)
+// byte[2] = á (225)   ← índice 2, não 3, pois 'á' ocupa 2 bytes (posições 2 e 3)
+// byte[4] = (97)     ← note: pulou o índice 3
+
+// Compare com indexação direta (itera por byte):
+for i := 0; i < len(s); i++ {
+    fmt.Printf("s[%d] = %d\n", i, s[i])
+}
+// s[0]=79 s[1]=108 s[2]=195 s[3]=161 s[4]=0 ← bytes brutos de 'á' em UTF-8</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Use range para strings — sempre
+                                 </div>
+                                 <div class="callout__body">
+                                    Se você precisa processar os caracteres de
+                                    uma string, use
+                                    <code>range</code>. Ele lida com UTF-8
+                                    corretamente. A indexação direta com
+                                    <code>s[i]</code> opera em bytes — e partir
+                                    um caractere multibyte ao meio produz
+                                    resultados incorretos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              range sobre channel
+                           </h4>
+                           <p>
+                              <code>range</code> também funciona em channels —
+                              itera até o channel ser fechado. Estudaremos
+                              channels em profundidade no Módulo 22; por ora, a
+                              sintaxe:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan int)
+
+go func() {
+    for i := 0; i < 5; i++ {
+        ch <- i
+    }
+    close(ch)  // sem close, o range bloqueia para sempre
+}()
+
+for v := range ch {
+    fmt.Println(v)  // 0 1 2 3 4
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — break e continue
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>break e continue</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>break</code> e
+                              <code>continue</code> controlam o fluxo dentro de
+                              um laço. Ambos afetam o laço mais interno em que
+                              estão — a menos que um label seja usado (próximo
+                              tópico).
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              break — encerra o laço
+                           </h4>
+                           <p>
+                              <code>break</code> termina a execução do laço
+                              imediatamente e passa o controle para a primeira
+                              instrução após o bloco do laço:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Busca linear — para ao encontrar
+nums := []int{3, 7, 2, 9, 4}
+alvo := 9
+encontrado := -1
+
+for i, v := range nums {
+    if v == alvo {
+        encontrado = i
+        break  // para o laço imediatamente
+    }
+}
+
+if encontrado >= 0 {
+    fmt.Printf("encontrado no índice %d\n", encontrado)  // índice 3
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              continue — pula para a próxima iteração
+                           </h4>
+                           <p>
+                              <code>continue</code> interrompe a iteração atual
+                              e avança para a próxima, sem executar o restante
+                              do corpo do laço:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Imprime apenas números pares
+for i := 0; i < 10; i++ {
+    if i%2 != 0 {
+        continue  // pula ímpares
+    }
+    fmt.Println(i)  // 0 2 4 6 8
+}
+
+// Filtra e processa — padrão comum
+for _, linha := range linhas {
+    if strings.HasPrefix(linha, "#") {
+        continue  // ignora comentários
+    }
+    if linha == "" {
+        continue  // ignora linhas vazias
+    }
+    processar(linha)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              break dentro de switch dentro de for
+                           </h4>
+                           <p>
+                              Uma pegadinha importante:
+                              <code>break</code> dentro de um
+                              <code>switch</code> que está dentro de um
+                              <code>for</code> encerra o <code>switch</code>,
+                              <strong>não o for</strong>. Para encerrar o
+                              <code>for</code> de dentro de um
+                              <code>switch</code>, é necessário um label —
+                              próximo tópico.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pegadinha clássica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">for i := 0; i < 5; i++ {
+    switch i {
+    case 3:
+        break  // encerra o switch, NÃO o for
+        // o for continua: i=4 ainda executa
+    }
+    fmt.Println(i)  // imprime 0 1 2 3 4 — o break não encerrou o for
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Labels
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod08-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Labels — controle de laços aninhados</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um <strong>label</strong> é um identificador que
+                              marca um laço (ou <code>switch</code>). Com ele,
+                              <code>break</code> e <code>continue</code> podem
+                              referenciar um laço específico — não apenas o mais
+                              interno. São escritos antes do laço, seguidos de
+                              dois pontos:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >break com label</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Busca em matriz 2D — encerra ambos os laços ao encontrar
+externo:
+for i := 0; i < 3; i++ {
+    for j := 0; j < 3; j++ {
+        if i == 1 && j == 1 {
+            fmt.Printf("encontrado em [%d][%d]\n", i, j)
+            break externo  // encerra o laço marcado como "externo"
+        }
+    }
+}
+// Sem o label, break encerraria apenas o laço interno (j)</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >continue com label</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Pula para a próxima iteração do laço externo
+externo:
+for i := 0; i < 3; i++ {
+    for j := 0; j < 3; j++ {
+        if j == 1 {
+            continue externo  // vai para o próximo i, ignorando j=2
+        }
+        fmt.Printf("[%d,%d] ", i, j)
+    }
+}
+// Saída: [0,0] [1,0] [2,0]
+// (j=1 e j=2 foram pulados em cada iteração de i)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Resolvendo a pegadinha do switch dentro do for
+                           </h4>
+                           <p>
+                              Labels também resolvem o problema do
+                              <code>break</code> dentro de um
+                              <code>switch</code> dentro de um
+                              <code>for</code> que vimos no tópico anterior:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">loop:
+for i := 0; i < 5; i++ {
+    switch i {
+    case 3:
+        break loop  // agora encerra o for, não o switch
+    }
+    fmt.Println(i)  // imprime 0 1 2 — para em 3
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar (e quando não usar) labels
+                           </h4>
+                           <p>
+                              Labels são úteis em dois cenários genuínos:
+                              encerrar laços aninhados ao encontrar um resultado
+                              em uma busca 2D, e sair de um <code>for</code> de
+                              dentro de um <code>switch</code>. Fora disso,
+                              labels frequentemente indicam que a lógica poderia
+                              ser extraída para uma função separada — o que é
+                              quase sempre mais claro.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Labels não são goto
+                                 </div>
+                                 <div class="callout__body">
+                                    Go tem <code>goto</code>, mas ele é
+                                    extremamente raro em código idiomático.
+                                    Labels usados com <code>break</code> e
+                                    <code>continue</code> são diferentes — eles
+                                    só funcionam em laços e switches, seguindo
+                                    um fluxo estruturado. Não é possível usar um
+                                    label para pular para um bloco arbitrário do
+                                    código.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 08
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod08-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'range'. Preste atenção no que range retorna ao iterar sobre uma string — bytes ou runes?"
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é a diferença entre iterar sobre uma string
+                              com
+                              <code>for i := 0; i &lt; len(s); i++</code> e
+                              <code>for i, v := range s</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nenhuma — ambas iteram sobre os mesmos
+                                    elementos na mesma ordem</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >A indexação direta itera sobre bytes
+                                    individuais; <code>range</code> itera sobre
+                                    runes (caracteres Unicode completos),
+                                    avançando corretamente por caracteres
+                                    multibyte</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>range</code> é mais lento pois
+                                    precisa decodificar UTF-8; a indexação
+                                    direta é sempre preferida</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >A indexação direta itera sobre runes;
+                                    <code>range</code> itera sobre bytes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>s[i]</code> retorna um
+                              <code>byte</code> (uint8).
+                              <code>range s</code> retorna um
+                              <code>rune</code> (int32) — o caractere Unicode
+                              completo. Para strings com caracteres multibyte
+                              como <code>"Olá"</code>, a indexação direta pode
+                              partir um caractere ao meio, produzindo valores
+                              incorretos. Use sempre <code>range</code> para
+                              processar caracteres.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod08-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'break e continue' — especificamente a seção sobre break dentro de switch dentro de for."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que o código abaixo imprime?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">for i := 0; i < 4; i++ {
+    switch i {
+    case 2:
+        break
+    }
+    fmt.Println(i)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>0 1</code> — o break encerra o for
+                                    quando i==2</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>0 1 2 3</code> — o break encerra
+                                    apenas o switch; o for continua
+                                    normalmente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>0 1 3</code> — o break pula a
+                                    iteração i==2 mas não encerra o for</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — break não pode ser
+                                    usado dentro de switch que está dentro de
+                                    for</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>break</code> encerra a estrutura
+                              mais interna onde está — neste caso, o
+                              <code>switch</code>. O <code>for</code> continua
+                              executando normalmente. Por isso o
+                              <code>fmt.Println(i)</code> é executado para todos
+                              os valores: 0, 1, 2 e 3. Para encerrar o
+                              <code>for</code>, seria necessário um label:
+                              <code>break loop</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod08-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'range'. Lembre-se do que acontece com a ordem de iteração ao usar range em um map."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um desenvolvedor usa
+                              <code>for k, v := range meuMap</code>
+                              e precisa que os elementos sejam processados em
+                              ordem alfabética das chaves. O que ele deve fazer?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nada — <code>range</code> sobre maps já
+                                    itera em ordem alfabética das chaves por
+                                    padrão</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Usar <code>range sort(meuMap)</code> — Go
+                                    tem uma função built-in para isso</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Extrair as chaves para um slice, ordenar o
+                                    slice com <code>sort.Strings</code>, e então
+                                    iterar sobre o slice para acessar o map em
+                                    ordem</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Usar um map ordenado — Go tem o tipo
+                                    <code>sortedmap</code> na stdlib para esse
+                                    caso</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A iteração sobre maps em Go é
+                              intencionalmente não-determinística — a ordem muda
+                              a cada execução. Para iterar em ordem: extraia as
+                              chaves com <code>for k := range m</code>, ordene
+                              com <code>sort.Strings(chaves)</code>, e acesse o
+                              map com <code>m[chave]</code> dentro do laço
+                              ordenado. Não existe <code>sortedmap</code> na
+                              stdlib.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 08
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod08-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de output</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">for i := 0; i < 5; i++ {
+    if i == 2 {
+        continue
+    }
+    if i == 4 {
+        break
+    }
+    fmt.Println(i)
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span><code>0 1 2 3 4</code></span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span><code>0 1 3 4</code></span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>0 1 3</code> — i==2 é pulado pelo
+                                    continue; i==4 encerra o laço antes do
+                                    Println</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span><code>0 1 2 3</code></span>
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Quando <code>i==2</code>,
+                              <code>continue</code> pula o
+                              <code>Println</code> e vai direto para
+                              <code>i++</code>. Quando <code>i==4</code>,
+                              <code>break</code> encerra o laço antes de chegar
+                              ao <code>Println</code>. Resultado: 0, 1, 3.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod08-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Labels</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo deveria parar toda a iteração ao
+                              encontrar o número 5 na matriz. O que está errado
+                              e como corrigir?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">matriz := [][]int{{1, 2}, {3, 5}, {6, 7}}
+for _, linha := range matriz {
+    for _, v := range linha {
+        if v == 5 {
+            fmt.Println("encontrado!")
+            break  // intenção: parar tudo
+        }
+    }
+}
+fmt.Println("continuou aqui")</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não há erro — o <code>break</code> encerra
+                                    ambos os laços corretamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir <code>break</code> por
+                                    <code>continue</code> para pular ao próximo
+                                    elemento</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >O <code>break</code> encerra apenas o laço
+                                    interno. A correção é adicionar um label no
+                                    laço externo (<code>externo:</code>) e usar
+                                    <code>break externo</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir <code>break</code> por
+                                    <code>return</code> — essa é a única forma
+                                    de sair de laços aninhados em Go</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O <code>break</code> sem label encerra
+                              apenas o laço mais interno — o laço externo
+                              continua. A solução com label: marcar o laço
+                              externo com <code>externo:</code> e usar
+                              <code>break externo</code> dentro do laço interno.
+                              Alternativamente, extrair a lógica para uma função
+                              e usar <code>return</code>
+                              é geralmente mais claro em código real.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

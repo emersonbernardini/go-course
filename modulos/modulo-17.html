@@ -1,0 +1,1607 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Interfaces em Go: implementação implícita, interface vazia, type assertion, type switch e filosofia de interfaces pequenas."
+      />
+      <title>Módulo 17 — Interfaces · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="17">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 5 — Tipos Compostos e Abstração
+                        </div>
+                        <h1 class="module-header__title">Interfaces</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 17</span>
+                           <span class="badge badge-default">7 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é uma interface
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é uma interface</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma interface em Go é um
+                              <strong>conjunto de assinaturas de métodos</strong
+                              >. Qualquer tipo que implemente todos esses
+                              métodos satisfaz a interface — automaticamente,
+                              sem declarar isso explicitamente. Não existe a
+                              palavra-chave <code>implements</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >definição básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Uma interface define o que um tipo consegue fazer — não o que ele é
+type Stringer interface {
+    String() string
+}
+
+// Qualquer tipo com o método String() string satisfaz Stringer
+type Produto struct {
+    Nome  string
+    Preco float64
+}
+
+func (p Produto) String() string {
+    return fmt.Sprintf("%s — R$ %.2f", p.Nome, p.Preco)
+}
+
+// Produto satisfaz Stringer sem declarar isso em nenhum lugar
+var s Stringer = Produto{Nome: "Teclado", Preco: 299.90}
+fmt.Println(s.String())  // Teclado — R$ 299.90</code></pre>
+                           </div>
+
+                           <p>
+                              Interfaces separam <em>o que</em> algo faz de
+                              <em>como</em> faz. Uma função que recebe uma
+                              interface não precisa saber qual tipo concreto
+                              está por trás — só precisa saber que o tipo tem os
+                              métodos exigidos. Isso é o que permite substituir
+                              implementações sem alterar o código que as usa.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >separação de responsabilidades</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Notificador interface {
+    Notificar(destinatario, mensagem string) error
+}
+
+// A função não sabe se está enviando e-mail, SMS ou push notification
+func enviarAlerta(n Notificador, usuario, msg string) error {
+    return n.Notificar(usuario, msg)
+}
+
+// Qualquer tipo com Notificar(...) funciona aqui
+enviarAlerta(emailService, "ana@exemplo.com", "Sua senha foi alterada")
+enviarAlerta(smsService,   "11999998888",    "Sua senha foi alterada")</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Interface vs herança
+                                 </div>
+                                 <div class="callout__body">
+                                    Go não tem herança. Interfaces são o
+                                    mecanismo de polimorfismo da linguagem. Em
+                                    vez de perguntar "de que tipo esse objeto
+                                    herda?", Go pergunta "quais métodos esse
+                                    tipo tem?". Isso resulta em acoplamento
+                                    menor e composição mais flexível.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Implementação implícita
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Implementação implícita</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, um tipo satisfaz uma interface quando
+                              possui todos os métodos que ela exige. Não há
+                              declaração de intenção — nenhum
+                              <code>implements</code>, nenhum
+                              <code>extends</code>. O compilador verifica isso
+                              em tempo de compilação.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >implementação sem declaração
+                                    explícita</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Animal interface {
+    Som() string
+    Nome() string
+}
+
+type Cachorro struct{ nome string }
+
+func (c Cachorro) Som() string  { return "Au" }
+func (c Cachorro) Nome() string { return c.nome }
+
+type Gato struct{ nome string }
+
+func (g Gato) Som() string  { return "Miau" }
+func (g Gato) Nome() string { return g.nome }
+
+// Cachorro e Gato satisfazem Animal sem nunca mencionar Animal
+func apresentar(a Animal) {
+    fmt.Printf("%s faz: %s\n", a.Nome(), a.Som())
+}
+
+apresentar(Cachorro{nome: "Rex"})   // Rex faz: Au
+apresentar(Gato{nome: "Whiskers"})  // Whiskers faz: Miau</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Satisfação parcial não é satisfação
+                           </h4>
+                           <p>
+                              Um tipo precisa implementar <em>todos</em> os
+                              métodos da interface. Implementar apenas parte
+                              deles causa erro de compilação ao tentar usar o
+                              tipo como a interface:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Peixe struct{}
+
+func (p Peixe) Som() string { return "..." }
+// Peixe não tem o método Nome() string
+
+var a Animal = Peixe{}
+// ERRO: cannot use Peixe as type Animal in assignment:
+//       Peixe does not implement Animal (missing Nome method)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Verificação de implementação em tempo de
+                              compilação
+                           </h4>
+                           <p>
+                              Uma convenção idiomática em Go é declarar
+                              explicitamente que um tipo satisfaz uma interface
+                              — não para o runtime, mas para o compilador
+                              verificar e emitir um erro descritivo se a
+                              implementação estiver incompleta:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >compile-time check</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Garante em tempo de compilação que *EmailService implementa Notificador
+// Se um método estiver faltando, o erro aparece aqui — não no ponto de uso
+var _ Notificador = (*EmailService)(nil)
+
+// O padrão: atribuir nil convertido para o tipo concreto à variável em branco (_)
+// Zero custo em runtime — o compilador descarta a atribuição</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que implementação implícita?
+                                 </div>
+                                 <div class="callout__body">
+                                    Permite que um tipo satisfaça interfaces
+                                    definidas <em>depois</em> que ele foi
+                                    escrito — inclusive interfaces de pacotes
+                                    que nem existiam quando o tipo foi criado. É
+                                    por isso que <code>fmt.Println</code> chama
+                                    automaticamente o método
+                                    <code>String()</code> de qualquer tipo que o
+                                    implemente: <code>fmt.Stringer</code> foi
+                                    definida no pacote <code>fmt</code>, mas
+                                    qualquer tipo do seu código pode
+                                    satisfazê-la.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Interface vazia (any / interface{})
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Interface vazia (any / interface{})</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma interface sem métodos é satisfeita por
+                              <em>qualquer</em> tipo — afinal, todo tipo
+                              implementa zero métodos. Em Go 1.18+,
+                              <code>any</code> é o alias oficial para
+                              <code>interface{}</code>. Os dois são idênticos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >any aceita qualquer valor</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var v any
+
+v = 42
+v = "olá"
+v = true
+v = []int{1, 2, 3}
+v = struct{ X int }{X: 99}
+
+// Todos os assignments acima são válidos
+// any é o tipo "qualquer coisa" de Go</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Onde any aparece na prática
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// fmt.Println aceita qualquer coisa porque usa ...any
+func Println(a ...any) (n int, err error)
+
+// map com valores de tipos mistos
+config := map[string]any{
+    "porta":   8080,
+    "debug":   true,
+    "nome":    "gomonitor",
+    "timeout": 30.0,
+}
+
+// JSON desserializado sem struct conhecido
+var dados map[string]any
+json.Unmarshal(jsonBytes, &dados)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    any remove a proteção do compilador
+                                 </div>
+                                 <div class="callout__body">
+                                    Ao usar <code>any</code>, você abre mão da
+                                    verificação de tipos em tempo de compilação.
+                                    O erro se move para runtime. Use
+                                    <code>any</code> quando o tipo é
+                                    genuinamente desconhecido em tempo de
+                                    compilação (JSON arbitrário, dados de
+                                    reflexão). Para casos onde os tipos são
+                                    conhecidos mas variados, prefira generics
+                                    (módulo 31) ou interfaces com métodos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Type assertion
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Type assertion</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma interface armazena dois campos internos: o
+                              tipo concreto e o valor.
+                              <strong>Type assertion</strong> extrai o valor
+                              concreto de dentro da interface — afirmando ao
+                              compilador "eu sei que o valor por trás dessa
+                              interface é deste tipo".
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var v any = "olá, Go"
+
+// Forma sem verificação — panic se o tipo estiver errado
+s := v.(string)
+fmt.Println(s)       // olá, Go
+fmt.Println(len(s))  // 8
+
+// Tentativa errada — causa panic em runtime
+n := v.(int)  // panic: interface conversion: interface {} is string, not int</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Forma segura: comma ok
+                           </h4>
+                           <p>
+                              Para evitar panic, use a forma de dois valores. Se
+                              a asserção falhar,
+                              <code>ok</code> é <code>false</code> e
+                              <code>v</code> recebe o zero value do tipo — sem
+                              panic:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var i any = "texto"
+
+// Forma segura — nunca causa panic
+s, ok := i.(string)
+if ok {
+    fmt.Println("é string:", s)  // é string: texto
+}
+
+n, ok := i.(int)
+if !ok {
+    fmt.Println("não é int")     // não é int
+    fmt.Println(n)               // 0 — zero value de int
+}
+
+// Padrão idiomático: verificar e usar no mesmo bloco
+if s, ok := i.(string); ok {
+    fmt.Println(strings.ToUpper(s))
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Type assertion em interface para interface
+                           </h4>
+                           <p>
+                              Type assertion também funciona entre interfaces —
+                              para verificar se o tipo concreto por trás de uma
+                              interface satisfaz outra interface:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Leitor interface {
+    Ler() string
+}
+
+type LeitorEscritor interface {
+    Leitor
+    Escrever(s string)
+}
+
+var l Leitor = obterLeitor()
+
+// Verificar se o tipo concreto também implementa LeitorEscritor
+if le, ok := l.(LeitorEscritor); ok {
+    le.Escrever("dados")
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Type switch
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Type switch</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando você precisa verificar vários tipos
+                              possíveis, encadear type assertions com
+                              <code>if/else</code> fica verboso. O
+                              <strong>type switch</strong> resolve isso de forma
+                              idiomática:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >type switch</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func descrever(v any) string {
+    switch t := v.(type) {  // t recebe o valor já convertido para o tipo correto
+    case string:
+        return fmt.Sprintf("string com %d caracteres", len(t))
+    case int:
+        return fmt.Sprintf("inteiro: %d", t)
+    case bool:
+        if t {
+            return "booleano verdadeiro"
+        }
+        return "booleano falso"
+    case []int:
+        return fmt.Sprintf("slice de int com %d elementos", len(t))
+    case nil:
+        return "nil"
+    default:
+        return fmt.Sprintf("tipo desconhecido: %T", v)
+    }
+}
+
+fmt.Println(descrever("Go"))        // string com 2 caracteres
+fmt.Println(descrever(42))          // inteiro: 42
+fmt.Println(descrever([]int{1,2}))  // slice de int com 2 elementos
+fmt.Println(descrever(nil))         // nil</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Múltiplos tipos no mesmo case
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func eNumero(v any) bool {
+    switch v.(type) {
+    case int, int8, int16, int32, int64,
+         uint, uint8, uint16, uint32, uint64,
+         float32, float64:
+        return true
+    default:
+        return false
+    }
+}
+
+// Nota: quando há múltiplos tipos no mesmo case,
+// a variável t não pode ser usada — o tipo seria ambíguo</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">%T no fmt</div>
+                                 <div class="callout__body">
+                                    O verbo <code>%T</code> do pacote
+                                    <code>fmt</code> imprime o tipo de qualquer
+                                    valor em tempo de execução — útil para
+                                    debugging.
+                                    <code>fmt.Sprintf("%T", v)</code> retorna
+                                    uma string como
+                                    <code>"main.Produto"</code> ou
+                                    <code>"[]int"</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Interfaces pequenas (filosofia Go)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Interfaces pequenas (filosofia Go)</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A maior parte das interfaces da stdlib de Go tem
+                              um ou dois métodos. Essa não é coincidência — é
+                              filosofia. Rob Pike resumiu:
+                              <em
+                                 >"The bigger the interface, the weaker the
+                                 abstraction."</em
+                              >
+                              Interfaces grandes exigem mais do implementador e
+                              acoplam mais. Interfaces de um método são quase
+                              universalmente satisfazíveis.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >interfaces de um método da stdlib</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// io.Reader — lê bytes
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+// io.Writer — escreve bytes
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+// io.Closer — libera recurso
+type Closer interface {
+    Close() error
+}
+
+// fmt.Stringer — representa como string
+type Stringer interface {
+    String() string
+}
+
+// error — a interface mais usada de Go
+type error interface {
+    Error() string
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Composição de interfaces
+                           </h4>
+                           <p>
+                              Interfaces maiores são construídas pela composição
+                              de interfaces menores — não redefinindo tudo do
+                              zero:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// io.ReadWriter = Reader + Writer
+type ReadWriter interface {
+    Reader
+    Writer
+}
+
+// io.ReadWriteCloser = Reader + Writer + Closer
+type ReadWriteCloser interface {
+    Reader
+    Writer
+    Closer
+}
+
+// O mesmo padrão para interfaces do seu código:
+type Storage interface {
+    Salvar(r Resultado)
+    Buscar(id string) (Resultado, bool)
+}
+
+// Interfaces separadas com responsabilidades únicas:
+type Salvador interface {
+    Salvar(r Resultado)
+}
+
+type Buscador interface {
+    Buscar(id string) (Resultado, bool)
+}
+
+// Funções que só precisam salvar recebem Salvador — não Storage inteiro
+// Isso facilita testes: o mock só precisa implementar Salvar</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Defina interfaces onde são usadas, não onde
+                                    são implementadas
+                                 </div>
+                                 <div class="callout__body">
+                                    Em Go, a convenção é declarar a interface no
+                                    pacote que a
+                                    <em>consome</em> — não no pacote que a
+                                    implementa. O pacote
+                                    <code>checker</code> define a interface
+                                    <code>Checker</code>
+                                    que ele mesmo usa. Quem quiser fornecer uma
+                                    implementação apenas implementa os métodos.
+                                    Isso inverte a dependência: o consumidor
+                                    define o contrato, o fornecedor o respeita.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 7 — Erros comuns com interfaces
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod17-t07">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Erros comuns com interfaces</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Interfaces em Go têm dois comportamentos que
+                              surpreendem quem vem de outras linguagens.
+                              Entendê-los evita bugs difíceis de diagnosticar.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              1 — Interface nil vs nil concreto
+                           </h4>
+                           <p>
+                              Uma variável de interface tem dois campos
+                              internos: tipo e valor. Uma interface é
+                              <code>nil</code> apenas quando <em>ambos</em> são
+                              nil. Se o campo tipo for preenchido, a interface
+                              não é nil — mesmo que o valor seja nil:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >armadilha clássica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type MeuErro struct{ msg string }
+
+func (e *MeuErro) Error() string { return e.msg }
+
+func podeFalhar(falhar bool) error {
+    var err *MeuErro  // nil do tipo *MeuErro
+
+    if falhar {
+        err = &MeuErro{msg: "algo falhou"}
+    }
+
+    return err  // ⚠️ retorna interface com tipo=*MeuErro, valor=nil
+}
+
+err := podeFalhar(false)
+if err != nil {
+    fmt.Println("erro:", err)  // ← esta linha executa! err não é nil
+}
+// Por quê? A interface retornada tem tipo=*MeuErro, valor=nil
+// Tipo preenchido = interface não nil</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >correção</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Correto: retornar nil da interface, não nil do tipo concreto
+func podeFalhar(falhar bool) error {
+    if falhar {
+        return &MeuErro{msg: "algo falhou"}
+    }
+    return nil  // nil de interface — ambos os campos nil
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              2 — Receiver por valor não satisfaz interface com
+                              receiver por ponteiro
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Incrementador interface {
+    Incrementar()
+}
+
+type Contador struct{ n int }
+
+// Receiver por PONTEIRO — modifica o estado
+func (c *Contador) Incrementar() { c.n++ }
+
+var i Incrementador
+
+i = &Contador{}  // ✓ ponteiro satisfaz a interface
+i = Contador{}   // ✗ ERRO: Contador does not implement Incrementador
+                 //   (Incrementar method has pointer receiver)
+
+// Por quê? Go pode pegar o endereço de *Contador para chamar o método,
+// mas não pode garantir endereçabilidade de um valor em todos os contextos</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Receiver definido em
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Valor satisfaz interface?
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Ponteiro satisfaz interface?
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          func (c Contador)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          ✓ Sim
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          ✓ Sim
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          func (c *Contador)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          ✗ Não
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          ✓ Sim
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não crie interfaces antecipadamente
+                                 </div>
+                                 <div class="callout__body">
+                                    Um erro comum vindo de outras linguagens é
+                                    definir interfaces antes de ter duas
+                                    implementações concretas. Em Go, o padrão é
+                                    o oposto: escreva o tipo concreto primeiro.
+                                    Quando uma segunda implementação for
+                                    necessária — ou quando um teste exigir um
+                                    mock — extraia a interface nesse momento.
+                                    Interfaces prematuras criam acoplamento
+                                    desnecessário e abstrações que nunca se
+                                    justificam.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 17
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod17-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Implementação implícita'. Em Go, a satisfação de interface não é declarada — o compilador a verifica automaticamente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">O código abaixo compila?</p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Voador interface {
+    Voar() string
+}
+
+type Aviao struct{}
+func (a Aviao) Voar() string { return "vroom" }
+
+type Passaro struct{}
+func (p Passaro) Voar() string  { return "flap" }
+func (p Passaro) Cantar() string { return "piu" }
+
+func decolar(v Voador) {
+    fmt.Println(v.Voar())
+}
+
+func main() {
+    decolar(Aviao{})
+    decolar(Passaro{})
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Não — <code>Passaro</code> tem métodos a
+                                    mais que <code>Voador</code> não define, o
+                                    que causa erro</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Sim — tanto <code>Aviao</code> quanto
+                                    <code>Passaro</code> implementam
+                                    <code>Voar() string</code> e satisfazem
+                                    <code>Voador</code>; métodos adicionais não
+                                    impedem a satisfação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Não — é preciso declarar
+                                    <code>type Passaro implements Voador</code>
+                                    explicitamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Não — uma interface só pode ser satisfeita
+                                    por um tipo por vez</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Em Go, um tipo satisfaz uma interface
+                              quando tem
+                              <em>ao menos</em> os métodos que ela exige. Ter
+                              métodos adicionais é permitido — e comum.
+                              <code>Passaro</code> tem <code>Voar()</code> e
+                              <code>Cantar()</code>; como <code>Voador</code> só
+                              exige <code>Voar()</code>, <code>Passaro</code> a
+                              satisfaz sem problemas.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod17-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Interface nil vs nil concreto'. Lembre-se que uma interface tem dois campos internos: tipo e valor."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Falha struct{}
+func (f *Falha) Error() string { return "falha" }
+
+func gerarErro(retornar bool) error {
+    var f *Falha
+    if retornar {
+        f = &Falha{}
+    }
+    return f
+}
+
+func main() {
+    err := gerarErro(false)
+    if err != nil {
+        fmt.Println("tem erro")
+    } else {
+        fmt.Println("sem erro")
+    }
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>sem erro</code> — <code>f</code> é
+                                    nil, então a interface retornada também é
+                                    nil</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>tem erro</code> — a interface
+                                    retornada tem tipo=<code>*Falha</code> e
+                                    valor=nil; como o campo tipo está
+                                    preenchido, a interface não é nil</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Panic — comparar interface nil com
+                                    <code>nil</code> causa erro em runtime</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — não é possível
+                                    retornar <code>*Falha</code> onde
+                                    <code>error</code> é esperado sem conversão
+                                    explícita</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Esta é a armadilha mais clássica de
+                              interfaces em Go. A função retorna
+                              <code>f</code> (um <code>*Falha</code> nil)
+                              convertido para <code>error</code>. A interface
+                              resultante tem <code>tipo=*Falha</code> e
+                              <code>valor=nil</code>. Como o campo tipo não é
+                              nil, a interface inteira não é nil — e o
+                              <code>if err != nil</code> é verdadeiro. A
+                              correção é retornar <code>nil</code> diretamente,
+                              não uma variável tipada nil.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod17-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Type assertion'. Preste atenção na diferença entre a forma com e sem verificação de segurança."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece ao executar o código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var v any = 42
+
+s, ok := v.(string)
+fmt.Println(s, ok)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Panic — <code>v</code> é <code>int</code>,
+                                    não <code>string</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — type assertion requer
+                                    que o tipo seja conhecido em tempo de
+                                    compilação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Imprime <code> false</code> — a forma com
+                                    dois valores nunca causa panic;
+                                    <code>s</code> recebe o zero value de
+                                    <code>string</code> (string vazia) e
+                                    <code>ok</code> é <code>false</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Imprime <code>42 false</code> —
+                                    <code>s</code> recebe o valor original
+                                    convertido</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A forma com dois valores (<code
+                                 >s, ok := v.(string)</code
+                              >) nunca causa panic. Quando o tipo não
+                              corresponde, <code>ok</code> é
+                              <code>false</code> e <code>s</code> recebe o zero
+                              value de <code>string</code> — que é a string
+                              vazia <code>""</code>. O output é uma linha em
+                              branco seguida de <code>false</code>. Use sempre
+                              esta forma quando não tiver certeza do tipo
+                              concreto.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 17
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod17-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Identificar satisfação de
+                              interface</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Dado o código abaixo, quais tipos satisfazem a
+                              interface <code>Formatador</code>?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Formatador interface {
+    Formatar() string
+}
+
+type A struct{}
+func (a A) Formatar() string { return "A" }
+
+type B struct{}
+func (b *B) Formatar() string { return "B" }
+
+type C struct{}
+func (c C) Formatar() string   { return "C" }
+func (c C) Validar() bool      { return true }
+
+type D struct{}
+func (d D) formatar() string { return "D" }  // minúsculo</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Apenas <code>A</code> — os outros têm
+                                    divergências que impedem a satisfação</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>A</code>, <code>B</code> e
+                                    <code>C</code> — todos têm um método chamado
+                                    <code>Formatar</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>A</code> (valor e ponteiro),
+                                    <code>*B</code> (apenas ponteiro) e
+                                    <code>C</code> (valor e ponteiro) —
+                                    <code>D</code> não satisfaz porque o método
+                                    é não-exportado (<code>formatar</code> com
+                                    minúsculo)</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>A</code>, <code>*B</code>,
+                                    <code>C</code> e <code>D</code> — todos têm
+                                    alguma variação de
+                                    <code>Formatar</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>A</code> tem receiver por valor —
+                              satisfeito por valor e ponteiro.
+                              <code>*B</code> tem receiver por ponteiro —
+                              satisfeito apenas por ponteiro (<code>B{}</code>
+                              não satisfaz, mas <code>&amp;B{}</code> satisfaz).
+                              <code>C</code> tem receiver por valor e métodos
+                              extras — eles não impedem a satisfação.
+                              <code>D</code> tem <code>formatar</code> com letra
+                              minúscula — é um método não-exportado, invisível
+                              fora do pacote, e não conta como implementação de
+                              <code>Formatar</code> (F maiúsculo).
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod17-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Type switch</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função recebe <code>any</code> e deve retornar
+                              o dobro do valor para tipos numéricos, o texto em
+                              maiúsculas para strings, e
+                              <code>"tipo não suportado"</code> para qualquer
+                              outro tipo. Qual implementação está correta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span>
+                                    <code
+                                       >switch v.(type) { case int: return v * 2
+                                       }</code
+                                    >
+                                    — usar o valor sem a variável nomeada do
+                                    type switch
+                                 </span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span>
+                                    <code
+                                       >switch t := v.(type) { case int: return
+                                       t * 2; case float64: return t * 2; case
+                                       string: return strings.ToUpper(t);
+                                       default: return "tipo não suportado"
+                                       }</code
+                                    >
+                                    — a variável <code>t</code> já tem o tipo
+                                    correto em cada case
+                                 </span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span>
+                                    <code
+                                       >switch v.(type) { case int, float64:
+                                       return v.(int) * 2 }</code
+                                    >
+                                    — agrupar int e float64 no mesmo case e
+                                    fazer assertion manual
+                                 </span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span>
+                                    Usar
+                                    <code>if v.(int) != nil</code> encadeado
+                                    para cada tipo
+                                 </span>
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A forma
+                              <code>switch t := v.(type)</code> é a idiomática:
+                              a variável <code>t</code> já carrega o valor
+                              convertido para o tipo do case atual — sem
+                              precisar fazer type assertion manual dentro do
+                              case. A opção de agrupar <code>int</code> e
+                              <code>float64</code>
+                              no mesmo case não funciona para operações
+                              aritméticas porque
+                              <code>t</code> ficaria com tipo ambíguo e não
+                              poderia ser multiplicado. Cada tipo numérico
+                              precisa do seu próprio case.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Condicionais em Go: if, else if, else, if com inicialização e switch com expression switch, type switch e fallthrough."
+      />
+      <title>Módulo 07 — Condicionais · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="07">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 2 — Controle de Fluxo
+                        </div>
+                        <h1 class="module-header__title">Condicionais</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 07</span>
+                           <span class="badge badge-default">3 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — if / else if / else
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod07-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>if / else if / else</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O <code>if</code> avalia uma expressão booleana e
+                              executa um bloco de código se ela for
+                              <code>true</code>. Em Go, a condição não precisa
+                              de parênteses — mas as chaves são
+                              <strong>obrigatórias</strong>, mesmo para blocos
+                              de uma única linha.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">idade := 20
+
+if idade >= 18 {
+    fmt.Println("maior de idade")
+}
+
+// Com else
+if idade >= 18 {
+    fmt.Println("maior de idade")
+} else {
+    fmt.Println("menor de idade")
+}
+
+// Com else if
+if idade < 13 {
+    fmt.Println("criança")
+} else if idade < 18 {
+    fmt.Println("adolescente")
+} else {
+    fmt.Println("adulto")
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Sem parênteses na condição
+                           </h4>
+                           <p>
+                              Em C, Java e muitas outras linguagens, os
+                              parênteses em torno da condição do
+                              <code>if</code> são obrigatórios. Em Go, são
+                              proibidos pelo <code>gofmt</code> — ele os remove
+                              automaticamente se você os escrever. A condição é
+                              uma expressão booleana simples, sem delimitadores:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ Correto — sem parênteses
+if x > 0 {
+    fmt.Println("positivo")
+}
+
+// ✗ Estilo errado — gofmt remove os parênteses
+if (x > 0) {
+    fmt.Println("positivo")
+}
+
+// ✗ Erro de compilação — chaves obrigatórias mesmo com uma linha
+if x > 0
+    fmt.Println("positivo")  // syntax error</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Go não converte outros tipos para bool
+                           </h4>
+                           <p>
+                              Já mencionamos no módulo de tipos, mas vale
+                              reforçar aqui: a condição do <code>if</code> deve
+                              ser uma expressão
+                              <strong>estritamente booleana</strong>. Em C,
+                              <code>if (1)</code> ou <code>if (ptr)</code> são
+                              idiomas comuns. Em Go, isso não compila.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">n := 1
+ptr := &n
+
+// ✗ ERRO — int não é bool
+if n {
+    fmt.Println("não funciona")
+}
+
+// ✗ ERRO — ponteiro não é bool
+if ptr {
+    fmt.Println("não funciona")
+}
+
+// ✓ Correto — expressão booleana explícita
+if n != 0 {
+    fmt.Println("n é diferente de zero")
+}
+
+if ptr != nil {
+    fmt.Println("ptr não é nil")
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    else fica na mesma linha que }
+                                 </div>
+                                 <div class="callout__body">
+                                    Pelo mesmo motivo da chave de abertura —
+                                    inserção automática de ponto e vírgula — o
+                                    <code>else</code> deve ficar na mesma linha
+                                    que o <code>}</code> do bloco anterior. Se
+                                    você colocar o <code>else</code> na linha
+                                    seguinte, o compilador insere
+                                    <code>;</code> após <code>}</code> e o
+                                    <code>else</code>
+                                    fica inesperado — erro de sintaxe.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — if com inicialização
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod07-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>if com inicialização</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem uma forma especial de <code>if</code> que
+                              permite executar uma instrução de inicialização
+                              antes de avaliar a condição. A instrução e a
+                              condição são separadas por ponto e vírgula:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">if instrução; condição {
+    // bloco
+}</code></pre>
+                           </div>
+
+                           <p>
+                              O uso mais comum é capturar o retorno de uma
+                              função e verificar o erro na mesma expressão:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrão idiomático</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem inicialização — verboso
+arquivo, err := os.Open("dados.txt")
+if err != nil {
+    log.Fatal(err)
+}
+_ = arquivo
+
+// Com inicialização — idiomático em Go
+if arquivo, err := os.Open("dados.txt"); err != nil {
+    log.Fatal(err)
+} else {
+    fmt.Println("arquivo aberto:", arquivo.Name())
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Escopo da variável inicializada
+                           </h4>
+                           <p>
+                              A variável declarada na inicialização existe
+                              apenas dentro do bloco do <code>if</code> —
+                              incluindo os blocos <code>else if</code> e
+                              <code>else</code>. Ela não vaza para o escopo
+                              externo. Isso é precisamente o ponto: limitar a
+                              variável ao contexto onde ela faz sentido.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >escopo da inicialização</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">if val, err := strconv.Atoi("42"); err != nil {
+    fmt.Println("erro:", err)
+} else {
+    fmt.Println("valor:", val)  // val existe aqui
+}
+
+// fmt.Println(val)  // ERRO: val não existe fora do if</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar vs quando evitar
+                           </h4>
+                           <p>
+                              Use o <code>if</code> com inicialização quando a
+                              variável declarada só faz sentido dentro do bloco
+                              condicional — isso mantém o escopo enxuto e a
+                              intenção clara. Evite quando você precisar da
+                              variável após o bloco — nesse caso, declare-a
+                              antes.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >quando evitar</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Precisa de arquivo após o if — declare fora
+arquivo, err := os.Open("dados.txt")
+if err != nil {
+    log.Fatal(err)
+}
+defer arquivo.Close()  // arquivo é necessário aqui fora
+processar(arquivo)</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — switch
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod07-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>switch</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O <code>switch</code> em Go é mais poderoso e mais
+                              seguro que em C. A diferença fundamental: em Go,
+                              cada <code>case</code>
+                              <strong
+                                 >não cai no próximo automaticamente</strong
+                              >
+                              (<em>no fallthrough by default</em>). Não é
+                              necessário escrever <code>break</code> — ele está
+                              implícito.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Expression switch — o mais comum
+                           </h4>
+                           <p>
+                              Compara uma expressão com valores em cada
+                              <code>case</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >expression switch</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">diaSemana := "segunda"
+
+switch diaSemana {
+case "segunda", "terca", "quarta", "quinta", "sexta":
+    fmt.Println("dia útil")
+case "sabado", "domingo":
+    fmt.Println("fim de semana")
+default:
+    fmt.Println("dia inválido")
+}
+
+// switch com expressão numérica
+nota := 8
+
+switch {
+case nota >= 9:
+    fmt.Println("A")
+case nota >= 7:
+    fmt.Println("B")
+case nota >= 5:
+    fmt.Println("C")
+default:
+    fmt.Println("F")
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    switch sem expressão
+                                 </div>
+                                 <div class="callout__body">
+                                    Quando <code>switch</code> não tem expressão
+                                    (como o segundo exemplo acima), cada
+                                    <code>case</code> é avaliado como uma
+                                    condição booleana independente. Isso é
+                                    equivalente a uma cadeia de
+                                    <code>if / else if</code>, mas mais legível
+                                    quando há muitos casos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              switch com inicialização
+                           </h4>
+                           <p>
+                              Assim como o <code>if</code>, o
+                              <code>switch</code> aceita uma instrução de
+                              inicialização antes da expressão:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">switch os := runtime.GOOS; os {
+case "linux":
+    fmt.Println("Linux")
+case "darwin":
+    fmt.Println("macOS")
+case "windows":
+    fmt.Println("Windows")
+default:
+    fmt.Printf("outro: %s\n", os)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              fallthrough — quando você quer cair no próximo
+                           </h4>
+                           <p>
+                              Se você explicitamente quer que a execução
+                              continue no próximo
+                              <code>case</code>, use <code>fallthrough</code>.
+                              Ele força a execução do bloco seguinte
+                              incondicionalmente — sem verificar a condição do
+                              próximo <code>case</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >fallthrough</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">n := 1
+
+switch n {
+case 1:
+    fmt.Println("um")
+    fallthrough  // executa o próximo caso incondicionalmente
+case 2:
+    fmt.Println("dois")
+case 3:
+    fmt.Println("três")
+}
+
+// Saída:
+// um
+// dois    ← executado por causa do fallthrough, mesmo n não sendo 2</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    fallthrough é raro e deve ser explícito
+                                 </div>
+                                 <div class="callout__body">
+                                    Em C, esquecer o <code>break</code> é um bug
+                                    comum e silencioso. Em Go, o fallthrough é
+                                    opt-in — você escreve explicitamente quando
+                                    quer esse comportamento. Na prática, é
+                                    raramente necessário. Se você se encontrar
+                                    usando <code>fallthrough</code> com
+                                    frequência, considere reestruturar a lógica.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Type switch — switch sobre tipos
+                           </h4>
+                           <p>
+                              O <em>type switch</em> é uma forma especial que
+                              verifica o <strong>tipo dinâmico</strong> de um
+                              valor em vez do seu valor. É fundamental ao
+                              trabalhar com interfaces — especialmente
+                              <code>interface{}</code> (ou <code>any</code>),
+                              que pode conter qualquer tipo. Estudaremos
+                              interfaces em profundidade no Módulo 17; por ora,
+                              veja a sintaxe e o uso:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >type switch</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func descrever(i interface{}) {
+    switch v := i.(type) {
+    case int:
+        fmt.Printf("inteiro: %d\n", v)
+    case string:
+        fmt.Printf("string: %q (len=%d)\n", v, len(v))
+    case bool:
+        fmt.Printf("bool: %t\n", v)
+    case []int:
+        fmt.Printf("slice de int com %d elementos\n", len(v))
+    default:
+        fmt.Printf("tipo desconhecido: %T\n", v)
+    }
+}
+
+descrever(42)           // inteiro: 42
+descrever("olá")        // string: "olá" (len=3)
+descrever(true)         // bool: true
+descrever([]int{1,2,3}) // slice de int com 3 elementos</code></pre>
+                           </div>
+
+                           <p>
+                              Note a sintaxe especial: <code>i.(type)</code> só
+                              é válida dentro de um <code>switch</code>. A
+                              variável <code>v</code> recebe o valor com o tipo
+                              correto em cada <code>case</code> — dentro do
+                              <code>case int</code>, <code>v</code> já é um
+                              <code>int</code>, não um <code>interface{}</code>.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              if vs switch — quando usar cada um
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Situação
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Preferir
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          1 ou 2 condições simples
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          if / else
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          3 ou mais valores discretos da mesma
+                                          variável
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          switch
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Condições com intervalos ou expressões
+                                          complexas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          switch sem expressão
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Verificar tipo dinâmico de interface
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          type switch
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 07
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod07-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'if com inicialização'. Preste atenção em onde a variável declarada na inicialização pode ser acessada."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece com a variável
+                              <code>err</code> após o bloco <code>if</code> no
+                              código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">if val, err := strconv.Atoi("abc"); err != nil {
+    fmt.Println("erro:", err)
+}
+fmt.Println(val) // ?</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Compila normalmente —
+                                    <code>val</code> existe no escopo da função
+                                    após o <code>if</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — <code>val</code> foi
+                                    declarada na inicialização do
+                                    <code>if</code> e só existe dentro do bloco;
+                                    fora dele é indefinida</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Compila, mas <code>val</code> tem valor
+                                    zero (<code>0</code>) fora do bloco</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Comportamento indefinido — depende do
+                                    compilador</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Variáveis declaradas na instrução de
+                              inicialização do
+                              <code>if</code> existem apenas dentro do bloco
+                              daquele <code>if</code> (incluindo os
+                              <code>else if</code> e
+                              <code>else</code> encadeados). Fora do bloco, o
+                              compilador não as enxerga — erro de compilação.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod07-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'switch'. Lembre-se da diferença fundamental do switch de Go em relação ao de C no comportamento padrão entre cases."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">x := 2
+switch x {
+case 1:
+    fmt.Println("um")
+case 2:
+    fmt.Println("dois")
+case 3:
+    fmt.Println("três")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>dois</code> seguido de
+                                    <code>três</code> — em Go o switch cai no
+                                    próximo case por padrão</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Apenas <code>dois</code> — em Go cada case
+                                    termina automaticamente; não há fallthrough
+                                    implícito</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — o switch precisa de
+                                    <code>break</code> ao final de cada
+                                    case</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>dois</code> seguido de
+                                    <code>três</code> apenas se não houver
+                                    <code>break</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Em Go, o <code>break</code> é implícito
+                              em cada <code>case</code>. A execução para
+                              automaticamente ao final do bloco — sem cair no
+                              próximo. Para comportamento oposto, use
+                              <code>fallthrough</code> explicitamente.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod07-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'switch' — a seção sobre fallthrough. Lembre-se de que fallthrough executa o próximo bloco independentemente de qualquer condição."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">n := 1
+switch n {
+case 1:
+    fmt.Println("um")
+    fallthrough
+case 2:
+    fmt.Println("dois")
+    fallthrough
+case 3:
+    fmt.Println("três")
+case 4:
+    fmt.Println("quatro")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Apenas <code>um</code> — fallthrough só
+                                    funciona se o próximo case também for
+                                    verdadeiro</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>um</code>, <code>dois</code>,
+                                    <code>três</code> e <code>quatro</code> —
+                                    fallthrough percorre todos os cases
+                                    restantes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>um</code>, <code>dois</code> e
+                                    <code>três</code> — fallthrough encadeia até
+                                    o primeiro case sem fallthrough</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — não é permitido usar
+                                    fallthrough em dois cases consecutivos</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>fallthrough</code> executa o
+                              bloco imediatamente seguinte de forma
+                              incondicional. Como <code>case 1</code> e
+                              <code>case 2</code> têm <code>fallthrough</code>,
+                              a execução percorre <code>um → dois → três</code>.
+                              O <code>case 3</code> não tem
+                              <code>fallthrough</code>, então a execução para
+                              ali — <code>quatro</code> não é impresso.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 07
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod07-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de código</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo tem um erro de compilação. Qual é
+                              o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    x := 5
+    if x {
+        fmt.Println("x é verdadeiro")
+    }
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A variável <code>x</code> deveria ser
+                                    declarada com <code>var</code>, não com
+                                    <code>:=</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >A condição do <code>if</code> é
+                                    <code>x</code> (um <code>int</code>), mas Go
+                                    exige uma expressão estritamente booleana —
+                                    inteiros não são convertidos automaticamente
+                                    para <code>bool</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Falta o <code>else</code> — o
+                                    <code>if</code> em Go exige um bloco
+                                    <code>else</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O problema são os parênteses ausentes:
+                                    deveria ser <code>if (x)</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Go não faz conversão implícita de tipos
+                              para
+                              <code>bool</code>. O compilador rejeita
+                              <code>if x</code> com "non-boolean condition in if
+                              statement". A correção é <code>if x != 0</code> —
+                              explícito e claro.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod07-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Escolha de estrutura</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função recebe um código HTTP
+                              (<code>int</code>) e deve retornar uma descrição
+                              em string. Os casos são: 200 → "OK", 301 → "Moved
+                              Permanently", 404 → "Not Found", 500 → "Internal
+                              Server Error", qualquer outro → "Unknown". Qual
+                              estrutura é mais adequada?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Uma cadeia de
+                                    <code>if / else if / else</code> — mais
+                                    legível para comparações numéricas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Um <code>switch</code> com um
+                                    <code>case</code> por código — mais legível
+                                    com múltiplos valores discretos da mesma
+                                    variável, e sem necessidade de
+                                    <code>break</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Um <code>switch</code> sem expressão, com
+                                    condições booleanas em cada
+                                    <code>case</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Um type switch — apropriado pois os códigos
+                                    são de tipos diferentes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Quando há múltiplos valores discretos
+                              da mesma variável,
+                              <code>switch</code> é mais legível que uma cadeia
+                              de <code>if/else if</code>. O type switch não se
+                              aplica aqui — todos os códigos são
+                              <code>int</code>. O switch sem expressão seria
+                              desnecessariamente verboso para comparações de
+                              igualdade simples.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

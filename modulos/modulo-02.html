@@ -1,0 +1,1615 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Configure seu ambiente Go do zero: instalação, GOPATH, GOROOT, go env e seu primeiro programa."
+      />
+      <title>Módulo 02 — Ambiente de desenvolvimento · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <!-- Header e Sidebar injetados pelo app.js -->
+
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="02">
+                  <div class="content-body">
+                     <!-- CABEÇALHO DO MÓDULO -->
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 0 — Fundação
+                        </div>
+                        <h1 class="module-header__title">
+                           Ambiente de desenvolvimento
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 02</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <!-- PROGRESSO DO MÓDULO -->
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Como Go funciona: compilador e toolchain
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod02-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Como Go funciona: compilador e toolchain</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Antes de instalar qualquer coisa, é importante
+                              entender o que acontece nos bastidores quando você
+                              executa um programa Go. Esse entendimento vai
+                              clarear muito do que veremos ao longo do curso.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O caminho do código até a execução
+                           </h4>
+                           <p>
+                              Quando você escreve um programa Go e o executa, o
+                              seguinte acontece:
+                           </p>
+
+                           <ol>
+                              <li>
+                                 <strong>Você escreve</strong> código-fonte em
+                                 arquivos <code>.go</code>
+                              </li>
+                              <li>
+                                 <strong>O compilador Go</strong> lê esses
+                                 arquivos, verifica tipos, resolve importações e
+                                 gera código de máquina
+                              </li>
+                              <li>
+                                 <strong>O linker</strong> junta tudo em um
+                                 único binário executável
+                              </li>
+                              <li>
+                                 <strong>O binário</strong> roda diretamente no
+                                 sistema operacional, sem intermediários
+                              </li>
+                           </ol>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >fluxo simplificado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>codigo.go  →  compilador Go  →  código de máquina  →  binário executável
+                              (verifica tipos,        (instrução nativas
+                               resolve imports)        do sistema)</code></pre>
+                           </div>
+
+                           <p>
+                              Diferente de Python (que interpreta linha a linha)
+                              ou Java (que compila para bytecode e roda na JVM),
+                              Go compila direto para o hardware. Não existe
+                              nenhuma camada intermediária em tempo de execução.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O que é o toolchain
+                           </h4>
+                           <p>
+                              Quando você instala Go, você não instala apenas um
+                              compilador. Você instala o
+                              <strong>toolchain</strong> — um conjunto completo
+                              de ferramentas oficiais que vivem sob o comando
+                              <code>go</code>:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Comando
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          O que faz
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go build
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Compila e gera o binário executável
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go run
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Compila e executa em um único passo
+                                          (sem gerar arquivo)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go test
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Executa os testes do projeto
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go fmt
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Formata o código seguindo o estilo
+                                          padrão Go
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go vet
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Analisa o código em busca de erros
+                                          comuns
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go mod
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Gerencia o módulo e as dependências
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go get
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Baixa e instala dependências externas
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go doc
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Exibe a documentação de pacotes e
+                                          símbolos
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    go run vs go build
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>go run</code> é conveniente para
+                                    experimentação — compila e executa
+                                    imediatamente, mas não grava o binário em
+                                    disco. <code>go build</code>
+                                    gera o executável final que você distribui.
+                                    Durante o curso, usaremos
+                                    <code>go run</code> para testar exemplos
+                                    rapidamente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Instalação do Go
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod02-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Instalação do Go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go é distribuído oficialmente pelo Google em
+                              <strong>go.dev/dl</strong>. Sempre baixe
+                              diretamente da fonte oficial — evite versões de
+                              repositórios de sistema operacional que podem
+                              estar desatualizadas.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Linux
+                           </h4>
+                           <p>
+                              O método recomendado no Linux é extrair o tarball
+                              diretamente em
+                              <code>/usr/local</code>. Isso garante que o Go
+                              fique isolado do restante do sistema e seja fácil
+                              de atualizar ou remover.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >Linux (x86-64)</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># 1. Baixe o tarball da versão mais recente em go.dev/dl
+#    Substitua X.XX.X pela versão atual (ex: 1.23.0)
+wget https://go.dev/dl/goX.XX.X.linux-amd64.tar.gz
+
+# 2. Remove instalação anterior (se existir) e extrai a nova
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf goX.XX.X.linux-amd64.tar.gz
+
+# 3. Adicione ao PATH no seu shell config (~/.bashrc, ~/.zshrc, ~/.config/fish/config.fish)
+export PATH=$PATH:/usr/local/go/bin
+
+# 4. Recarregue o shell e confirme
+go version</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              macOS
+                           </h4>
+                           <p>
+                              No macOS você tem duas opções equivalentes: o
+                              instalador <code>.pkg</code>
+                              (que configura o PATH automaticamente) ou via
+                              Homebrew.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename">macOS</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Opção A: instalador oficial
+# Baixe o .pkg em go.dev/dl e execute — o PATH é configurado automaticamente
+
+# Opção B: Homebrew
+brew install go
+
+# Confirme a instalação
+go version</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Windows
+                           </h4>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >Windows</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Opção A: instalador oficial
+# Baixe o .msi em go.dev/dl e execute — o PATH é configurado automaticamente
+
+# Opção B: winget
+winget install GoLang.Go
+
+# Confirme no PowerShell ou CMD
+go version</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Verificando a instalação
+                           </h4>
+                           <p>
+                              Em qualquer sistema, após instalar, abra um novo
+                              terminal e execute:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >verificação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>go version
+# Saída esperada (versão pode variar):
+# go version go1.23.0 linux/amd64</code></pre>
+                           </div>
+
+                           <p>
+                              Se o comando for reconhecido e exibir a versão, a
+                              instalação está correta. Se receber "command not
+                              found", o problema é no PATH — o diretório
+                              <code>/usr/local/go/bin</code> (Linux/macOS) ou o
+                              equivalente no Windows não está na variável de
+                              ambiente.
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Abra um novo terminal após instalar
+                                 </div>
+                                 <div class="callout__body">
+                                    Alterações no PATH só têm efeito em
+                                    terminais abertos <em>após</em> a mudança.
+                                    Se você editou o arquivo de configuração do
+                                    shell, feche e reabra o terminal — ou
+                                    execute <code>source ~/.bashrc</code>
+                                    (ou equivalente) para recarregar sem fechar.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — GOPATH e GOROOT
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod02-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>GOPATH e GOROOT</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Duas variáveis de ambiente causam muita confusão
+                              em quem está começando:
+                              <code>GOROOT</code> e <code>GOPATH</code>. Elas
+                              têm propósitos completamente diferentes e é
+                              importante entender cada uma.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              GOROOT — onde o Go está instalado
+                           </h4>
+                           <p>
+                              <code>GOROOT</code> aponta para o diretório onde o
+                              toolchain Go foi instalado. É onde ficam o
+                              compilador, as ferramentas e a biblioteca padrão.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>go env GOROOT
+# Exemplo de saída:
+# /usr/local/go
+
+# Estrutura interna do GOROOT:
+# /usr/local/go/
+# ├── bin/        ← executáveis: go, gofmt
+# ├── src/        ← código-fonte da stdlib
+# ├── pkg/        ← pacotes pré-compilados da stdlib
+# └── doc/        ← documentação</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Você não precisa configurar GOROOT
+                                 </div>
+                                 <div class="callout__body">
+                                    O Go define
+                                    <code>GOROOT</code> automaticamente com base
+                                    em onde ele foi instalado. Você só
+                                    precisaria alterá-lo manualmente em casos
+                                    muito específicos de instalações
+                                    customizadas — o que não é o caso para
+                                    desenvolvimento normal.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              GOPATH — seu espaço de trabalho
+                           </h4>
+                           <p>
+                              <code>GOPATH</code> aponta para o seu espaço de
+                              trabalho pessoal — o lugar onde Go armazena
+                              pacotes baixados, binários instalados via
+                              <code>go install</code>, e o cache de módulos.
+                           </p>
+                           <p>
+                              Por padrão, o valor é <code>$HOME/go</code> no
+                              Linux/macOS e <code>%USERPROFILE%\go</code> no
+                              Windows. Você raramente precisa alterá-lo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>go env GOPATH
+# Exemplo de saída:
+# /home/usuario/go
+
+# Estrutura interna do GOPATH:
+# ~/go/
+# ├── bin/        ← binários instalados com go install
+# ├── pkg/        ← cache de módulos compilados
+# └── src/        ← usado antes dos Go Modules (pré Go 1.11, hoje obsoleto)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              A confusão histórica do GOPATH
+                           </h4>
+                           <p>
+                              Antes do Go 1.11 (2018), todo código Go
+                              <em>obrigatoriamente</em> precisava ficar dentro
+                              do <code>GOPATH/src</code>. Isso causava muita
+                              fricção e era amplamente criticado. Com a
+                              introdução dos <strong>Go Modules</strong> no Go
+                              1.11, essa restrição foi eliminada.
+                           </p>
+                           <p>
+                              Hoje você pode criar projetos Go em
+                              <strong>qualquer diretório do sistema</strong>. O
+                              <code>GOPATH</code> continua existindo, mas apenas
+                              para armazenar binários instalados e o cache de
+                              módulos — não mais o seu código-fonte.
+                           </p>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Resumo prático
+                                 </div>
+                                 <div class="callout__body">
+                                    Não se preocupe com <code>GOROOT</code> nem
+                                    <code>GOPATH</code> no dia a dia. Crie seus
+                                    projetos onde quiser, inicialize com
+                                    <code>go mod init</code>, e o Go cuida do
+                                    resto. Estudaremos Go Modules em detalhes no
+                                    Módulo 20.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — go env
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod02-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Inspecionando o ambiente: go env</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O comando <code>go env</code> é sua janela para o
+                              ambiente de configuração do Go. Ele exibe todas as
+                              variáveis que controlam o comportamento do
+                              toolchain. É o primeiro lugar a olhar quando algo
+                              não está funcionando como esperado.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >go env — saída típica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>go env
+
+# Saída (trecho das variáveis mais importantes):
+GOROOT='/usr/local/go'
+GOPATH='/home/usuario/go'
+GOMODCACHE='/home/usuario/go/pkg/mod'
+GOOS='linux'
+GOARCH='amd64'
+GOBIN=''
+CGO_ENABLED='1'
+GOVERSION='go1.23.0'</code></pre>
+                           </div>
+
+                           <p>Conheça as variáveis mais importantes:</p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              GOOS e GOARCH — compilação cruzada
+                           </h4>
+                           <p>
+                              <code>GOOS</code> define o sistema operacional
+                              alvo da compilação e <code>GOARCH</code> define a
+                              arquitetura de processador. Esses dois juntos são
+                              o que torna a
+                              <strong>compilação cruzada</strong>
+                              (<em>cross-compilation</em>) em Go trivial.
+                           </p>
+                           <p>
+                              Compilação cruzada significa compilar para um
+                              sistema diferente do que você está usando. Em Go,
+                              isso funciona nativamente sem instalar nada extra:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >compilação cruzada</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Compilar para Windows a partir do Linux:
+GOOS=windows GOARCH=amd64 go build -o programa.exe main.go
+
+# Compilar para macOS a partir do Linux:
+GOOS=darwin GOARCH=arm64 go build -o programa-mac main.go
+
+# Compilar para Linux ARM (Raspberry Pi) a partir de qualquer sistema:
+GOOS=linux GOARCH=arm64 go build -o programa-pi main.go</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que isso é raro em outras linguagens
+                                 </div>
+                                 <div class="callout__body">
+                                    Em C/C++, compilar para outra plataforma
+                                    exige instalar um cross-compiler específico
+                                    — uma tarefa não trivial. Em Go, toda a
+                                    stdlib foi escrita para suportar compilação
+                                    cruzada nativamente. Isso é possível porque
+                                    Go não depende de bibliotecas do sistema
+                                    para funcionalidades básicas.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              GOBIN — onde ficam os binários instalados
+                           </h4>
+                           <p>
+                              Quando você roda <code>go install</code>, o
+                              binário gerado vai para <code>GOBIN</code>. Se
+                              <code>GOBIN</code> estiver vazio, o Go usa
+                              <code>GOPATH/bin</code>. Para que esses binários
+                              sejam acessíveis no terminal, esse diretório
+                              precisa estar no seu <code>PATH</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >adicionando GOPATH/bin ao PATH</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Adicione ao seu shell config:
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# Ou de forma explícita:
+export PATH=$PATH:$HOME/go/bin</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Consultando uma variável específica
+                           </h4>
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Exibe apenas uma variável
+go env GOPATH
+go env GOOS
+go env GOARCH
+
+# Exibe múltiplas variáveis
+go env GOOS GOARCH GOVERSION</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Primeiro programa: Hello, World
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod02-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Seu primeiro programa: Hello, World</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Chegou a hora de escrever código. Vamos criar o
+                              programa mais simples possível em Go — e entender
+                              cada linha dele com precisão. Não existe nenhuma
+                              linha desnecessária aqui.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Criando o projeto
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >terminal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Crie um diretório para o projeto
+mkdir hello-go
+cd hello-go
+
+# Inicialize o módulo Go (estudaremos isso a fundo no Módulo 20)
+go mod init hello-go
+
+# Crie o arquivo principal
+touch main.go</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O código
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Agora vamos dissecar cada linha, sem pular nada:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Linha 1: <code>package main</code>
+                           </h4>
+                           <p>
+                              Todo arquivo Go começa com uma declaração de
+                              pacote. <code>package main</code> é especial:
+                              indica que este arquivo faz parte do pacote
+                              executável. Em Go,
+                              <strong
+                                 >apenas pacotes chamados
+                                 <code>main</code> geram binários
+                                 executáveis</strong
+                              >. Qualquer outro nome de pacote gera uma
+                              biblioteca — código que pode ser importado, mas
+                              não executado diretamente.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Linha 3: <code>import "fmt"</code>
+                           </h4>
+                           <p>
+                              <code>import</code> inclui outros pacotes no
+                              arquivo. <code>fmt</code> (abreviação de
+                              <em>format</em>) é um pacote da biblioteca padrão
+                              que oferece funções de formatação e saída de texto
+                              — entre elas, <code>Println</code>.
+                           </p>
+                           <p>
+                              Uma característica importante do Go:
+                              <strong
+                                 >importações não usadas são erro de
+                                 compilação</strong
+                              >. Se você importar <code>fmt</code> mas não usar
+                              nenhuma de suas funções, o compilador recusa
+                              compilar. Isso evita código morto acumulando ao
+                              longo do tempo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >erro — importação não utilizada</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt" // ERRO: importado mas não utilizado
+
+func main() {
+    // fmt não é usado em lugar nenhum
+}
+
+// Erro de compilação:
+// ./main.go:3:8: "fmt" imported and not used</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Linha 5: <code>func main()</code>
+                           </h4>
+                           <p>
+                              <code>func</code> é a palavra-chave para declarar
+                              uma função. <code>main</code> é o nome especial
+                              que o compilador procura como
+                              <strong>ponto de entrada do programa</strong> — é
+                              a primeira função que executa quando você roda o
+                              binário. Todo programa executável em Go deve ter
+                              exatamente uma função <code>main</code> no pacote
+                              <code>main</code>.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Linha 6: <code>fmt.Println("Hello, World!")</code>
+                           </h4>
+                           <p>
+                              Chama a função <code>Println</code> do pacote
+                              <code>fmt</code>. O ponto (<code>.</code>) é o
+                              separador entre pacote e função.
+                              <code>Println</code> imprime o texto seguido de
+                              uma quebra de linha (<em>print line</em>). As
+                              aspas duplas delimitam uma
+                              <em>string literal</em> — uma sequência de texto.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Executando o programa
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >terminal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Modo rápido: compila e executa sem gerar arquivo
+go run main.go
+# Saída: Hello, World!
+
+# Modo produção: gera o binário e executa separadamente
+go build -o hello main.go
+./hello
+# Saída: Hello, World!</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Variáveis declaradas e não usadas também são
+                                    erro
+                                 </div>
+                                 <div class="callout__body">
+                                    Assim como importações, Go não compila se
+                                    você declarar uma variável e não a usar.
+                                    Essa regra, junto com as importações
+                                    obrigatórias, elimina código morto por
+                                    design. Veremos isso em detalhes no Módulo
+                                    04.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O que <code>go mod init</code> criou
+                           </h4>
+                           <p>
+                              Quando você rodou
+                              <code>go mod init hello-go</code>, o Go criou um
+                              arquivo <code>go.mod</code> no diretório. Ele
+                              identifica o módulo e declara a versão mínima do
+                              Go necessária:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >go.mod</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>module hello-go
+
+go 1.23</code></pre>
+                           </div>
+
+                           <p>
+                              Por enquanto não se preocupe com os detalhes desse
+                              arquivo — o Módulo 20 cobre Go Modules
+                              completamente. O que importa agora:
+                              <strong
+                                 >todo projeto Go moderno começa com
+                                 <code>go mod init</code></strong
+                              >.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 02
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod02-q01"
+                        data-feedback-wrong="✗ Não exatamente. Reveja o tópico 'Como Go funciona'. A diferença entre go run e go build está em gerar ou não o binário em disco — ambos compilam o código."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é a diferença principal entre
+                              <code>go run</code> e <code>go build</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>go run</code> interpreta o código sem
+                                    compilar;
+                                    <code>go build</code> compila</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>go run</code> compila e executa sem
+                                    gravar o binário em disco;
+                                    <code>go build</code> compila e grava o
+                                    binário executável</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>go run</code> é mais rápido porque
+                                    não verifica tipos;
+                                    <code>go build</code> faz verificação
+                                    completa</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>go run</code> só funciona com um
+                                    único arquivo;
+                                    <code>go build</code> funciona com projetos
+                                    inteiros</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Ambos compilam o código com a mesma
+                              verificação completa de tipos. A diferença é que
+                              <code>go run</code> descarta o binário após
+                              executar — ideal para experimentação.
+                              <code>go build</code> grava o binário em disco
+                              para distribuição ou uso posterior.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod02-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'GOPATH e GOROOT'. As duas variáveis têm propósitos distintos: uma aponta para a instalação do Go, outra para o espaço de trabalho do usuário."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que diferencia <code>GOROOT</code> de
+                              <code>GOPATH</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >São sinônimos — ambas apontam para o
+                                    diretório de instalação do Go</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>GOROOT</code> é para Linux e
+                                    <code>GOPATH</code> é para Windows</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>GOROOT</code> é onde o toolchain Go
+                                    está instalado (compilador, stdlib);
+                                    <code>GOPATH</code> é o espaço de trabalho
+                                    do usuário (binários instalados, cache de
+                                    módulos)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>GOROOT</code> precisa ser configurado
+                                    manualmente; <code>GOPATH</code> é
+                                    automático</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>GOROOT</code> = instalação do Go
+                              (você não mexe). <code>GOPATH</code> = seu espaço
+                              de trabalho pessoal, padrão em <code>~/go</code>.
+                              Com Go Modules, você raramente precisará pensar em
+                              nenhuma das duas no dia a dia.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod02-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Seu primeiro programa'. Preste atenção no que cada declaração da linha 1 significa e o que ela determina sobre o arquivo."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que todo programa executável em Go deve
+                              começar com
+                              <code>package main</code> e ter uma função
+                              <code>main()</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >É apenas uma convenção de estilo — qualquer
+                                    nome de pacote funcionaria para programas
+                                    executáveis</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>package main</code> instrui o
+                                    compilador a otimizar o código para execução
+                                    mais rápida</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>package main</code> sinaliza ao
+                                    compilador que deve gerar um binário
+                                    executável (não uma biblioteca), e
+                                    <code>func main()</code> é o ponto de
+                                    entrada — a primeira função que
+                                    executa</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O nome <code>main</code> é obrigatório
+                                    apenas no Windows — em outros sistemas
+                                    qualquer nome funciona</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O compilador Go usa
+                              <code>package main</code> como sinal para produzir
+                              um executável. Sem ele, o resultado é uma
+                              biblioteca — código que pode ser importado, mas
+                              não executado diretamente. A função
+                              <code>main()</code> dentro desse pacote é o ponto
+                              de entrada obrigatório.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 02
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod02-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de código</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo tem um erro que impede a
+                              compilação. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    fmt.Println("Olá, Go!")
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A função <code>main()</code> não pode usar
+                                    <code>fmt.Println</code> — deveria usar
+                                    <code>print()</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Falta o ponto-e-vírgula ao final de
+                                    <code>fmt.Println("Olá, Go!")</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >O pacote <code>"os"</code> foi importado
+                                    mas não é utilizado em lugar nenhum — Go não
+                                    compila com importações não usadas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O <code>package main</code> deveria ser
+                                    <code>package programa</code> para programas
+                                    com nome personalizado</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Exato! Go trata importações não utilizadas como
+                              erro de compilação, não como aviso. A solução é
+                              remover <code>"os"</code> do import ou, se
+                              precisar importar sem usar (raro), usar o blank
+                              identifier: <code>import _ "os"</code>. No dia a
+                              dia, simplesmente remova o que não usa.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod02-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Compilação cruzada</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um desenvolvedor está no Linux e precisa
+                              distribuir seu programa para usuários Windows
+                              (64-bit). Qual comando gera o executável correto?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >go build -platform windows/amd64 -o
+                                       programa.exe main.go</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code
+                                       >GOOS=windows GOARCH=amd64 go build -o
+                                       programa.exe main.go</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >go build --target=windows --arch=64 -o
+                                       programa.exe main.go</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não é possível — é necessário compilar no
+                                    Windows para gerar um executável
+                                    Windows</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A compilação cruzada em Go se faz
+                              definindo as variáveis de ambiente
+                              <code>GOOS</code> e <code>GOARCH</code> antes do
+                              comando <code>go build</code>. Não é necessária
+                              nenhuma ferramenta adicional — o suporte é nativo
+                              ao toolchain.
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- NAVEGAÇÃO ENTRE MÓDULOS -->
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

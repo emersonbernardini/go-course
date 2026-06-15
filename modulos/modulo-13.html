@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Funções avançadas em Go: closures, variádicas, defer, panic, recover e init."
+      />
+      <title>Módulo 13 — Funções: avançado · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="13">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 4 — Funções
+                        </div>
+                        <h1 class="module-header__title">Funções — avançado</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 13</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Closures
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod13-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Closures</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma closure é uma função que
+                              <strong
+                                 >captura variáveis do escopo em que foi
+                                 definida</strong
+                              >
+                              — mesmo após esse escopo ter encerrado. A função
+                              "fecha sobre" as variáveis externas, mantendo uma
+                              referência viva a elas.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >closure básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func contador() func() int {
+    n := 0  // variável capturada pela closure
+    return func() int {
+        n++
+        return n
+    }
+}
+
+c := contador()
+fmt.Println(c())  // 1
+fmt.Println(c())  // 2
+fmt.Println(c())  // 3
+
+// Cada chamada a contador() cria uma closure independente
+c2 := contador()
+fmt.Println(c2()) // 1 — estado próprio, independente de c</code></pre>
+                           </div>
+
+                           <p>
+                              <code>n</code> é uma variável local de
+                              <code>contador()</code>. Normalmente seria
+                              descartada quando <code>contador()</code> retorna.
+                              Mas como a função retornada a referencia, Go move
+                              <code>n</code>
+                              para o heap — ela sobrevive enquanto a closure
+                              existir.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Closures compartilham a mesma variável
+                           </h4>
+                           <p>
+                              Múltiplas closures criadas no mesmo escopo
+                              compartilham a mesma variável — não cópias dela:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func criarPar() (func(), func() int) {
+    n := 0
+    incrementar := func() { n++ }
+    ler := func() int { return n }
+    return incrementar, ler  // ambas capturam o mesmo n
+}
+
+inc, ler := criarPar()
+inc()
+inc()
+fmt.Println(ler())  // 2 — ambas operam sobre o mesmo n</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha clássico: closure em loop
+                           </h4>
+                           <p>
+                              Em Go antes de 1.22, todas as closures criadas em
+                              um loop capturavam a <em>mesma</em> variável de
+                              iteração — não uma cópia por iteração. O resultado
+                              clássico:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Go < 1.22: bug clássico
+funcs := make([]func(), 3)
+for i := 0; i < 3; i++ {
+    funcs[i] = func() { fmt.Println(i) }
+}
+funcs[0]()  // 3 — não 0!
+funcs[1]()  // 3
+funcs[2]()  // 3  — todas capturam o i final do loop
+
+// Correção (necessária em Go < 1.22): captura explícita
+for i := 0; i < 3; i++ {
+    i := i  // nova variável i local a esta iteração
+    funcs[i] = func() { fmt.Println(i) }
+}
+
+// Go >= 1.22: cada iteração tem sua própria variável — bug resolvido por padrão</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Casos de uso reais
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Middleware HTTP — injeta dependência via closure
+func comAutenticacao(db *DB, handler http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if !db.ValidarToken(r.Header.Get("Authorization")) {
+            http.Error(w, "não autorizado", 401)
+            return
+        }
+        handler(w, r)
+    }
+}
+
+// Memoização — cache de resultados via closure
+func memoizar(f func(int) int) func(int) int {
+    cache := make(map[int]int)
+    return func(n int) int {
+        if v, ok := cache[n]; ok {
+            return v
+        }
+        v := f(n)
+        cache[n] = v
+        return v
+    }
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Funções variádicas
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod13-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Funções variádicas</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma função variádica aceita um número variável de
+                              argumentos do mesmo tipo. O último parâmetro
+                              recebe <code>...</code> antes do tipo — dentro da
+                              função ele é tratado como um slice:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func somar(nums ...int) int {
+    total := 0
+    for _, n := range nums {  // nums é []int dentro da função
+        total += n
+    }
+    return total
+}
+
+fmt.Println(somar())           // 0   — zero argumentos é válido
+fmt.Println(somar(1, 2, 3))    // 6
+fmt.Println(somar(1, 2, 3, 4, 5)) // 15</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Expandindo um slice com ...
+                           </h4>
+                           <p>
+                              Para passar um slice existente a uma função
+                              variádica, use <code>...</code> ao passar o
+                              argumento:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">nums := []int{1, 2, 3, 4, 5}
+
+somar(nums...)      // ✓ expande o slice como argumentos individuais
+// somar(nums)      // ✗ ERRO: []int não é int</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Parâmetros fixos e variádicos
+                           </h4>
+                           <p>
+                              O parâmetro variádico deve ser o último. Os demais
+                              são fixos e normais:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func logar(nivel string, msgs ...string) {
+    for _, msg := range msgs {
+        fmt.Printf("[%s] %s\n", nivel, msg)
+    }
+}
+
+logar("INFO", "servidor iniciado", "porta 8080")
+logar("ERRO", "conexão recusada")</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    fmt.Println é variádica
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>fmt.Println(a, b, c)</code> funciona
+                                    porque <code>Println</code> é declarada como
+                                    <code
+                                       >func Println(a ...any) (n int, err
+                                       error)</code
+                                    >. O <code>any</code> (alias de
+                                    <code>interface{}</code>) aceita qualquer
+                                    tipo.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — defer
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod13-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>defer</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>defer</code> adia a execução de uma
+                              instrução para o momento em que a função que a
+                              contém retorna — seja por
+                              <code>return</code> normal, <code>panic</code> ou
+                              qualquer outro caminho de saída. Os argumentos são
+                              avaliados <strong>imediatamente</strong>, mas a
+                              execução é adiada.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >uso básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func lerArquivo(nome string) error {
+    f, err := os.Open(nome)
+    if err != nil {
+        return err
+    }
+    defer f.Close()  // garante fechamento independente do caminho de retorno
+
+    // ... lê o arquivo
+    return nil
+}
+// f.Close() é chamado aqui — após o return</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Múltiplos defers: ordem LIFO
+                           </h4>
+                           <p>
+                              Quando há múltiplos <code>defer</code>s na mesma
+                              função, eles executam em ordem
+                              <strong>LIFO</strong> (last in, first out) — o
+                              último defer registrado executa primeiro:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func exemplo() {
+    defer fmt.Println("terceiro")  // registrado primeiro, executa por último
+    defer fmt.Println("segundo")
+    defer fmt.Println("primeiro")  // registrado por último, executa primeiro
+    fmt.Println("corpo da função")
+}
+
+// Saída:
+// corpo da função
+// primeiro
+// segundo
+// terceiro</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Argumentos avaliados imediatamente
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+defer fmt.Println("valor de x:", x)  // x=10 capturado agora
+x = 20
+// Saída: "valor de x: 10" — não 20
+
+// Para capturar o valor final, use uma closure
+defer func() { fmt.Println("valor de x:", x) }()
+x = 20
+// Saída: "valor de x: 20" — closure lê x no momento da execução</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              defer com retornos nomeados
+                           </h4>
+                           <p>
+                              <code>defer</code> com uma closure pode modificar
+                              retornos nomeados após o <code>return</code> —
+                              útil para wrapping de erros:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func consultar(id int) (resultado string, err error) {
+    defer func() {
+        if err != nil {
+            // envolve o erro com contexto após o return
+            err = fmt.Errorf("consultar(%d): %w", id, err)
+        }
+    }()
+
+    resultado, err = db.Buscar(id)
+    return  // defer executa aqui, modificando err se necessário
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    defer em loop tem custo
+                                 </div>
+                                 <div class="callout__body">
+                                    Cada <code>defer</code> tem um custo de
+                                    alocação pequeno. Em loops com milhões de
+                                    iterações, registrar um defer por iteração
+                                    pode ser significativo. Se precisar de
+                                    cleanup dentro de um loop, extraia o corpo
+                                    para uma função separada com o defer, ou
+                                    gerencie o recurso manualmente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — panic e recover
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod13-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>panic e recover</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>panic</code> interrompe a execução normal do
+                              programa. O stack é desempilhado, os defers são
+                              executados, e o programa termina com mensagem de
+                              erro e stack trace — a menos que um
+                              <code>recover</code> intercepte o panic.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              panic
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func dividir(a, b int) int {
+    if b == 0 {
+        panic("divisão por zero")  // aceita qualquer valor
+    }
+    return a / b
+}
+
+// Panics gerados automaticamente pelo runtime:
+var s []int
+_ = s[0]           // index out of range
+var m map[string]int
+m["x"] = 1         // assignment to entry in nil map
+var p *int
+_ = *p             // nil pointer dereference</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              recover — interceptando panics
+                           </h4>
+                           <p>
+                              <code>recover</code> só funciona dentro de um
+                              <code>defer</code>. Ele captura o valor passado ao
+                              <code>panic</code> e interrompe o desempilhamento
+                              — a função que chamou <code>recover</code>
+                              retorna normalmente (com zero values), mas a
+                              função que causou o panic não continua:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func seguro(f func()) (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = fmt.Errorf("panic recuperado: %v", r)
+        }
+    }()
+    f()
+    return nil
+}
+
+err := seguro(func() {
+    panic("algo deu muito errado")
+})
+
+fmt.Println(err)  // panic recuperado: algo deu muito errado
+// programa continua normalmente</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar panic vs error
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Situação
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Erro esperado, recuperável (arquivo
+                                          não encontrado, input inválido)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          error
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Violação de invariante do programa
+                                          (bug, estado impossível)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          panic
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Inicialização falhou e o programa não
+                                          pode continuar
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          panic ou log.Fatal
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Servidor web precisa isolar panics de
+                                          goroutines individuais
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-warning);
+                                          "
+                                       >
+                                          recover em middleware
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não use panic para controle de fluxo normal
+                                 </div>
+                                 <div class="callout__body">
+                                    Em Go, erros esperados são retornados como
+                                    valores — não lançados como exceções.
+                                    <code>panic</code> é para situações
+                                    verdadeiramente excepcionais. Usar
+                                    panic/recover como substituto de try/catch é
+                                    considerado antipadrão.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — init()
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod13-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>init()</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>init()</code> é uma função especial chamada
+                              automaticamente pelo runtime antes de
+                              <code>main()</code>. Não pode ser invocada
+                              diretamente, não aceita parâmetros e não retorna
+                              valores. Um arquivo pode ter múltiplas
+                              <code>init()</code>s; um pacote pode ter
+                              <code>init()</code>s em múltiplos arquivos.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ordem de execução
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ordem garantida</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Para cada pacote (na ordem de dependência):
+// 1. Variáveis de pacote são inicializadas
+// 2. init() é chamada (pode haver várias, na ordem de aparição)
+// 3. Após todos os pacotes: main() é chamada
+
+var conexao = conectarDB()  // 1. variáveis de pacote
+
+func init() {               // 2. init
+    validarConexao(conexao)
+}
+
+func main() {               // 3. main
+    // conexao já está válida aqui
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Casos de uso legítimos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Registrar drivers de banco de dados (padrão da stdlib)
+import _ "github.com/lib/pq"  // init() de pq registra o driver PostgreSQL
+
+// 2. Validar configurações obrigatórias na inicialização
+func init() {
+    if os.Getenv("API_KEY") == "" {
+        log.Fatal("API_KEY não configurada")
+    }
+}
+
+// 3. Inicializar tabelas de lookup que exigem lógica
+var tabela [256]byte
+
+func init() {
+    for i := range tabela {
+        tabela[i] = byte(i * 2 % 256)
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    init() dificulta testabilidade
+                                 </div>
+                                 <div class="callout__body">
+                                    Código em <code>init()</code> executa
+                                    automaticamente ao importar o pacote —
+                                    inclusive nos testes. Efeitos colaterais em
+                                    <code>init()</code> (conexões de rede,
+                                    leitura de arquivos, variáveis globais
+                                    mutáveis) tornam os testes frágeis e
+                                    difíceis de isolar. Prefira inicialização
+                                    explícita via construtores ou injeção de
+                                    dependência quando possível.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 13
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod13-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'defer'. Preste atenção em quando os argumentos de um defer são avaliados versus quando a função é executada."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func f() {
+    for i := 0; i < 3; i++ {
+        defer fmt.Println(i)
+    }
+}
+f()</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>0 1 2</code> — defers executam na
+                                    ordem em que foram registrados</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>2 2 2</code> — todos capturam o valor
+                                    final de i</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>2 1 0</code> — argumentos avaliados
+                                    imediatamente (capturam 0, 1, 2), execução
+                                    em LIFO</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>2 2 2</code> — defer em loop não
+                                    funciona corretamente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Os argumentos de
+                              <code>defer fmt.Println(i)</code> são avaliados no
+                              momento do <code>defer</code> — capturando 0, 1 e
+                              2 respectivamente. A execução é LIFO: o último
+                              defer registrado (<code>i=2</code>) executa
+                              primeiro. Resultado: 2, 1, 0.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod13-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'panic e recover'. Lembre-se da restrição sobre onde recover pode ser chamado para funcionar."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo consegue recuperar o panic?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    if r := recover(); r != nil {
+        fmt.Println("recuperado:", r)
+    }
+    panic("erro grave")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim — <code>recover()</code> antes do
+                                    <code>panic</code> intercepta o erro</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não — <code>recover()</code> só funciona
+                                    dentro de um <code>defer</code>; chamado
+                                    diretamente retorna <code>nil</code> e o
+                                    panic não é interceptado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Sim — <code>recover()</code> pode ser
+                                    chamado em qualquer lugar antes do
+                                    panic</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>recover()</code> e
+                                    <code>panic()</code> não podem estar na
+                                    mesma função</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>recover()</code> fora de um
+                              <code>defer</code> sempre retorna
+                              <code>nil</code> — não tem efeito. O padrão
+                              correto é:
+                              <code
+                                 >defer func() { if r := recover(); r != nil {
+                                 ... } }()</code
+                              >
+                              declarado antes do código que pode causar panic.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod13-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Closures'. Lembre-se do que acontece quando múltiplas closures são criadas no mesmo escopo e o que cada uma captura."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    x := 0
+    inc := func() { x++ }
+    get := func() int { return x }
+
+    inc()
+    inc()
+    fmt.Println(get())
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>0</code> — cada closure tem sua
+                                    própria cópia de x</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>2</code> — <code>inc</code> e
+                                    <code>get</code> capturam a mesma variável
+                                    <code>x</code>; as duas chamadas de
+                                    <code>inc</code> incrementam o mesmo x</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>1</code> — apenas o último incremento
+                                    é visível</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — closures não podem
+                                    capturar variáveis de
+                                    <code>main</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>inc</code> e <code>get</code> são
+                              definidas no mesmo escopo e capturam a
+                              <em>mesma</em> variável <code>x</code> — não
+                              cópias independentes. Cada chamada a
+                              <code>inc()</code> modifica o <code>x</code> que
+                              <code>get()</code> vai ler. Resultado: 2.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 13
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod13-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — defer e recursos</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função abre um arquivo, adquire um mutex e faz
+                              uma consulta ao banco. Qual é a ordem correta de
+                              usar <code>defer</code>
+                              para garantir liberação de todos os recursos?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func processar() error {
+    f, err := os.Open("dados.txt")
+    if err != nil { return err }
+
+    mu.Lock()
+
+    rows, err := db.Query("SELECT ...")
+    if err != nil { return err }  // mu nunca é desbloqueado!
+
+    // ... processamento
+    return nil
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Adicionar <code>defer f.Close()</code>,
+                                    <code>defer mu.Unlock()</code> e
+                                    <code>defer rows.Close()</code> ao final da
+                                    função, antes do return</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Adicionar cada defer imediatamente após a
+                                    aquisição do recurso:
+                                    <code>defer f.Close()</code> após abrir o
+                                    arquivo, <code>defer mu.Unlock()</code> após
+                                    o Lock, <code>defer rows.Close()</code> após
+                                    a query — garantindo liberação mesmo em
+                                    erros intermediários</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar um único defer no início da função que
+                                    chama todos os cleanups</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Defers não são adequados aqui — usar blocos
+                                    try/finally equivalentes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O padrão idiomático é declarar o defer
+                              imediatamente após adquirir o recurso — não ao
+                              final da função. Assim, se um erro ocorrer no meio
+                              (como o erro na query sem o defer do mutex), todos
+                              os recursos já registrados são liberados
+                              corretamente na ordem LIFO. No código do
+                              exercício, <code>mu</code> nunca é desbloqueado se
+                              a query falhar.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod13-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Função variádica</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Dado o slice <code>vals := []int{1, 2, 3}</code>,
+                              como passar seus elementos para a função variádica
+                              <code>func max(nums ...int) int</code>?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span><code>max(vals)</code></span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>max(vals...)</code> — o operador
+                                    <code>...</code> expande o slice como
+                                    argumentos individuais</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span><code>max(&vals)</code></span>
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>max(vals[0], vals[1], vals[2])</code>
+                                    — única forma correta</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>max(vals...)</code> expande o
+                              slice como argumentos individuais — equivalente a
+                              <code>max(1, 2, 3)</code>.
+                              <code>max(vals)</code> causaria erro de compilação
+                              porque <code>[]int</code> não é <code>int</code>.
+                              A forma manual
+                              <code>max(vals[0], vals[1], vals[2])</code>
+                              funciona mas é desnecessariamente verbosa e não
+                              escala.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

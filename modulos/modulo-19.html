@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Pacotes em Go: criando pacotes, exportação por maiúscula, pacotes internos e organização de código real."
+      />
+      <title>Módulo 19 — Pacotes · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="19">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 7 — Pacotes e Módulos
+                        </div>
+                        <h1 class="module-header__title">Pacotes</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 19</span>
+                           <span class="badge badge-default">4 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Criando pacotes
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod19-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Criando pacotes</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, um pacote é simplesmente um
+                              <strong
+                                 >diretório com arquivos <code>.go</code> que
+                                 compartilham a mesma declaração
+                                 <code>package</code></strong
+                              >. Não existe sintaxe especial de criação — você
+                              cria uma pasta, cria arquivos <code>.go</code>
+                              dentro dela, e declara o nome do pacote na
+                              primeira linha de cada arquivo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >estrutura de diretórios</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">meuprojeto/
+├── go.mod
+├── main.go
+└── math/
+    ├── soma.go
+    └── media.go</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >math/soma.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package math  // nome do pacote — deve ser igual em todos os arquivos da pasta
+
+func Somar(a, b int) int {
+    return a + b
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >math/media.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package math  // mesmo nome — faz parte do mesmo pacote
+
+func Media(nums []float64) float64 {
+    if len(nums) == 0 {
+        return 0
+    }
+    var total float64
+    for _, n := range nums {
+        total += n
+    }
+    return total / float64(len(nums))
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Os dois arquivos pertencem ao mesmo pacote
+                              <code>math</code>. Eles enxergam as funções,
+                              variáveis e tipos uns dos outros diretamente — sem
+                              importação — como se fossem um arquivo só. Para
+                              usar o pacote de outro lugar, você o importa pelo
+                              caminho do módulo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "meuprojeto/math"  // caminho do módulo + subpasta
+)
+
+func main() {
+    fmt.Println(math.Somar(3, 4))    // 7
+    fmt.Println(math.Media([]float64{1, 2, 3}))  // 2
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Nome do pacote vs caminho de importação
+                           </h4>
+                           <p>
+                              O <strong>caminho de importação</strong> é o
+                              caminho do diretório relativo ao módulo
+                              (<code>meuprojeto/math</code>). O
+                              <strong>nome do pacote</strong> é o identificador
+                              que você usa no código (<code>math.Somar</code>).
+                              Por convenção, os dois coincidem — mas não são
+                              obrigados:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Diretório: meuprojeto/httputil/
+// Declaração no arquivo: package httputil
+// Importado como: "meuprojeto/httputil"
+// Usado como: httputil.AlgumaFunc()
+
+// Caso real da stdlib: o diretório é encoding/json
+// mas o pacote se chama json — import "encoding/json", uso: json.Marshal()</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Todos os arquivos da pasta devem ter o mesmo
+                                    package
+                                 </div>
+                                 <div class="callout__body">
+                                    Se dois arquivos no mesmo diretório declaram
+                                    nomes de pacote diferentes, o compilador
+                                    rejeita. A única exceção é
+                                    <code>package nome_test</code> — o sufixo
+                                    <code>_test</code>
+                                    é permitido para testes externos ao pacote
+                                    no mesmo diretório.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Exportação (maiúscula)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod19-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Exportação por maiúscula</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go não tem palavras-chave <code>public</code> ou
+                              <code>private</code>. A visibilidade é determinada
+                              pela
+                              <strong>primeira letra do identificador</strong>:
+                              maiúscula é exportado (visível fora do pacote),
+                              minúscula é não-exportado (visível apenas dentro
+                              do pacote). Essa regra se aplica a funções, tipos,
+                              variáveis, constantes, campos de struct e métodos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pacote/usuario.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package usuario
+
+// Usuario — exportado: acessível por quem importar o pacote
+type Usuario struct {
+    Nome  string  // exportado
+    Email string  // exportado
+    senha string  // não-exportado: só acessível dentro de pacote/
+}
+
+// Novo — exportado: construtor público
+func Novo(nome, email, senha string) *Usuario {
+    return &Usuario{
+        Nome:  nome,
+        Email: email,
+        senha: hashSenha(senha),  // usa função não-exportada
+    }
+}
+
+// ValidarSenha — exportado: API pública
+func (u *Usuario) ValidarSenha(tentativa string) bool {
+    return hashSenha(tentativa) == u.senha
+}
+
+// hashSenha — não-exportada: detalhe de implementação
+func hashSenha(s string) string {
+    // ... lógica interna
+    return s
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Quem importar o pacote <code>usuario</code> pode
+                              acessar <code>usuario.Novo</code>,
+                              <code>u.Nome</code>, <code>u.ValidarSenha</code> —
+                              mas <code>u.senha</code> e
+                              <code>hashSenha</code> são invisíveis. O
+                              compilador rejeita qualquer acesso a
+                              identificadores não-exportados de fora do pacote.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exportação se aplica a campos de struct
+                              individualmente
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Struct exportada com campos mistos
+type Config struct {
+    Host    string // exportado — quem usa o pacote pode ler/escrever
+    Porta   int    // exportado
+    timeout int    // não-exportado — controlado internamente
+    retries int    // não-exportado
+}
+
+// Do ponto de vista de quem importa:
+cfg := config.Config{Host: "localhost", Porta: 8080}
+// cfg.timeout = 30  // ERRO de compilação: campo não-exportado</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Convenções de nomenclatura
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Identificador
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Convenção
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Exemplo
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Tipo exportado
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          PascalCase
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          HttpClient, UserRepo
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Função/método exportado
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          PascalCase
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          Marshal, ParseURL
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Variável/constante não-exportada
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          camelCase
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          maxRetries, defaultTimeout
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Erro sentinela exportado
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Err + PascalCase
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          ErrNotFound, ErrTimeout
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go não usa underscores em nomes — exceto em
+                                    testes
+                                 </div>
+                                 <div class="callout__body">
+                                    Ao contrário de Python ou C, Go usa
+                                    camelCase para identificadores
+                                    não-exportados e PascalCase para exportados.
+                                    Underscores aparecem apenas em nomes de
+                                    arquivo de teste (<code>_test.go</code>), em
+                                    imports em branco (<code>_</code>) e em
+                                    constantes geradas (como
+                                    <code>iota</code> patterns). Nunca em
+                                    funções ou variáveis normais.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Pacotes internos (internal)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod19-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Pacotes internos (internal)</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Exportação por maiúscula tem uma limitação:
+                              qualquer módulo externo pode importar um pacote
+                              exportado da sua biblioteca. Às vezes você quer
+                              compartilhar código entre subpacotes do seu
+                              próprio módulo sem expô-lo ao mundo. Para isso
+                              existe o diretório especial
+                              <code>internal/</code>.
+                           </p>
+
+                           <p>
+                              Uma regra do toolchain Go:
+                              <strong
+                                 >apenas o código dentro da árvore pai do
+                                 diretório <code>internal</code> pode
+                                 importá-lo</strong
+                              >. Qualquer módulo externo que tente importar um
+                              pacote <code>internal/</code> recebe um erro de
+                              compilação.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >estrutura com internal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">github.com/empresa/api/
+├── go.mod
+├── main.go
+├── handler/
+│   └── usuario.go      // pode importar internal/
+├── service/
+│   └── usuario.go      // pode importar internal/
+└── internal/
+    ├── db/
+    │   └── conn.go     // só acessível dentro de github.com/empresa/api/
+    └── validator/
+        └── cpf.go      // idem</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >handler/usuario.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package handler
+
+import (
+    "github.com/empresa/api/internal/db"        // ✓ permitido — mesmo módulo
+    "github.com/empresa/api/internal/validator"  // ✓ permitido
+)
+
+func CriarUsuario(w http.ResponseWriter, r *http.Request) {
+    if !validator.CPF(r.FormValue("cpf")) {
+        http.Error(w, "CPF inválido", 400)
+        return
+    }
+    conn := db.Get()
+    // ...
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >outro-modulo/main.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "github.com/empresa/api/internal/db"
+// ERRO de compilação:
+// use of internal package github.com/empresa/api/internal/db
+// not allowed</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              internal aninhado — escopo mais restrito
+                           </h4>
+                           <p>
+                              Você pode aninhar <code>internal</code> dentro de
+                              subpacotes para restringir ainda mais o acesso:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">github.com/empresa/api/
+└── service/
+    ├── usuario.go
+    └── internal/
+        └── cache.go  // só service/ pode importar — nem handler/ consegue</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    internal é a ferramenta certa para API
+                                    privada de biblioteca
+                                 </div>
+                                 <div class="callout__body">
+                                    Se você publica uma biblioteca Go no GitHub,
+                                    tudo fora de
+                                    <code>internal/</code> com letra maiúscula
+                                    vira API pública de fato — qualquer usuário
+                                    pode depender disso. Use
+                                    <code>internal/</code> para código de
+                                    suporte que você não quer comprometer a
+                                    manter compatível entre versões.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Organização de código
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod19-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Organização de código</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go não impõe uma estrutura de projeto — mas a
+                              comunidade convergiu em padrões práticos baseados
+                              em como o toolchain e os pacotes interagem.
+                              Entender esses padrões evita reorganizações
+                              dolorosas conforme o projeto cresce.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Flat first — comece simples
+                           </h4>
+                           <p>
+                              Para projetos pequenos, um único pacote
+                              <code>main</code> com múltiplos arquivos
+                              <code>.go</code> na raiz é suficiente e
+                              preferível. Não crie subpacotes antes de precisar
+                              — Go não recompensa estrutura prematura:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >projeto pequeno — flat</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">minha-cli/
+├── go.mod
+├── main.go
+├── config.go    // package main — mesmo pacote, arquivo separado por clareza
+├── handler.go   // package main
+└── storage.go   // package main</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando extrair um pacote
+                           </h4>
+                           <p>
+                              Extraia para um subpacote quando o código tem uma
+                              responsabilidade coesa o suficiente para ter sua
+                              própria API, ou quando precisa ser reutilizado por
+                              mais de um ponto do projeto:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >projeto médio — com subpacotes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">minha-api/
+├── go.mod
+├── main.go              // package main — ponto de entrada
+├── handler/
+│   ├── usuario.go       // package handler
+│   └── produto.go
+├── service/
+│   ├── usuario.go       // package service
+│   └── produto.go
+├── repository/
+│   └── usuario.go       // package repository
+└── internal/
+    └── validator/
+        └── validator.go // package validator</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              cmd/ para múltiplos binários
+                           </h4>
+                           <p>
+                              Se o projeto produz mais de um executável, cada um
+                              fica em seu próprio subdiretório de
+                              <code>cmd/</code>. Cada diretório é um
+                              <code>package main</code> independente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >múltiplos binários</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">meu-sistema/
+├── go.mod
+├── cmd/
+│   ├── api/
+│   │   └── main.go    // go build ./cmd/api → binário do servidor HTTP
+│   └── worker/
+│       └── main.go    // go build ./cmd/worker → binário do processador
+├── internal/
+│   └── db/
+└── pkg/
+    └── models/        // pacotes reutilizáveis e importáveis externamente
+
+// Para compilar um binário específico:
+// go build ./cmd/api
+// go build ./cmd/worker
+// Para compilar todos:
+// go build ./...</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Imports em grupos e ordem canônica
+                           </h4>
+                           <p>
+                              O <code>goimports</code> (e o <code>gofmt</code>)
+                              organiza os imports em três grupos separados por
+                              linha em branco — essa é a convenção oficial:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ordem de imports</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    // 1. Stdlib
+    "fmt"
+    "net/http"
+    "os"
+
+    // 2. Dependências externas
+    "github.com/go-chi/chi/v5"
+    "go.uber.org/zap"
+
+    // 3. Pacotes do próprio módulo
+    "github.com/empresa/api/internal/db"
+    "github.com/empresa/api/service"
+)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Imports circulares são proibidos — e por
+                                    isso o design importa
+                                 </div>
+                                 <div class="callout__body">
+                                    Go não permite que o pacote A importe B e B
+                                    importe A — nem indiretamente. O compilador
+                                    rejeita com erro. Isso força uma hierarquia
+                                    clara de dependências. Se você se encontra
+                                    tentando criar um import circular, é sinal
+                                    de que dois pacotes estão muito acoplados e
+                                    deveriam ser reorganizados — ou que a lógica
+                                    compartilhada pertence a um terceiro pacote
+                                    que ambos importam.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 19
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod19-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Exportação por maiúscula'. Lembre-se de que a regra se aplica individualmente a cada identificador — incluindo campos de struct."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo? O pacote
+                              <code>config</code> declara a struct à esquerda; o
+                              pacote <code>main</code> executa o código à
+                              direita.
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// pacote config
+type Opcoes struct {
+    Host    string
+    Porta   int
+    timeout int
+}
+
+// pacote main
+cfg := config.Opcoes{Host: "localhost", Porta: 8080, timeout: 30}
+fmt.Println(cfg.Host)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>localhost</code> — todos os campos
+                                    são inicializados normalmente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — <code>timeout</code> é
+                                    não-exportado; pacote <code>main</code> não
+                                    pode inicializá-lo em um struct
+                                    literal</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>localhost</code> —
+                                    <code>timeout</code> é simplesmente ignorado
+                                    por ser minúsculo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de runtime —
+                                    <code>timeout</code> recebe zero value e
+                                    causa panic</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Campos não-exportados não podem ser
+                              referenciados por código fora do pacote — nem para
+                              leitura, nem para escrita, nem em struct literals.
+                              O compilador rejeita
+                              <code>config.Opcoes{..., timeout: 30}</code> com
+                              "cannot refer to unexported field 'timeout'". A
+                              struct deve ser inicializada sem o campo, ou via
+                              uma função construtora exportada pelo próprio
+                              pacote <code>config</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod19-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Pacotes internos'. A regra de acesso ao internal/ é baseada na posição do diretório na árvore do módulo."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dado o layout abaixo, qual pacote
+                              <strong>não</strong> consegue importar
+                              <code>service/internal/cache</code>?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                              </div>
+                              <pre><code data-lang="go">github.com/empresa/app/
+├── main.go
+├── handler/
+│   └── usuario.go
+└── service/
+    ├── usuario.go
+    └── internal/
+        └── cache/
+            └── cache.go</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>service/usuario.go</code> — está
+                                    dentro da árvore pai de
+                                    <code>service/internal/</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>handler/usuario.go</code> — está fora
+                                    da árvore pai de
+                                    <code>service/internal/</code>; o toolchain
+                                    bloqueia o import</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>main.go</code> — é o ponto de entrada
+                                    e tem privilégios especiais de import</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Nenhum dos três —
+                                    <code>internal/</code> aninhado dentro de
+                                    <code>service/</code> bloqueia todos os
+                                    imports externos ao módulo inteiro</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O pai de
+                              <code>service/internal/</code> é o diretório
+                              <code>service/</code>. Somente código dentro de
+                              <code>service/</code> (e seus subdiretórios) pode
+                              importar <code>service/internal/cache</code>. O
+                              <code>handler/</code> está fora dessa árvore —
+                              assim como o <code>main.go</code> na raiz. O
+                              <code>main</code> não tem nenhum privilégio
+                              especial de importação.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod19-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Criando pacotes'. Preste atenção na diferença entre caminho de importação e nome do pacote, e nas regras que o compilador impõe."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dois arquivos no mesmo diretório
+                              <code>util/</code> têm as seguintes declarações. O
+                              que acontece ao compilar?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// util/strings.go
+package util
+
+// util/numbers.go
+package utilities</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Compila normalmente — Go usa o nome do
+                                    diretório como nome canônico do pacote</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Compila, mas apenas o primeiro arquivo
+                                    declarado é considerado parte do
+                                    pacote</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Aviso em tempo de compilação — o compilador
+                                    escolhe <code>util</code> por ser o nome do
+                                    diretório</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — todos os arquivos
+                                    <code>.go</code> do mesmo diretório devem
+                                    declarar o mesmo <code>package</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O compilador Go exige que todos os
+                              arquivos
+                              <code>.go</code> no mesmo diretório declarem o
+                              mesmo nome de pacote. Ter
+                              <code>package util</code> em um arquivo e
+                              <code>package utilities</code> em outro resulta
+                              em: "found packages util (strings.go) and
+                              utilities (numbers.go)". A única exceção permitida
+                              é o sufixo <code>_test</code>
+                              para arquivos de teste de caixa-preta no mesmo
+                              diretório.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 19
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod19-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Decisão de exportação</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você está escrevendo um pacote
+                              <code>pagamento</code> que: (a) expõe uma função
+                              <code>Processar</code> para quem usar o pacote;
+                              (b) usa internamente uma função de cálculo de
+                              taxa; (c) tem uma struct
+                              <code>Transacao</code> com campos de valor, moeda
+                              e um campo <code>idInterno</code> gerado pela
+                              infraestrutura. Qual conjunto de declarações está
+                              correto?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Tudo exportado:
+                                    <code>func Processar</code>,
+                                    <code>func CalcularTaxa</code>,
+                                    <code
+                                       >type Transacao struct { Valor float64;
+                                       Moeda string; IdInterno string }</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>func Processar</code> exportada;
+                                    <code>func calcularTaxa</code>
+                                    não-exportada;
+                                    <code
+                                       >type Transacao struct { Valor float64;
+                                       Moeda string; idInterno string }</code
+                                    >
+                                    — idInterno não-exportado</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Toda a struct não-exportada:
+                                    <code>type transacao struct { ... }</code> —
+                                    e <code>Processar</code> retorna
+                                    <code>interface{}</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar tags de struct para controlar
+                                    visibilidade:
+                                    <code
+                                       >IdInterno string
+                                       \`private:"true"\`</code
+                                    ></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Cada identificador tem visibilidade
+                              própria e independente.
+                              <code>Processar</code> é a API pública —
+                              exportada. <code>calcularTaxa</code> é detalhe de
+                              implementação — não-exportada, e quem usa o pacote
+                              não precisa saber que existe.
+                              <code>Transacao</code> precisa ser exportada para
+                              que quem chama <code>Processar</code> possa
+                              receber e usar o retorno — mas
+                              <code>idInterno</code> é gerado internamente e não
+                              deve ser acessível ou modificável de fora. Tags de
+                              struct controlam serialização (JSON, SQL), não
+                              visibilidade de acesso.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod19-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Import circular</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O pacote <code>service</code> importa
+                              <code>repository</code> para buscar dados, e o
+                              pacote <code>repository</code> quer importar
+                              <code>service</code> para reutilizar uma função de
+                              validação. O compilador rejeita: import circular.
+                              Qual é a solução idiomática em Go?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>interface{}</code> como tipo nos
+                                    parâmetros para evitar que os pacotes se
+                                    referenciem diretamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Mover toda a lógica para um único pacote
+                                    <code>main</code> — pacotes só causam
+                                    problemas de circular dependency</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Extrair a função de validação para um
+                                    terceiro pacote <code>validator</code> (ou
+                                    <code>internal/validator</code>) que não
+                                    depende de nenhum dos dois — ambos importam
+                                    <code>validator</code> sem
+                                    circularidade</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Duplicar a função de validação em ambos os
+                                    pacotes — Go não permite a mesma função em
+                                    dois pacotes mas permite lógica
+                                    duplicada</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A solução canônica para imports
+                              circulares em Go é identificar a dependência comum
+                              e extraí-la para um pacote independente que nenhum
+                              dos dois precisa importar. Isso força uma
+                              hierarquia de dependências limpa:
+                              <code>service</code> e
+                              <code>repository</code> ambos dependem de
+                              <code>validator</code>, mas não um do outro.
+                              Colocar em <code>internal/validator</code> ainda
+                              restringe o uso ao próprio módulo. Duplicar lógica
+                              e fundir tudo em <code>main</code> são antipadrões
+                              que escalam mal.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

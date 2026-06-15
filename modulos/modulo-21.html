@@ -1,0 +1,1465 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Goroutines em Go: o que são, go keyword, scheduler M:N, race conditions e WaitGroup."
+      />
+      <title>Módulo 21 — Goroutines · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="21">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 8 — Concorrência
+                        </div>
+                        <h1 class="module-header__title">Goroutines</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 21</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é uma goroutine
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod21-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é uma goroutine</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma <strong>goroutine</strong> é a unidade de
+                              concorrência de Go. É uma função que executa
+                              concorrentemente com outras funções no mesmo
+                              processo — mas não é uma thread do sistema
+                              operacional. Goroutines são muito mais leves: uma
+                              thread do SO custa tipicamente 1–8 MB de stack;
+                              uma goroutine começa com apenas
+                              <strong>2–8 KB</strong> e cresce sob demanda.
+                           </p>
+                           <p>
+                              Isso significa que um programa Go pode facilmente
+                              ter dezenas de milhares (ou centenas de milhares)
+                              de goroutines ativas sem esgotar a memória — algo
+                              impossível com threads do SO equivalentes.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Goroutine vs thread vs processo
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       ></th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Processo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Thread (SO)
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Goroutine
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Stack inicial
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Vários MB
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          1–8 MB
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          2–8 KB
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Criação
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Lenta (fork)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Moderada
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          Muito rápida
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Gerenciamento
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Kernel
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Kernel
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          Runtime Go
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Quantidade típica viável
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Dezenas
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Milhares
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          Centenas de milhares
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <p>
+                              Goroutines compartilham o mesmo espaço de
+                              endereços do processo — elas podem ler e escrever
+                              nas mesmas variáveis. Isso é poderoso mas também é
+                              a fonte dos problemas de concorrência que
+                              estudaremos nos próximos tópicos.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Stack dinâmica — goroutines crescem sob
+                                    demanda
+                                 </div>
+                                 <div class="callout__body">
+                                    O runtime Go monitora a goroutine e, se a
+                                    stack estiver quase cheia, aloca uma stack
+                                    maior e copia o conteúdo. Isso permite
+                                    começar com 2 KB e crescer para megabytes
+                                    quando necessário — sem desperdício para
+                                    goroutines simples e sem estouro de stack
+                                    para as complexas.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — go keyword
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod21-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>A keyword go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Iniciar uma goroutine é deliberadamente simples:
+                              basta prefixar uma chamada de função com
+                              <code>go</code>. A função é lançada em uma nova
+                              goroutine e a execução continua imediatamente na
+                              goroutine atual, sem bloquear.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func imprimir(msg string) {
+    fmt.Println(msg)
+}
+
+func main() {
+    go imprimir("goroutine")  // lança concorrentemente
+    imprimir("main")          // executa na goroutine principal
+    // Problema: main pode terminar antes da goroutine executar
+}</code></pre>
+                           </div>
+
+                           <p>
+                              O exemplo acima tem um problema crítico: quando
+                              <code>main()</code> termina,
+                              <strong
+                                 >todas as goroutines são encerradas
+                                 imediatamente</strong
+                              >, independente de terem terminado ou não. A saída
+                              pode ser <code>"main"</code> sem imprimir
+                              <code>"goroutine"</code> — ou ambas, dependendo do
+                              scheduling. É comportamento não-determinístico.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Goroutines com funções anônimas
+                           </h4>
+                           <p>
+                              É comum usar funções anônimas (literais) com
+                              <code>go</code> para goroutines inline:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    // Goroutine com função anônima
+    go func() {
+        fmt.Println("executando em goroutine separada")
+    }()  // ← parênteses para invocar imediatamente
+
+    // Passando argumentos por valor (evita problema de closure em loop)
+    for i := 0; i < 3; i++ {
+        go func(n int) {  // n é uma cópia de i no momento do lançamento
+            fmt.Println(n)
+        }(i)
+    }
+
+    time.Sleep(100 * time.Millisecond)  // gambiarra — use WaitGroup (tópico 5)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Goroutines não têm ID — e isso é intencional
+                                 </div>
+                                 <div class="callout__body">
+                                    Ao contrário de threads em outras
+                                    linguagens, goroutines não expõem um
+                                    identificador acessível no código. Isso é
+                                    uma decisão de design: Go desencoraja o
+                                    padrão "thread-local storage" onde o
+                                    comportamento depende de qual thread está
+                                    executando. Comunicação explícita via
+                                    channels é o caminho correto.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Goroutines em produção — padrão real
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >servidor HTTP concurrent</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// O net/http lança uma goroutine por request automaticamente
+// Mas o padrão manual é o mesmo:
+func processar(jobs []Job) {
+    for _, job := range jobs {
+        job := job  // captura por valor (Go >= 1.22: desnecessário)
+        go func() {
+            resultado, err := job.Executar()
+            if err != nil {
+                log.Printf("job %s falhou: %v", job.ID, err)
+                return
+            }
+            log.Printf("job %s concluído: %v", job.ID, resultado)
+        }()
+    }
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Scheduler do Go (M:N)
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod21-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Scheduler do Go (M:N)</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O runtime Go implementa um scheduler
+                              <strong>M:N</strong> — ele multiplexa M goroutines
+                              sobre N threads do SO. O número de threads reais é
+                              controlado por <code>GOMAXPROCS</code>, que por
+                              padrão é igual ao número de CPUs lógicas da
+                              máquina.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O modelo GMP
+                           </h4>
+                           <p>O scheduler usa três componentes principais:</p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >modelo conceitual</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// G — Goroutine: a unidade de trabalho (o que você cria com "go func()")
+// M — Machine: uma thread do SO (gerenciada pelo kernel)
+// P — Processor: um processador lógico do Go (fila de goroutines prontas)
+//
+// Relação:
+//   - GOMAXPROCS define quantos P existem (padrão = número de CPUs)
+//   - Cada P tem uma fila local de G prontas para executar
+//   - Um M precisa de um P para executar G
+//   - M sem P fica bloqueado (sem trabalho)
+//
+// Work stealing:
+//   - Se o P de uma M fica vazio, ele "rouba" goroutines do P de outra M
+//   - Isso garante que CPUs ociosas encontram trabalho automaticamente</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Preempção e bloqueio
+                           </h4>
+                           <p>
+                              O scheduler preempta goroutines em pontos seguros
+                              — chamadas de função, operações de I/O, operações
+                              de channel. Quando uma goroutine bloqueia em I/O
+                              do sistema operacional, o runtime a desacopla do M
+                              e coloca outra goroutine no lugar, garantindo que
+                              o M não fique ocioso:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Quando esta goroutine chama os.ReadFile (I/O bloqueante):
+// 1. O runtime detecta o bloqueio iminente
+// 2. A goroutine é desacoplada do M
+// 3. O M (thread) continua com outra goroutine da fila
+// 4. Quando o I/O conclui, a goroutine volta à fila de G prontas
+go func() {
+    data, err := os.ReadFile("enorme.csv")  // bloqueia no I/O, mas não bloqueia a thread
+    processar(data, err)
+}()
+
+// GOMAXPROCS — raramente ajustado manualmente
+fmt.Println(runtime.GOMAXPROCS(0))  // 0 = apenas consultar, não alterar
+
+// Em containers, pode ser necessário ajustar explicitamente:
+// runtime.GOMAXPROCS(runtime.NumCPU())</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que goroutines são tão eficientes em I/O
+                                 </div>
+                                 <div class="callout__body">
+                                    Em servidores web com threads do SO, cada
+                                    request em espera de I/O mantém uma thread
+                                    bloqueada — consumindo memória. Com
+                                    goroutines, milhares de requests podem estar
+                                    em "espera de I/O" enquanto apenas algumas
+                                    threads do SO estão ativas, executando as
+                                    goroutines que têm trabalho a fazer. Isso é
+                                    o que permite Go lidar com alta concorrência
+                                    de I/O com poucos recursos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Race conditions
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod21-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Race conditions</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Uma <strong>race condition</strong> ocorre quando
+                              duas ou mais goroutines acessam a mesma variável
+                              concorrentemente e pelo menos uma delas escreve. O
+                              resultado depende do timing de execução — é
+                              não-determinístico e pode produzir corrupção de
+                              dados silenciosa, crashes ou comportamento
+                              imprevisível.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >race condition clássica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var contador int  // variável compartilhada
+
+func main() {
+    for i := 0; i < 1000; i++ {
+        go func() {
+            contador++  // RACE: leitura + incremento + escrita NÃO são atômicos
+        }()
+    }
+    time.Sleep(time.Second)
+    fmt.Println(contador)  // pode ser qualquer valor entre 1 e 1000
+}
+
+// contador++ é na verdade três operações:
+// 1. temp = contador  (leitura)
+// 2. temp = temp + 1  (incremento)
+// 3. contador = temp  (escrita)
+//
+// Se duas goroutines executam a leitura ao mesmo tempo com contador=5,
+// ambas incrementam para 6 e escrevem 6 — um incremento é perdido.</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O race detector — seu melhor amigo
+                           </h4>
+                           <p>
+                              Go tem um detector de race conditions integrado.
+                              Ative com a flag
+                              <code>-race</code> em qualquer comando Go:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Compilar e rodar com race detector
+go run -race main.go
+
+# Rodar testes com race detector (sempre recomendado em CI)
+go test -race ./...
+
+# Saída quando detecta race:
+# ==================
+# WARNING: DATA RACE
+# Write at 0x00c0000b4010 by goroutine 7:
+#   main.main.func1()
+#       /tmp/main.go:7 +0x28
+# Previous read at 0x00c0000b4010 by goroutine 6:
+#   main.main.func1()
+#       /tmp/main.go:7 +0x20
+# ==================</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Regra de ouro da concorrência em Go
+                           </h4>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    "Do not communicate by sharing memory; share
+                                    memory by communicating."
+                                 </div>
+                                 <div class="callout__body">
+                                    O mantra da concorrência em Go: em vez de
+                                    múltiplas goroutines acessando a mesma
+                                    variável (compartilhar memória para
+                                    comunicar), use channels para passar dados
+                                    entre goroutines (comunicar para
+                                    compartilhar memória). Quando necessário
+                                    usar estado compartilhado, proteja com
+                                    <code>sync.Mutex</code> (módulo 24).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >solução via channel</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Ao invés de compartilhar um contador, enviar resultados por channel
+func main() {
+    ch := make(chan int, 1000)
+
+    for i := 0; i < 1000; i++ {
+        go func() {
+            ch <- 1  // envia 1, sem acesso a variável compartilhada
+        }()
+    }
+
+    total := 0
+    for i := 0; i < 1000; i++ {
+        total += <-ch  // apenas a goroutine principal escreve em total
+    }
+    fmt.Println(total)  // sempre 1000 — sem race condition
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — WaitGroup
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod21-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>WaitGroup</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O problema mais imediato ao lançar goroutines é:
+                              como esperar que todas terminem?
+                              <code>time.Sleep</code> é uma gambiarra — não é
+                              confiável em produção. O
+                              <code>sync.WaitGroup</code> é a solução idiomática
+                              para
+                              <em
+                                 >aguardar um conjunto de goroutines
+                                 concluir</em
+                              >.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrão básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    "fmt"
+    "sync"
+)
+
+func main() {
+    var wg sync.WaitGroup  // zero value é válido, não precisa de inicialização
+
+    for i := 0; i < 5; i++ {
+        wg.Add(1)         // incrementa o contador ANTES de lançar a goroutine
+        go func(n int) {
+            defer wg.Done()  // decrementa quando a goroutine termina
+            fmt.Printf("goroutine %d concluída\n", n)
+        }(i)
+    }
+
+    wg.Wait()  // bloqueia até o contador chegar a zero
+    fmt.Println("todas as goroutines terminaram")
+}</code></pre>
+                           </div>
+
+                           <p>
+                              O WaitGroup tem três métodos:
+                              <code>Add(n)</code> incrementa o contador interno,
+                              <code>Done()</code> decrementa em 1 (equivalente a
+                              <code>Add(-1)</code>), e
+                              <code>Wait()</code> bloqueia até o contador chegar
+                              a zero.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrão real: processamento paralelo com coleta de
+                              erros
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >processamento paralelo</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func baixarArquivos(urls []string) ([][]byte, error) {
+    resultados := make([][]byte, len(urls))
+    erros := make([]error, len(urls))
+
+    var wg sync.WaitGroup
+
+    for i, url := range urls {
+        wg.Add(1)
+        go func(idx int, u string) {
+            defer wg.Done()
+            data, err := http.Get(u)  // cada download em paralelo
+            if err != nil {
+                erros[idx] = err  // escrita segura: cada goroutine escreve em índice diferente
+                return
+            }
+            defer data.Body.Close()
+            resultados[idx], erros[idx] = io.ReadAll(data.Body)
+        }(i, url)
+    }
+
+    wg.Wait()
+
+    // Verificar se algum erro ocorreu
+    for _, err := range erros {
+        if err != nil {
+            return nil, fmt.Errorf("falha em download: %w", err)
+        }
+    }
+    return resultados, nil
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Add() deve ser chamado antes de go, não
+                                    dentro
+                                 </div>
+                                 <div class="callout__body">
+                                    Um erro comum é chamar
+                                    <code>wg.Add(1)</code> dentro da goroutine.
+                                    Se o scheduler executa
+                                    <code>wg.Wait()</code> antes de qualquer
+                                    goroutine chamar <code>Add</code>, o wait
+                                    retorna imediatamente com contador zero — as
+                                    goroutines não foram esperadas. Sempre chame
+                                    <code>wg.Add(1)</code> na goroutine que
+                                    <em>lança</em> a goroutine, antes do
+                                    <code>go</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              WaitGroup não pode ser copiado
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✗ ERRADO: copia o WaitGroup ao passar por valor
+func processar(wg sync.WaitGroup) {  // cópia — Done() não afeta o original
+    defer wg.Done()
+    // ...
+}
+
+// ✓ CORRETO: sempre passe por ponteiro
+func processar(wg *sync.WaitGroup) {
+    defer wg.Done()
+    // ...
+}
+
+// ✓ Ou use closures que capturam o ponteiro
+var wg sync.WaitGroup
+wg.Add(1)
+go func() {
+    defer wg.Done()  // captura &wg implicitamente — correto
+}()
+wg.Wait()</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 21
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod21-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'A keyword go'. Preste atenção no que acontece com as goroutines quando a goroutine principal (main) termina."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    go fmt.Println("goroutine")
+    fmt.Println("main")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sempre imprime
+                                    <code>goroutine</code> depois de
+                                    <code>main</code> — goroutines executam após
+                                    o código síncrono</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Sempre imprime <code>goroutine</code> antes
+                                    de <code>main</code> — goroutines têm
+                                    prioridade</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Imprime <code>main</code> e pode ou não
+                                    imprimir <code>goroutine</code> — quando
+                                    main termina, todas as goroutines são
+                                    encerradas</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>fmt.Println</code> não pode ser usado
+                                    diretamente com <code>go</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Quando <code>main()</code> retorna, o
+                              programa termina — todas as goroutines em execução
+                              são encerradas imediatamente, sem chance de
+                              completar. O scheduling entre goroutines é
+                              não-determinístico, então
+                              <code>"goroutine"</code> pode ou não ser impressa
+                              dependendo de quando o scheduler ceder o
+                              processador para ela. A solução é usar
+                              <code>sync.WaitGroup</code> ou channels para
+                              sincronizar.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod21-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Race conditions'. Analise cuidadosamente quais goroutines acessam qual variável e se há acesso concorrente com escrita."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo tem race condition?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">resultados := make([]int, 10)
+var wg sync.WaitGroup
+
+for i := 0; i < 10; i++ {
+    wg.Add(1)
+    go func(idx int) {
+        defer wg.Done()
+        resultados[idx] = idx * idx  // escrita em índices diferentes
+    }(i)
+}
+wg.Wait()
+fmt.Println(resultados)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim — múltiplas goroutines escrevem no
+                                    slice <code>resultados</code>, causando race
+                                    condition</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não — cada goroutine escreve em um índice
+                                    diferente do slice; não há acesso
+                                    concorrente ao mesmo endereço de
+                                    memória</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Sim — o WaitGroup em si não é thread-safe
+                                    quando usado assim</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Não é possível determinar sem rodar
+                                    <code>go run -race</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Race condition exige acesso concorrente
+                              ao <em>mesmo</em> endereço de memória com pelo
+                              menos uma escrita. Aqui, cada goroutine escreve em
+                              <code>resultados[idx]</code> onde
+                              <code>idx</code> é único por goroutine — índices 0
+                              a 9 distintos. Não há sobreposição de memória.
+                              <code>sync.WaitGroup</code> é thread-safe por
+                              design. O <code>go run -race</code> confirmaria:
+                              sem data race.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod21-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'WaitGroup'. Preste atenção na ordem correta das chamadas Add(), go e Done()."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o problema no código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var wg sync.WaitGroup
+
+for i := 0; i < 5; i++ {
+    go func(n int) {
+        wg.Add(1)         // Add dentro da goroutine
+        defer wg.Done()
+        fmt.Println(n)
+    }(i)
+}
+
+wg.Wait()
+fmt.Println("fim")</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O <code>defer wg.Done()</code> deve ser
+                                    chamado antes do
+                                    <code>wg.Add(1)</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O loop deveria usar
+                                    <code>wg.Add(5)</code> uma vez fora, não
+                                    <code>Add(1)</code> repetidamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>wg.Add(1)</code> está dentro da
+                                    goroutine — <code>wg.Wait()</code> pode ser
+                                    chamado antes de qualquer <code>Add</code>,
+                                    retornando imediatamente com contador
+                                    zero</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O código está correto —
+                                    <code>Add</code> pode ser chamado de
+                                    qualquer lugar antes de
+                                    <code>Done</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O problema é sutil mas crítico: se o
+                              scheduler executar
+                              <code>wg.Wait()</code> antes de qualquer goroutine
+                              chamar <code>wg.Add(1)</code>, o contador está em
+                              zero e <code>Wait()</code> retorna imediatamente —
+                              sem esperar nenhuma goroutine. O padrão correto é
+                              sempre chamar <code>wg.Add(1)</code> na goroutine
+                              que <em>lança</em> a goroutine, antes do
+                              <code>go</code>:
+                              <code
+                                 >wg.Add(1); go func() { defer wg.Done(); ...
+                                 }()</code
+                              >.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 21
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod21-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Identificar race condition</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo é um cache simples. O que acontece
+                              quando múltiplas goroutines chamam
+                              <code>Set</code> e <code>Get</code>
+                              concorrentemente, e qual é a correção mais
+                              adequada para o cenário descrito?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Cache struct {
+    data map[string]string
+}
+
+func (c *Cache) Set(key, value string) {
+    c.data[key] = value  // escrita no map
+}
+
+func (c *Cache) Get(key string) (string, bool) {
+    v, ok := c.data[key]  // leitura no map
+    return v, ok
+}
+
+// Usado concorrentemente por muitas goroutines</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Maps são thread-safe em Go; o código está
+                                    correto como está</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Race condition apenas em <code>Set</code>;
+                                    <code>Get</code> (somente leitura) é sempre
+                                    seguro</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Race condition em ambos — maps não são
+                                    thread-safe. A correção é adicionar
+                                    <code>sync.RWMutex</code>:
+                                    <code>RLock/RUnlock</code> em
+                                    <code>Get</code> e
+                                    <code>Lock/Unlock</code> em
+                                    <code>Set</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir o map por um slice; slices são
+                                    thread-safe quando o tamanho não muda</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Maps em Go
+                              <strong>não são thread-safe</strong> — acesso
+                              concorrente com ao menos uma escrita causa panic
+                              em runtime (<code
+                                 >concurrent map read and map write</code
+                              >). A solução correta é um
+                              <code>sync.RWMutex</code>: <code>Get</code> usa
+                              <code>RLock</code> (múltiplas leituras simultâneas
+                              são permitidas) e <code>Set</code> usa
+                              <code>Lock</code> exclusivo. Para casos de alta
+                              contenção, considere <code>sync.Map</code> (módulo
+                              24), que tem otimizações específicas para leituras
+                              frequentes.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod21-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — WaitGroup com limite de
+                              concorrência</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você precisa processar 10.000 URLs em paralelo,
+                              mas lançar 10.000 goroutines simultâneas esgota
+                              conexões de rede. Qual padrão resolve isso
+                              limitando a concorrência a no máximo 20 goroutines
+                              ao mesmo tempo?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>runtime.GOMAXPROCS(20)</code> antes
+                                    do loop — limita quantas goroutines executam
+                                    em paralelo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>wg.Add(20)</code> uma vez e
+                                    reutilizar as mesmas 20 goroutines em
+                                    loop</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Usar um channel buffered com capacidade 20
+                                    como semáforo: enviar antes de lançar a
+                                    goroutine e receber no defer dentro dela —
+                                    bloqueia o lançamento quando 20 já estão
+                                    ativas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Dividir as 10.000 URLs em batches de 20 e
+                                    processar cada batch sequencialmente com
+                                    WaitGroup</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O padrão semáforo com channel buffered
+                              é o idioma Go para limitar concorrência.
+                              <code>sem := make(chan struct{}, 20)</code> e
+                              então no loop:
+                              <code>sem &lt;- struct{}{}</code> (bloqueia se já
+                              há 20 no canal), lança a goroutine com
+                              <code>defer func() { &lt;-sem }()</code>. Assim,
+                              no máximo 20 goroutines executam simultaneamente.
+                              <code>GOMAXPROCS</code> controla threads do SO,
+                              não quantas goroutines ficam ativas. Batches
+                              sequenciais funcionam mas subutilizam: se uma URL
+                              de um batch demora, as outras 19 ficam ociosas.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1766 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="io, bufio e os em Go: as interfaces Reader e Writer, composição de IO, leitura eficiente com bufio, arquivos e sistema de arquivos com o pacote os."
+      />
+      <title>Módulo 26 — io, bufio, os · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="26">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">io, bufio, os</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 26</span>
+                           <span class="badge badge-default">4 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — As interfaces io.Reader e io.Writer
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod26-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>As interfaces io.Reader e io.Writer</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>io</code> define as duas interfaces
+                              mais importantes da stdlib do Go. Toda entrada e
+                              saída de dados — arquivos, conexões de rede,
+                              buffers em memória, respostas HTTP, compressão
+                              gzip — converge para essas duas interfaces
+                              minimalistas:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >definições no pacote io</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Reader é qualquer coisa da qual se pode ler bytes
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+// Writer é qualquer coisa na qual se pode escrever bytes
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}</code></pre>
+                           </div>
+
+                           <p>
+                              A beleza dessas interfaces é o que elas
+                              <em>não</em> especificam. Não importa se a fonte é
+                              um arquivo em disco, uma conexão TCP, uma string
+                              em memória ou um gerador de bytes aleatórios —
+                              qualquer um satisfaz <code>io.Reader</code>. O
+                              código que consume um
+                              <code>io.Reader</code> funciona com todos eles sem
+                              modificação.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O contrato de Read
+                           </h4>
+                           <p>
+                              Entender o contrato exato de <code>Read</code> é
+                              essencial — ele tem comportamentos não-óbvios que
+                              causam bugs quando ignorados:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >contrato de Read — nuances
+                                    importantes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Read preenche p com até len(p) bytes.
+// Retorna o número de bytes lidos (0 <= n <= len(p)) e qualquer erro.
+//
+// Quando Read esgota os dados, retorna 0, io.EOF
+// (ou n > 0, io.EOF — pode retornar dados E EOF na mesma chamada)
+//
+// Read PODE retornar menos bytes do que len(p) mesmo sem erro.
+// Isso é legal e esperado — nunca assuma que um Read preenche o buffer completo.
+
+func lerCompletoErrado(r io.Reader) ([]byte, error) {
+    buf := make([]byte, 1024)
+    n, err := r.Read(buf)  // ✗ pode retornar menos de 1024 bytes mesmo havendo mais
+    return buf[:n], err
+}
+
+// Forma correta: io.ReadAll lê até EOF, fazendo múltiplos Reads internamente
+func lerCompleto(r io.Reader) ([]byte, error) {
+    return io.ReadAll(r)  // ✓ continua lendo até io.EOF
+}
+
+// Forma correta para tamanho conhecido: io.ReadFull
+func lerExatamente(r io.Reader, n int) ([]byte, error) {
+    buf := make([]byte, n)
+    _, err := io.ReadFull(r, buf)  // ✓ erro se não conseguir ler exatamente n bytes
+    return buf, err
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções utilitárias do pacote io
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >as funções mais usadas do io</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// io.Copy — copia de Reader para Writer até EOF, sem buffer intermediário na memória
+// Ideal para arquivos grandes: nunca carrega tudo na memória de uma vez
+n, err := io.Copy(destino, origem)         // retorna bytes copiados
+
+// io.CopyN — copia exatamente n bytes
+n, err = io.CopyN(destino, origem, 1024)
+
+// io.ReadAll — lê tudo até EOF, retorna []byte
+data, err := io.ReadAll(r)
+
+// io.ReadFull — lê exatamente len(buf) bytes ou retorna erro
+n, err = io.ReadFull(r, buf)
+
+// io.Discard — Writer que descarta tudo (útil para drenar um Reader)
+io.Copy(io.Discard, resp.Body)  // drena e fecha corretamente sem alocar memória
+
+// io.MultiWriter — escreve em múltiplos Writers simultaneamente
+mw := io.MultiWriter(arquivo, os.Stdout, hashWriter)
+io.Copy(mw, origem)  // um Copy escreve no arquivo, na tela e calcula hash ao mesmo tempo
+
+// io.TeeReader — lê de r e escreve tudo que leu em w (espelho de leitura)
+tee := io.TeeReader(resp.Body, &buf)  // cada Read de tee também grava em buf
+io.Copy(io.Discard, tee)              // força leitura completa; buf agora tem o conteúdo</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Implementações na stdlib
+                           </h4>
+                           <p>
+                              A força das interfaces <code>io.Reader</code> e
+                              <code>io.Writer</code>
+                              está na quantidade de tipos que as implementam.
+                              Todo código que aceita essas interfaces
+                              automaticamente funciona com todos eles:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Pacote
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Implementa
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *os.File
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          os
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Reader, Writer
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *bytes.Buffer
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          bytes
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Reader, Writer
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *strings.Reader
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          strings
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Reader
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *strings.Builder
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          strings
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Writer
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          net.Conn
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          net
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Reader, Writer
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          http.ResponseWriter
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          net/http
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Writer
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          *gzip.Reader / *gzip.Writer
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          compress/gzip
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Reader, Writer
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    io.ReadCloser, io.WriteCloser e
+                                    io.ReadWriter
+                                 </div>
+                                 <div class="callout__body">
+                                    O pacote <code>io</code> define interfaces
+                                    compostas combinando as básicas:
+                                    <code>io.ReadCloser</code> =
+                                    <code>Reader + Closer</code>,
+                                    <code>io.ReadWriter</code> =
+                                    <code>Reader + Writer</code>,
+                                    <code>io.ReadWriteSeeker</code> =
+                                    <code>Reader + Writer + Seeker</code>.
+                                    <code>http.Response.Body</code>, por
+                                    exemplo, é um <code>io.ReadCloser</code> —
+                                    você lê com <code>Read</code> e fecha com
+                                    <code>Close</code> ao terminar.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Composição de IO
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod26-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Composição de IO</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A maior vantagem das interfaces
+                              <code>io.Reader</code> e <code>io.Writer</code> é
+                              que elas se <strong>compõem</strong>. Você pode
+                              envolver um Reader em outro para adicionar
+                              comportamento — sem modificar o Reader original,
+                              sem herança, sem wrappers frágeis. É o padrão
+                              Decorator aplicado a IO.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Encadeando transformações
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >composição: arquivo → gzip → hash →
+                                    destino</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Cenário: baixar um arquivo, calcular seu hash SHA-256 e gravá-lo comprimido
+// Tudo em uma única passagem, sem carregar o arquivo inteiro na memória
+
+func downloadEComprimir(url, destPath string) ([]byte, error) {
+    resp, err := http.Get(url)
+    if err != nil {
+        return nil, fmt.Errorf("download: %w", err)
+    }
+    defer resp.Body.Close()
+
+    // Cria o arquivo de destino
+    arquivo, err := os.Create(destPath)
+    if err != nil {
+        return nil, fmt.Errorf("criar arquivo: %w", err)
+    }
+    defer arquivo.Close()
+
+    // Cadeia de Writers: gzip → arquivo
+    gz, err := gzip.NewWriter(arquivo)
+    if err != nil {
+        return nil, fmt.Errorf("gzip: %w", err)
+    }
+    defer gz.Close()
+
+    // hasher intercepta tudo que passa: calcula SHA-256 "de graça"
+    hasher := sha256.New()
+
+    // MultiWriter: escreve nos dois simultaneamente
+    destino := io.MultiWriter(gz, hasher)
+
+    // Uma única cópia: resp.Body → gzip → arquivo
+    //                   resp.Body → hasher
+    // Nada fica inteiro na RAM
+    if _, err := io.Copy(destino, resp.Body); err != nil {
+        return nil, fmt.Errorf("copiar: %w", err)
+    }
+
+    return hasher.Sum(nil), nil  // retorna hash SHA-256 do conteúdo
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              strings.NewReader — string como Reader
+                           </h4>
+                           <p>
+                              Quando uma função exige um
+                              <code>io.Reader</code> mas você só tem uma
+                              <code>string</code>, use
+                              <code>strings.NewReader</code>. Isso elimina a
+                              necessidade de criar arquivos temporários ou
+                              converter para
+                              <code>[]byte</code> desnecessariamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >string como Reader — teste e
+                                    utilidades</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Decodificar JSON de uma string literal — útil em testes
+input := `{"nome":"Ana","idade":30}`
+var usuario struct {
+    Nome  string `json:"nome"`
+    Idade int    `json:"idade"`
+}
+json.NewDecoder(strings.NewReader(input)).Decode(&usuario)
+
+// Testar uma função que aceita io.Reader sem criar arquivo temporário
+func processarCSV(r io.Reader) ([][]string, error) { /* ... */ }
+
+rows, _ := processarCSV(strings.NewReader("nome,email\nAna,ana@ex.com\n"))
+
+// bytes.NewReader faz o mesmo para []byte
+data := []byte{0x89, 0x50, 0x4E, 0x47}  // cabeçalho PNG
+formato, _ := detectarFormato(bytes.NewReader(data))</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              bytes.Buffer — Reader e Writer em memória
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >bytes.Buffer como buffer de memória</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var buf bytes.Buffer
+
+// Escreve de múltiplas formas
+buf.WriteString("linha 1\n")
+fmt.Fprintf(&buf, "linha %d\n", 2)  // Fprintf aceita io.Writer
+buf.Write([]byte("linha 3\n"))
+
+// Lê como Reader
+scanner := bufio.NewScanner(&buf)
+for scanner.Scan() {
+    fmt.Println(scanner.Text())
+}
+
+// Ou lê tudo de uma vez
+fmt.Println(buf.String())  // converte para string sem cópia extra em Go 1.10+
+
+// Caso de uso real: construir corpo de requisição HTTP
+var body bytes.Buffer
+json.NewEncoder(&body).Encode(payload)
+http.Post(url, "application/json", &body)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    bytes.Buffer vs strings.Builder
+                                 </div>
+                                 <div class="callout__body">
+                                    Para construir strings por concatenação,
+                                    prefira
+                                    <code>strings.Builder</code> — ele não
+                                    implementa <code>io.Reader</code> (só
+                                    <code>Writer</code>), mas é otimizado para
+                                    crescimento incremental e não faz cópias
+                                    desnecessárias. <code>bytes.Buffer</code> é
+                                    melhor quando você precisa tanto escrever
+                                    quanto ler do mesmo buffer, ou quando
+                                    trabalha com dados binários
+                                    (<code>[]byte</code>).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — bufio: leitura eficiente
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod26-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>bufio: leitura eficiente</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Cada chamada a <code>Read</code> ou
+                              <code>Write</code> diretamente em um arquivo ou
+                              conexão de rede pode resultar em uma chamada de
+                              sistema — caro. O pacote
+                              <code>bufio</code> adiciona uma camada de buffer
+                              entre seu código e o IO real: agrupa muitas
+                              operações pequenas em poucas operações grandes,
+                              reduzindo drasticamente o número de syscalls.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              bufio.Scanner — linha por linha
+                           </h4>
+                           <p>
+                              O jeito mais idiomático de ler um arquivo linha
+                              por linha em Go:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Scanner — leitura linha a linha</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">arquivo, err := os.Open("dados.txt")
+if err != nil {
+    log.Fatal(err)
+}
+defer arquivo.Close()
+
+scanner := bufio.NewScanner(arquivo)
+
+// Scan() retorna true enquanto houver linhas; false em EOF ou erro
+for scanner.Scan() {
+    linha := scanner.Text()  // string sem o \n final
+    fmt.Println(linha)
+}
+
+// Verificar erro APÓS o loop — Scan() não retorna erro, apenas false
+if err := scanner.Err(); err != nil {
+    log.Printf("erro ao ler: %v", err)
+}
+// Não verificar scanner.Err() é um bug comum — EOF e erro real dão o mesmo false</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Scanner com SplitFunc personalizado
+                           </h4>
+                           <p>
+                              Por padrão, <code>Scanner</code> separa por
+                              linhas. É possível configurar outros separadores —
+                              palavras, bytes individuais, ou qualquer lógica
+                              customizada:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >split functions</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ScanWords — separa por espaços/tabs/newlines
+scanner := bufio.NewScanner(strings.NewReader("go é simples e poderoso"))
+scanner.Split(bufio.ScanWords)
+for scanner.Scan() {
+    fmt.Println(scanner.Text())  // "go", "é", "simples", "e", "poderoso"
+}
+
+// ScanBytes — byte a byte
+scanner.Split(bufio.ScanBytes)
+
+// ScanRunes — runa a runa (correto para UTF-8)
+scanner.Split(bufio.ScanRunes)
+
+// SplitFunc customizado — separa por vírgula (CSV simples)
+scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+    for i, b := range data {
+        if b == ',' {
+            return i + 1, data[:i], nil  // consome até a vírgula
+        }
+    }
+    if atEOF && len(data) > 0 {
+        return len(data), data, nil  // último campo sem vírgula
+    }
+    return 0, nil, nil  // aguarda mais dados
+})</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              bufio.Reader — controle granular
+                           </h4>
+                           <p>
+                              <code>bufio.Scanner</code> é conveniente mas
+                              limitado: não funciona bem com linhas maiores que
+                              o buffer padrão (64KB). Para controle maior, use
+                              <code>bufio.Reader</code> diretamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >bufio.Reader — controle fino</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">reader := bufio.NewReader(arquivo)
+
+// ReadString lê até o delimitador (inclusivo)
+linha, err := reader.ReadString('\n')
+// linha inclui o '\n' — diferente de scanner.Text() que remove
+
+// ReadBytes — igual mas retorna []byte
+bytes, err := reader.ReadBytes('\n')
+
+// ReadLine — baixo nível, evite em código novo
+// Não retorna o '\n', mas também não funciona bem com linhas muito longas
+
+// Peek — lê sem consumir (útil para detecção de formato)
+cabecalho, err := reader.Peek(4)  // olha os próximos 4 bytes sem avançar
+if bytes.Equal(cabecalho, []byte{0x89, 0x50, 0x4E, 0x47}) {
+    fmt.Println("arquivo PNG detectado")
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              bufio.Writer — escrita com buffer
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >bufio.Writer — flush obrigatório</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">arquivo, _ := os.Create("saida.txt")
+defer arquivo.Close()
+
+// bufio.Writer agrupa writes — menos syscalls, mais performance
+w := bufio.NewWriter(arquivo)
+
+for i := 0; i < 10000; i++ {
+    fmt.Fprintf(w, "linha %d\n", i)  // escreve no buffer interno
+}
+
+// CRÍTICO: Flush envia o buffer restante para o arquivo
+// Sem Flush, os últimos bytes podem ficar no buffer e nunca chegarem ao disco
+if err := w.Flush(); err != nil {
+    log.Printf("erro ao fazer flush: %v", err)
+}
+
+// Padrão idiomático com defer — mas atenção: defer não captura erro de Flush
+defer w.Flush()  // ✓ simples, mas ignora o erro de flush
+// Para capturar o erro de flush com defer, use uma função nomeada</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Esquecer Flush é um bug silencioso
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>bufio.Writer</code> mantém dados em
+                                    memória até o buffer encher (padrão 4096
+                                    bytes) ou até <code>Flush()</code> ser
+                                    chamado. Se o programa terminar, ou o
+                                    arquivo for fechado, sem um
+                                    <code>Flush()</code>, os dados no buffer são
+                                    perdidos silenciosamente. Nenhum erro é
+                                    retornado — o arquivo simplesmente ficará
+                                    incompleto. Sempre verifique o erro de
+                                    <code>Flush()</code>, especialmente antes de
+                                    fechar o arquivo.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Arquivos e sistema de arquivos com os
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod26-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Arquivos e sistema de arquivos com os</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>os</code> é a interface do Go com o
+                              sistema operacional. Abrir, criar, renomear,
+                              remover arquivos; ler variáveis de ambiente;
+                              manipular diretórios — tudo passa por
+                              <code>os</code>. As funções retornam
+                              <code>error</code> idiomático e
+                              <code>*os.File</code> implementa tanto
+                              <code>io.Reader</code> quanto
+                              <code>io.Writer</code>.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Abrir e criar arquivos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >os.Open, os.Create e os.OpenFile</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// os.Open — somente leitura; erro se não existir
+f, err := os.Open("entrada.txt")
+defer f.Close()
+
+// os.Create — cria ou trunca para escrita; cria se não existir
+f, err = os.Create("saida.txt")
+defer f.Close()
+
+// os.OpenFile — controle total com flags e permissões
+f, err = os.OpenFile("log.txt",
+    os.O_APPEND|os.O_CREATE|os.O_WRONLY,  // abre para append, cria se não existir
+    0644,                                   // permissões Unix: rw-r--r--
+)
+
+// Flags mais comuns:
+// os.O_RDONLY  — somente leitura (valor 0)
+// os.O_WRONLY  — somente escrita
+// os.O_RDWR    — leitura e escrita
+// os.O_CREATE  — cria se não existir
+// os.O_TRUNC   — trunca ao abrir (apaga conteúdo existente)
+// os.O_APPEND  — escreve sempre no final
+
+// Atalho para arquivo inteiro — os.ReadFile / os.WriteFile (Go 1.16+)
+data, err := os.ReadFile("config.json")    // lê tudo de uma vez
+err = os.WriteFile("saida.json", data, 0644)  // escreve tudo de uma vez</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Informações e metadados
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >os.Stat — metadados de arquivo</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">info, err := os.Stat("arquivo.txt")
+if err != nil {
+    if errors.Is(err, os.ErrNotExist) {
+        fmt.Println("arquivo não existe")
+    } else {
+        log.Fatal(err)
+    }
+}
+
+fmt.Println(info.Name())       // "arquivo.txt"
+fmt.Println(info.Size())       // tamanho em bytes
+fmt.Println(info.ModTime())    // última modificação
+fmt.Println(info.IsDir())      // é diretório?
+fmt.Println(info.Mode())       // permissões: -rw-r--r--
+
+// Verificar se arquivo existe — padrão idiomático
+func existeArquivo(path string) bool {
+    _, err := os.Stat(path)
+    return !errors.Is(err, os.ErrNotExist)
+    // NUNCA use: err == nil — outros erros (permissão) dariam false incorretamente
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Manipulação de diretórios
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >diretórios e navegação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Criar diretório
+os.Mkdir("dados", 0755)           // um nível
+os.MkdirAll("a/b/c/d", 0755)     // cria toda a hierarquia (como mkdir -p)
+
+// Listar conteúdo — os.ReadDir (Go 1.16+, substitui ioutil.ReadDir)
+entradas, err := os.ReadDir(".")
+for _, e := range entradas {
+    fmt.Printf("%s  dir=%v  size=%d\n",
+        e.Name(), e.IsDir(), /* tamanho requer e.Info() */ 0)
+}
+
+// Percorrer recursivamente — filepath.WalkDir (mais eficiente que filepath.Walk)
+filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+    if err != nil {
+        return err  // erro ao acessar este path — continua ou para
+    }
+    if d.IsDir() && d.Name() == "node_modules" {
+        return filepath.SkipDir  // pula diretório inteiro
+    }
+    fmt.Println(path)
+    return nil
+})
+
+// Remover
+os.Remove("arquivo.txt")       // remove arquivo ou diretório vazio
+os.RemoveAll("diretorio/")     // remove recursivamente (como rm -rf)
+
+// Renomear / mover
+os.Rename("velho.txt", "novo.txt")
+os.Rename("arquivo.txt", "subdir/arquivo.txt")  // mover entre diretórios</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Arquivo temporário e variáveis de ambiente
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >temporários e ambiente</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Arquivo temporário — criado no diretório de temp do SO
+tmp, err := os.CreateTemp("", "processo-*.json")
+// "" = diretório padrão (os.TempDir()); "*.json" = sufixo
+defer os.Remove(tmp.Name())  // limpa após uso
+defer tmp.Close()
+
+// Diretório temporário
+dir, err := os.MkdirTemp("", "build-*")
+defer os.RemoveAll(dir)
+
+// Variáveis de ambiente
+dsn := os.Getenv("DATABASE_URL")          // retorna "" se não existir
+os.Setenv("MODO", "producao")
+os.Unsetenv("DEBUG")
+
+// LookupEnv — distingue variável ausente de variável vazia
+if val, ok := os.LookupEnv("PORT"); ok {
+    fmt.Println("porta configurada:", val)
+} else {
+    fmt.Println("PORT não definida, usando padrão 8080")
+}
+
+// Todos os pares key=value do ambiente
+for _, pair := range os.Environ() {
+    fmt.Println(pair)  // "DATABASE_URL=postgres://..."
+}
+
+// Diretórios especiais
+fmt.Println(os.TempDir())     // /tmp no Linux, %TEMP% no Windows
+fmt.Println(os.Getwd())       // diretório de trabalho atual
+fmt.Println(os.UserHomeDir()) // diretório home do usuário</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    filepath vs path — use sempre filepath
+                                 </div>
+                                 <div class="callout__body">
+                                    Go tem dois pacotes para manipular caminhos:
+                                    <code>path</code> usa sempre
+                                    <code>/</code> como separador e é para URLs
+                                    e caminhos lógicos.
+                                    <code>path/filepath</code> usa o separador
+                                    nativo do SO (<code>/</code> no Unix,
+                                    <code>\</code> no Windows) e deve ser usado
+                                    para caminhos de arquivo reais.
+                                    <code>filepath.Join</code>,
+                                    <code>filepath.Dir</code>,
+                                    <code>filepath.Base</code> e
+                                    <code>filepath.Ext</code> são as funções que
+                                    você usará no dia a dia.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 26
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod26-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'As interfaces io.Reader e io.Writer'. Lembre-se do contrato exato do método Read e o que ele garante sobre a quantidade de bytes lidos."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo tenta ler exatamente 100 bytes de
+                              uma conexão de rede. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func ler100Bytes(conn net.Conn) ([]byte, error) {
+    buf := make([]byte, 100)
+    n, err := conn.Read(buf)
+    if err != nil {
+        return nil, err
+    }
+    return buf[:n], nil
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nenhum problema — <code>Read</code> com um
+                                    buffer de 100 bytes sempre retorna
+                                    exatamente 100 bytes ou um erro</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>Read</code> pode retornar menos de
+                                    100 bytes sem erro — por exemplo, 40 bytes
+                                    chegaram primeiro pela rede. O código
+                                    retornará apenas esses 40, silenciosamente
+                                    ignorando os 60 restantes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O problema é que
+                                    <code>conn.Read</code> retorna
+                                    <code>io.EOF</code> quando há exatamente 100
+                                    bytes disponíveis, causando retorno de erro
+                                    incorreto</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O buffer deve ser
+                                    <code>make([]byte, 101)</code> —
+                                    <code>Read</code> precisa de um byte extra
+                                    para o delimitador</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O contrato de <code>Read</code> permite
+                              retornar entre 1 e <code>len(buf)</code> bytes sem
+                              erro — uma leitura parcial é completamente válida.
+                              Em conexões de rede, dados chegam em pacotes e uma
+                              única chamada <code>Read</code> pode retornar
+                              apenas o que chegou até aquele momento. A correção
+                              para ler exatamente N bytes é
+                              <code>io.ReadFull(conn, buf)</code> — ele faz
+                              múltiplos <code>Read</code>
+                              internamente até preencher o buffer ou encontrar
+                              um erro.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod26-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'bufio: leitura eficiente'. Atenção ao que acontece com os dados no buffer quando Flush não é chamado."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O arquivo <code>saida.txt</code> gerado pelo
+                              código abaixo está vazio (0 bytes) mesmo sem
+                              nenhum erro reportado. Por quê?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func gravar() error {
+    f, err := os.Create("saida.txt")
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    w := bufio.NewWriter(f)
+    fmt.Fprintln(w, "linha importante")
+    fmt.Fprintln(w, "outra linha")
+
+    return nil  // retorna sem chamar w.Flush()
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>defer f.Close()</code> limpa o
+                                    arquivo automaticamente ao fechar — use
+                                    <code>os.OpenFile</code> com
+                                    <code>os.O_APPEND</code> para evitar
+                                    isso</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>fmt.Fprintln</code> retorna erro que
+                                    está sendo ignorado — as escritas falharam
+                                    silenciosamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Os dados ficaram no buffer interno do
+                                    <code>bufio.Writer</code> — como o total
+                                    escrito (menos de 4096 bytes) não encheu o
+                                    buffer, nada foi para o arquivo.
+                                    <code>w.Flush()</code> antes do retorno
+                                    enviaria os dados pendentes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>bufio.NewWriter</code> requer que o
+                                    Writer subjacente seja um
+                                    <code>bufio.Writer</code> também — usar
+                                    <code>*os.File</code> diretamente não
+                                    funciona</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>bufio.Writer</code> acumula dados
+                              em um buffer interno (padrão 4096 bytes). Só envia
+                              ao Writer subjacente (o arquivo) quando o buffer
+                              enche ou <code>Flush()</code> é chamado. Como as
+                              duas linhas somam bem menos que 4096 bytes, elas
+                              ficam no buffer e nunca chegam ao arquivo.
+                              <code>defer f.Close()</code> fecha o
+                              <em>arquivo</em>, não o <em>bufio.Writer</em> — o
+                              buffer é descartado. A correção: adicionar
+                              <code>w.Flush()</code> antes de retornar, ou usar
+                              <code>defer w.Flush()</code> logo após criar o
+                              writer.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod26-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Arquivos e sistema de arquivos com os'. Atenção à forma correta de verificar se um arquivo existe usando errors.Is."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual das implementações abaixo verifica
+                              corretamente se um arquivo existe?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// Opção A
+func existeA(path string) bool {
+    _, err := os.Stat(path)
+    return err == nil
+}
+
+// Opção B
+func existeB(path string) bool {
+    _, err := os.Stat(path)
+    return !errors.Is(err, os.ErrNotExist)
+}
+
+// Opção C
+func existeC(path string) bool {
+    f, err := os.Open(path)
+    if err != nil { return false }
+    f.Close()
+    return true
+}
+
+// Opção D
+func existeD(path string) bool {
+    return os.Stat(path) != nil
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Opção A — <code>err == nil</code> retorna
+                                    <code>true</code> apenas quando o arquivo
+                                    existe, sem falsos positivos</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Opção B — distingue corretamente "arquivo
+                                    não existe" (<code>os.ErrNotExist</code>) de
+                                    outros erros como falta de permissão, que
+                                    também retornariam
+                                    <code>err != nil</code> mas não indicam
+                                    ausência do arquivo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Opção C — abrir o arquivo é a forma mais
+                                    confiável de verificar existência, pois
+                                    confirma acesso real</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Opção D — <code>os.Stat</code> retorna dois
+                                    valores; comparar diretamente com
+                                    <code>nil</code> não compila</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A Opção A parece certa mas é
+                              subtilmente incorreta: se o arquivo existe mas
+                              você não tem permissão de leitura,
+                              <code>os.Stat</code> retorna um erro de permissão
+                              — e a Opção A reportaria incorretamente "não
+                              existe". A Opção B é a correta:
+                              <code>!errors.Is(err, os.ErrNotExist)</code>
+                              retorna <code>true</code>
+                              tanto quando o arquivo existe (err == nil) quanto
+                              quando há outro erro (permissão negada — o arquivo
+                              existe, só não está acessível). A Opção C funciona
+                              para arquivos, mas falha para diretórios com
+                              permissão de execução mas não leitura.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 26
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod26-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Scanner sem verificação de
+                              erro</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo conta linhas de um arquivo grande.
+                              Em testes com arquivos pequenos funciona
+                              perfeitamente, mas em produção ocasionalmente
+                              retorna contagens erradas sem nenhum erro
+                              reportado. Qual é a causa?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func contarLinhas(path string) (int, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return 0, err
+    }
+    defer f.Close()
+
+    scanner := bufio.NewScanner(f)
+    count := 0
+    for scanner.Scan() {
+        count++
+    }
+    return count, nil  // scanner.Err() nunca é verificado
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir
+                                    <code>bufio.NewScanner</code> por
+                                    <code>bufio.NewReader</code> e usar
+                                    <code>ReadString('\n')</code> — o Scanner
+                                    não detecta erros de IO</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Verificar <code>scanner.Scan()</code> com
+                                    <code>if !scanner.Scan() { break }</code> —
+                                    o loop <code>for scanner.Scan()</code> não
+                                    detecta erros, apenas EOF</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Verificar <code>scanner.Err()</code> após o
+                                    loop e retornar o erro —
+                                    <code>Scan()</code> retorna
+                                    <code>false</code> tanto em EOF quanto em
+                                    erro de IO, e sem
+                                    <code>scanner.Err()</code> os dois casos são
+                                    indistinguíveis</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>bufio.NewScanner</code> com
+                                    <code
+                                       >scanner.Buffer(make([]byte, 1MB),
+                                       1MB)</code
+                                    >
+                                    — o buffer padrão limita linhas a 64KB e
+                                    causa erros silenciosos em arquivos
+                                    grandes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>scanner.Scan()</code> retorna
+                              <code>false</code>
+                              em dois casos: EOF (normal) e erro de IO
+                              (problema). Sem verificar
+                              <code>scanner.Err()</code> após o loop, é
+                              impossível distinguir os dois. Se um erro de IO
+                              ocorrer no meio de um arquivo grande (erro de
+                              disco, rede, timeout), a contagem será parcial e
+                              retornada como se fosse completa — sem nenhum erro
+                              reportado ao chamador. A correção:
+                              <pre
+                                 style="margin-top: 8px"
+                              ><code>for scanner.Scan() { count++ }
+if err := scanner.Err(); err != nil {
+    return 0, fmt.Errorf("lendo %s: %w", path, err)
+}</code></pre>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod26-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — io.Copy vs ReadAll para arquivos
+                              grandes</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um serviço precisa servir o download de arquivos
+                              que podem ter vários gigabytes. O código atual
+                              causa crashes por OOM (Out of Memory) em produção.
+                              Qual é a causa e a correção?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func servirArquivo(w http.ResponseWriter, r *http.Request, path string) {
+    data, err := os.ReadFile(path)  // lê arquivo INTEIRO na memória
+    if err != nil {
+        http.Error(w, "não encontrado", 404)
+        return
+    }
+    w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+    w.Write(data)  // envia tudo de uma vez
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>bufio.NewReader</code> para ler
+                                    o arquivo em chunks de 4096 bytes e enviar
+                                    um de cada vez com múltiplos
+                                    <code>w.Write</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Aumentar o limite de memória do processo —
+                                    arquivos grandes sempre requerem memória
+                                    proporcional ao tamanho</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Substituir <code>os.ReadFile</code> +
+                                    <code>w.Write</code> por
+                                    <code>os.Open</code> +
+                                    <code>io.Copy(w, f)</code> — ou ainda
+                                    melhor, <code>http.ServeFile</code> — que
+                                    transmite o arquivo diretamente para o
+                                    cliente sem carregar tudo na RAM</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>os.ReadFile</code> dentro de uma
+                                    goroutine separada com
+                                    <code>runtime.GC()</code> chamado após para
+                                    liberar memória imediatamente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>os.ReadFile</code> carrega o
+                              arquivo inteiro em um <code>[]byte</code> na heap.
+                              Um arquivo de 4GB cria um slice de 4GB na RAM — e
+                              com múltiplas requisições simultâneas, o processo
+                              rapidamente esgota a memória. A solução é
+                              <code>io.Copy(w, f)</code>: ele usa um buffer
+                              interno de 32KB, lendo e enviando em fatias sem
+                              jamais ter o arquivo completo na memória. O uso de
+                              RAM é O(1) independente do tamanho do arquivo. Na
+                              prática, use <code>http.ServeFile</code> ou
+                              <code>http.ServeContent</code> — eles também
+                              cuidam de Range requests, ETags e Content-Type
+                              automaticamente.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

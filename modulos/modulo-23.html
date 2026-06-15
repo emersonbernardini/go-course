@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Select e padrões de concorrência em Go: select, timeout, done channel, fan-in, fan-out e pipeline."
+      />
+      <title>Módulo 23 — Select e padrões de concorrência · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="23">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 8 — Concorrência
+                        </div>
+                        <h1 class="module-header__title">
+                           Select e padrões de concorrência
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 23</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — select
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod23-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>select</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>select</code> é o mecanismo de Go para
+                              aguardar
+                              <strong
+                                 >múltiplas operações de channel
+                                 simultaneamente</strong
+                              >. Sua sintaxe lembra um <code>switch</code>, mas
+                              cada caso é uma operação de envio ou recebimento
+                              em um channel — e o <code>select</code>
+                              bloqueia até que ao menos um caso esteja pronto.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >select básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch1 := make(chan string)
+ch2 := make(chan string)
+
+go func() {
+    time.Sleep(1 * time.Second)
+    ch1 <- "um"
+}()
+go func() {
+    time.Sleep(2 * time.Second)
+    ch2 <- "dois"
+}()
+
+// Aguarda o que chegar primeiro
+select {
+case msg := <-ch1:
+    fmt.Println("recebido de ch1:", msg)
+case msg := <-ch2:
+    fmt.Println("recebido de ch2:", msg)
+}
+// Imprime "recebido de ch1: um" após ~1s</code></pre>
+                           </div>
+
+                           <p>
+                              Se múltiplos casos estiverem prontos ao mesmo
+                              tempo, Go escolhe um
+                              <strong>aleatoriamente</strong> — não o primeiro
+                              na ordem textual. Isso é intencional: evita
+                              starvation de channels com menor prioridade.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso default — select não-bloqueante
+                           </h4>
+                           <p>
+                              Um <code>default</code> faz o
+                              <code>select</code> não bloquear: se nenhum
+                              channel estiver pronto, o caso
+                              <code>default</code>
+                              executa imediatamente. Útil para polling ou
+                              tentativas sem espera:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Verificação não-bloqueante de um channel
+func tentarReceber(ch <-chan int) (int, bool) {
+    select {
+    case v := <-ch:
+        return v, true
+    default:
+        return 0, false  // channel não tem valor disponível agora
+    }
+}
+
+// Envio não-bloqueante
+func tentarEnviar(ch chan<- int, v int) bool {
+    select {
+    case ch <- v:
+        return true
+    default:
+        return false  // channel cheio ou sem receiver
+    }
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              select em loop — o padrão event loop
+                           </h4>
+                           <p>
+                              O uso mais comum de <code>select</code> é dentro
+                              de um <code>for</code> para processar eventos de
+                              múltiplas fontes continuamente. Isso forma o
+                              núcleo de muitos servidores e workers em Go:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >worker com múltiplas fontes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func worker(tarefas <-chan Tarefa, erros <-chan error, done <-chan struct{}) {
+    for {
+        select {
+        case t := <-tarefas:
+            processar(t)
+        case err := <-erros:
+            log.Printf("erro recebido: %v", err)
+        case <-done:
+            fmt.Println("worker encerrando")
+            return
+        }
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    select com channels nil
+                                 </div>
+                                 <div class="callout__body">
+                                    Um case com channel <code>nil</code> nunca
+                                    está pronto — é ignorado pelo
+                                    <code>select</code>. Isso é um padrão útil:
+                                    ao nil-ar um channel dentro de um loop de
+                                    select, você efetivamente "desativa" aquele
+                                    caso sem remover o código. Padrão comum para
+                                    draining seletivo de múltiplos channels.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Timeout pattern
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod23-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Timeout pattern</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Todo sistema que faz I/O precisa de timeouts. Em
+                              Go, o padrão idiomático combina
+                              <code>select</code> com <code>time.After</code> ou
+                              <code>context.WithTimeout</code>
+                              para limitar quanto tempo uma operação pode
+                              bloquear.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              time.After — timeout simples
+                           </h4>
+                           <p>
+                              <code>time.After(d)</code> retorna um channel que
+                              recebe um valor após a duração <code>d</code>.
+                              Basta colocá-lo como caso do <code>select</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >timeout com time.After</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func buscarComTimeout(id int) (*Resultado, error) {
+    resultado := make(chan *Resultado, 1)
+
+    go func() {
+        r, _ := buscarNoBanco(id)  // operação potencialmente lenta
+        resultado <- r
+    }()
+
+    select {
+    case r := <-resultado:
+        return r, nil
+    case <-time.After(3 * time.Second):
+        return nil, fmt.Errorf("buscarComTimeout: timeout após 3s")
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    time.After vaza memória em loops
+                                 </div>
+                                 <div class="callout__body">
+                                    Cada chamada a <code>time.After</code> cria
+                                    um timer que não é coletado pelo GC até
+                                    disparar — mesmo que o
+                                    <code>select</code> já tenha saído pelo
+                                    outro caso. Em loops de alta frequência,
+                                    isso acumula. Use
+                                    <code>time.NewTimer</code> com
+                                    <code>t.Stop()</code> e reset explícito, ou
+                                    prefira <code>context.WithTimeout</code>
+                                    que é a abordagem recomendada em código de
+                                    produção.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              context.WithTimeout — abordagem de produção
+                           </h4>
+                           <p>
+                              <code>context.WithTimeout</code> propaga o timeout
+                              por toda a cadeia de chamadas — qualquer função
+                              que receba o <code>ctx</code> pode respeitar o
+                              prazo automaticamente. É o padrão correto para
+                              código real:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >timeout com context</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func handler(w http.ResponseWriter, r *http.Request) {
+    // Herda o contexto da requisição e adiciona timeout
+    ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+    defer cancel()  // SEMPRE deferir o cancel — evita vazamento de goroutine
+
+    resultado, err := buscarDados(ctx, r.URL.Query().Get("id"))
+    if err != nil {
+        if errors.Is(err, context.DeadlineExceeded) {
+            http.Error(w, "serviço indisponível", http.StatusGatewayTimeout)
+            return
+        }
+        http.Error(w, "erro interno", http.StatusInternalServerError)
+        return
+    }
+    json.NewEncoder(w).Encode(resultado)
+}
+
+// buscarDados respeita o contexto:
+func buscarDados(ctx context.Context, id string) (*Dados, error) {
+    req, _ := http.NewRequestWithContext(ctx, "GET",
+        "https://api.exemplo.com/dados/"+id, nil)
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("buscarDados: %w", err)
+    }
+    defer resp.Body.Close()
+    // ...
+}</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Abordagem
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Quando usar
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Cuidado
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          time.After
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Scripts, testes, operações únicas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Vaza em loops de alta frequência
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          context.WithTimeout
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Servidores, APIs, código de produção
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Sempre deferir <code>cancel()</code>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Done channel / cancellation
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod23-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Done channel / cancellation</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Como sinalizar a uma goroutine que ela deve parar?
+                              A abordagem mais direta é um
+                              <strong>done channel</strong>: um
+                              <code>chan struct{}</code> que, quando fechado,
+                              desbloqueia todos os
+                              <code>&lt;-done</code> simultaneamente. O
+                              fechamento propaga o sinal para quantas goroutines
+                              precisar — sem precisar enviar um valor por
+                              destinatário.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >done channel manual</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func iniciarWorkers(n int) (func(), <-chan Resultado) {
+    done := make(chan struct{})
+    resultados := make(chan Resultado)
+
+    for i := 0; i < n; i++ {
+        go func(id int) {
+            for {
+                select {
+                case <-done:
+                    // sinal de encerramento — sai sem bloquear
+                    return
+                default:
+                    r := executarTarefa(id)
+                    select {
+                    case resultados <- r:
+                    case <-done:
+                        return
+                    }
+                }
+            }
+        }(i)
+    }
+
+    parar := func() { close(done) }  // fecha uma vez, notifica todos
+    return parar, resultados
+}
+
+// Uso:
+parar, resultados := iniciarWorkers(4)
+defer parar()
+
+for r := range resultados {
+    fmt.Println(r)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              context.WithCancel — done channel da stdlib
+                           </h4>
+                           <p>
+                              O pacote <code>context</code> formaliza o padrão
+                              done channel. <code>ctx.Done()</code> retorna um
+                              channel que fecha quando o contexto é cancelado —
+                              e o contexto se propaga pela árvore de chamadas
+                              automaticamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >cancellation com context</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func gerarNumeros(ctx context.Context) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        n := 0
+        for {
+            select {
+            case <-ctx.Done():
+                // ctx cancelado ou deadline excedido — encerra limpo
+                fmt.Println("gerador cancelado:", ctx.Err())
+                return
+            case out <- n:
+                n++
+            }
+        }
+    }()
+    return out
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+
+    nums := gerarNumeros(ctx)
+    for i := 0; i < 5; i++ {
+        fmt.Println(<-nums)  // 0 1 2 3 4
+    }
+    cancel()  // sinaliza encerramento — gerarNumeros retorna
+
+    // Pequena espera para o print do gerador aparecer:
+    time.Sleep(10 * time.Millisecond)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Por que chan struct{} e não chan bool?
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// chan bool — funciona, mas o valor é irrelevante e ambíguo:
+done := make(chan bool)
+close(done)
+v := <-done  // v == false (zero value de bool) — confuso
+
+// chan struct{} — sem ambiguidade: o sinal é o fechamento, não o valor
+done := make(chan struct{})
+close(done)
+<-done  // sem valor útil — explícito que é apenas sinalização
+
+// struct{} ocupa 0 bytes: sem alocação, sem overhead</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Goroutine leak: o bug silencioso mais comum
+                                 </div>
+                                 <div class="callout__body">
+                                    Uma goroutine bloqueada em um channel que
+                                    nunca receberá dados permanece viva para
+                                    sempre — é um <em>goroutine leak</em>.
+                                    Sempre forneça um caminho de saída via done
+                                    channel ou contexto. O pacote
+                                    <code>goleak</code> (uber-go/goleak) detecta
+                                    leaks em testes automaticamente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Fan-in / Fan-out
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod23-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Fan-in / Fan-out</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Fan-in e Fan-out são padrões para distribuir e
+                              consolidar trabalho entre múltiplas goroutines.
+                              São complementares:
+                              <strong>fan-out</strong> distribui um único fluxo
+                              de entrada para N workers;
+                              <strong>fan-in</strong> multiplexar N channels em
+                              um único channel de saída.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Fan-out — distribuindo trabalho
+                           </h4>
+                           <p>
+                              Quando uma etapa do pipeline é CPU-bound ou
+                              I/O-bound e lenta, lançar múltiplas goroutines
+                              para processá-la em paralelo reduz a latência
+                              total:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >fan-out: N workers para a mesma
+                                    entrada</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Simula compressão lenta de arquivos
+func comprimirArquivo(ctx context.Context, nome string) Resultado {
+    time.Sleep(100 * time.Millisecond) // I/O simulado
+    return Resultado{Nome: nome, Tamanho: len(nome) * 10}
+}
+
+// fanOut lança n goroutines para processar o mesmo channel de entrada
+func fanOut(ctx context.Context, entrada <-chan string, n int) []<-chan Resultado {
+    saidas := make([]<-chan Resultado, n)
+    for i := 0; i < n; i++ {
+        saida := make(chan Resultado)
+        saidas[i] = saida
+        go func() {
+            defer close(saida)
+            for nome := range entrada {
+                select {
+                case <-ctx.Done():
+                    return
+                case saida <- comprimirArquivo(ctx, nome):
+                }
+            }
+        }()
+    }
+    return saidas
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Fan-in — consolidando resultados
+                           </h4>
+                           <p>
+                              Após o fan-out, os N channels de saída precisam
+                              ser consolidados em um único channel para a etapa
+                              seguinte. Isso é o fan-in:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >fan-in: N channels → 1</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// fanIn multiplexa N channels de entrada em um único channel de saída
+func fanIn(ctx context.Context, canais ...<-chan Resultado) <-chan Resultado {
+    saida := make(chan Resultado)
+    var wg sync.WaitGroup
+
+    encaminhar := func(c <-chan Resultado) {
+        defer wg.Done()
+        for r := range c {
+            select {
+            case saida <- r:
+            case <-ctx.Done():
+                return
+            }
+        }
+    }
+
+    wg.Add(len(canais))
+    for _, c := range canais {
+        go encaminhar(c)
+    }
+
+    // Fecha saida quando todos os workers terminarem
+    go func() {
+        wg.Wait()
+        close(saida)
+    }()
+
+    return saida
+}
+
+// Uso combinado: fan-out + fan-in
+func processarArquivos(ctx context.Context, arquivos []string) {
+    entrada := make(chan string, len(arquivos))
+    for _, f := range arquivos {
+        entrada <- f
+    }
+    close(entrada)
+
+    // Fan-out: 4 workers processam em paralelo
+    workers := fanOut(ctx, entrada, 4)
+
+    // Fan-in: consolida os 4 channels em 1
+    resultados := fanIn(ctx, workers...)
+
+    for r := range resultados {
+        fmt.Printf("comprimido: %s (%d bytes)\n", r.Nome, r.Tamanho)
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Quando fan-out vale a pena
+                                 </div>
+                                 <div class="callout__body">
+                                    Fan-out só traz ganho real quando a operação
+                                    é genuinamente paralelizável (I/O ou CPU em
+                                    núcleos distintos) e o overhead de
+                                    coordenação (channels, goroutines,
+                                    WaitGroup) é menor que o ganho. Para
+                                    operações de microssegundos, o overhead pode
+                                    superar o ganho. Meça com benchmarks antes
+                                    de distribuir.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Pipeline pattern
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod23-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Pipeline pattern</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um pipeline é uma cadeia de estágios conectados
+                              por channels, onde cada estágio recebe valores de
+                              um channel de entrada, transforma-os e envia para
+                              um channel de saída. Cada estágio roda em sua
+                              própria goroutine — o processamento ocorre em
+                              paralelo entre os estágios (como um pipeline de
+                              CPU).
+                           </p>
+
+                           <p>A convenção de assinatura de cada estágio é:</p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >assinatura padrão de estágio</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Estágio recebe um ctx + channel de entrada, retorna channel de saída
+func estagio(ctx context.Context, entrada <-chan TipoA) <-chan TipoB {
+    saida := make(chan TipoB)
+    go func() {
+        defer close(saida)  // sinaliza fim para o próximo estágio
+        for v := range entrada {
+            select {
+            case <-ctx.Done():
+                return  // cancellation se propaga por toda a cadeia
+            case saida <- transformar(v):
+            }
+        }
+    }()
+    return saida
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exemplo real: pipeline de processamento de logs
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pipeline completo: ler → parsear → filtrar
+                                    → agregar</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type LogEntry struct {
+    Nivel   string
+    Msg     string
+    Campos  map[string]string
+}
+
+// Estágio 1 — gerador: lê linhas de um io.Reader
+func lerLinhas(ctx context.Context, r io.Reader) <-chan string {
+    out := make(chan string)
+    go func() {
+        defer close(out)
+        scanner := bufio.NewScanner(r)
+        for scanner.Scan() {
+            select {
+            case <-ctx.Done():
+                return
+            case out <- scanner.Text():
+            }
+        }
+    }()
+    return out
+}
+
+// Estágio 2 — parsear: string → LogEntry
+func parsearLogs(ctx context.Context, linhas <-chan string) <-chan LogEntry {
+    out := make(chan LogEntry)
+    go func() {
+        defer close(out)
+        for linha := range linhas {
+            var entry LogEntry
+            if err := json.Unmarshal([]byte(linha), &entry); err != nil {
+                continue  // linha inválida: descarta sem parar o pipeline
+            }
+            select {
+            case <-ctx.Done():
+                return
+            case out <- entry:
+            }
+        }
+    }()
+    return out
+}
+
+// Estágio 3 — filtrar: apenas erros
+func filtrarErros(ctx context.Context, entries <-chan LogEntry) <-chan LogEntry {
+    out := make(chan LogEntry)
+    go func() {
+        defer close(out)
+        for e := range entries {
+            if e.Nivel != "ERROR" {
+                continue
+            }
+            select {
+            case <-ctx.Done():
+                return
+            case out <- e:
+            }
+        }
+    }()
+    return out
+}
+
+// Estágio 4 — consumidor final: conta erros por serviço
+func contarPorServico(ctx context.Context, erros <-chan LogEntry) map[string]int {
+    contagem := make(map[string]int)
+    for e := range erros {
+        select {
+        case <-ctx.Done():
+            return contagem
+        default:
+            contagem[e.Campos["service"]]++
+        }
+    }
+    return contagem
+}
+
+// Composição do pipeline
+func analisarLogs(ctx context.Context, r io.Reader) map[string]int {
+    linhas  := lerLinhas(ctx, r)
+    entries := parsearLogs(ctx, linhas)
+    erros   := filtrarErros(ctx, entries)
+    return contarPorServico(ctx, erros)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Propriedades do padrão
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Propriedade
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Como o padrão garante
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Backpressure
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Channel unbuffered bloqueia produtor
+                                          quando consumidor está lento
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Encerramento limpo
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          <code>close(out)</code> em cada
+                                          estágio propaga EOF para o próximo via
+                                          <code>range</code>
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Cancellation
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          <code>ctx.Done()</code> em cada
+                                          estágio encerra toda a cadeia
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Composabilidade
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Estágios são funções puras de channel
+                                          → channel; fáceis de testar e reusar
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não esqueça o close em cada estágio
+                                 </div>
+                                 <div class="callout__body">
+                                    Se um estágio intermediário não fechar seu
+                                    channel de saída quando encerrar, o estágio
+                                    seguinte ficará bloqueado em
+                                    <code>range</code> para sempre — goroutine
+                                    leak garantido. O
+                                    <code>defer close(out)</code> no início da
+                                    goroutine de cada estágio é mandatório, não
+                                    opcional.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 23
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod23-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'select'. Preste atenção no comportamento do select quando múltiplos cases estão prontos simultaneamente — a especificação da linguagem define isso explicitamente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo executa o select 1000 vezes com
+                              ambos os channels prontos simultaneamente. O que
+                              podemos afirmar sobre a saída?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">ch1 := make(chan int, 1)
+ch2 := make(chan int, 1)
+contCh1, contCh2 := 0, 0
+
+for i := 0; i < 1000; i++ {
+    ch1 <- 1
+    ch2 <- 2
+    select {
+    case <-ch1:
+        contCh1++
+    case <-ch2:
+        contCh2++
+    }
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>contCh1 == 1000</code> e
+                                    <code>contCh2 == 0</code> — o primeiro case
+                                    tem prioridade</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>contCh1 == 0</code> e
+                                    <code>contCh2 == 1000</code> — channels com
+                                    buffer têm prioridade</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Ambos terão contagens positivas, mas não
+                                    necessariamente 500/500 — a escolha é
+                                    pseudoaleatória quando múltiplos cases estão
+                                    prontos</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Deadlock — dois channels com buffer cheio
+                                    causam panic</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A especificação de Go garante que
+                              quando múltiplos cases de um
+                              <code>select</code> estão prontos, um é escolhido
+                              <em>pseudo-aleatoriamente</em>. Não há garantia de
+                              50/50, mas ambos receberão seleções ao longo de
+                              1000 iterações. Isso é intencional — previne
+                              starvation de qualquer case.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod23-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Timeout pattern'. Preste atenção no comportamento de time.After em chamadas repetidas — há uma consequência específica de memória que o diferencia de time.NewTimer."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um servidor de alta carga executa o loop abaixo
+                              milhares de vezes por segundo. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func processarMensagens(msgs <-chan Msg) {
+    for {
+        select {
+        case msg := <-msgs:
+            processar(msg)
+        case <-time.After(100 * time.Millisecond):
+            flush()
+        }
+    }
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Nenhum problema — <code>time.After</code> é
+                                    a forma recomendada de timeout em
+                                    loops</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Race condition — <code>flush()</code> pode
+                                    ser chamado concorrentemente com
+                                    <code>processar(msg)</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Vazamento de memória — cada iteração cria
+                                    um novo timer que não é coletado até
+                                    disparar; com alta frequência de mensagens o
+                                    timer de 100ms nunca dispara mas acumula
+                                    alocações</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Deadlock — <code>time.After</code> não pode
+                                    ser usado em loops infinitos</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A cada iteração onde uma mensagem está
+                              disponível, o case do timer "perde" — mas o timer
+                              criado por
+                              <code>time.After</code> ainda existe no heap e só
+                              é coletado após 100ms. Em alta frequência,
+                              centenas ou milhares de timers acumulam
+                              simultaneamente. A correção é usar
+                              <code>time.NewTicker</code> (para flush periódico)
+                              ou <code>time.NewTimer</code> com
+                              <code>Reset</code> explícito.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod23-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Pipeline pattern'. Preste atenção no que acontece com os estágios seguintes quando um estágio intermediário encerra sem fechar seu channel de saída."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O estágio abaixo tem um bug que causa goroutine
+                              leak no pipeline. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func filtrar(ctx context.Context, entrada <-chan int) <-chan int {
+    saida := make(chan int)
+    go func() {
+        for v := range entrada {
+            if v%2 == 0 {
+                select {
+                case saida <- v:
+                case <-ctx.Done():
+                    return  // encerra sem fechar saida
+                }
+            }
+        }
+        // entrada foi fechada — goroutine encerra aqui
+        // saida também NÃO é fechada aqui
+    }()
+    return saida
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O filtro não respeita a cancellation —
+                                    deveria verificar
+                                    <code>ctx.Done()</code> antes do range</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O <code>select</code> dentro do
+                                    <code>range</code> é inválido — não se pode
+                                    misturar os dois</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>saida</code> nunca é fechado — quando
+                                    o contexto cancela e a goroutine retorna, o
+                                    estágio seguinte fica bloqueado em
+                                    <code>range saida</code> para sempre</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O channel <code>saida</code> deveria ser
+                                    buffered para evitar bloqueio no
+                                    filtro</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Quando o contexto cancela e a goroutine
+                              retorna pelo <code>case &lt;-ctx.Done()</code>,
+                              <code>saida</code> não é fechado. O estágio
+                              seguinte que faz
+                              <code>for v := range saida</code> bloqueia
+                              indefinidamente — goroutine leak. A correção é
+                              <code>defer close(saida)</code> no início da
+                              goroutine, garantindo fechamento em qualquer
+                              caminho de saída.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 23
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod23-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Bug em produção</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um serviço faz três chamadas a APIs externas em
+                              paralelo e retorna o primeiro resultado. O código
+                              abaixo tem um bug sutil que causa goroutine leak
+                              em produção. Qual é o problema e a correção
+                              correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func primeiroResultado(urls []string) string {
+    ch := make(chan string)  // unbuffered
+
+    for _, url := range urls {
+        go func(u string) {
+            resp, _ := http.Get(u)
+            body, _ := io.ReadAll(resp.Body)
+            ch <- string(body)  // bloqueia se ninguém está lendo
+        }(url)
+    }
+
+    return <-ch  // recebe apenas o primeiro
+    // As outras 2 goroutines ficam bloqueadas em ch <- para sempre
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>sync.WaitGroup</code> para
+                                    aguardar todas as goroutines antes de
+                                    retornar</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Usar
+                                    <code
+                                       >ch := make(chan string, len(urls))</code
+                                    >
+                                    — channel buffered com capacidade igual ao
+                                    número de goroutines, permitindo que todas
+                                    enviem sem bloquear mesmo após o retorno da
+                                    função</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Adicionar <code>defer close(ch)</code> após
+                                    a criação do channel para sinalizar
+                                    encerramento</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir
+                                    <code>ch &lt;- string(body)</code> por
+                                    <code
+                                       >select { case ch &lt;- string(body):
+                                       default: }</code
+                                    >
+                                    em cada goroutine</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Com channel unbuffered, após a função
+                              retornar o primeiro valor, as 2 goroutines
+                              restantes ficam bloqueadas em
+                              <code>ch &lt;-</code> para sempre — ninguém mais
+                              lê o channel. Com
+                              <code>make(chan string, len(urls))</code>, todas
+                              as goroutines conseguem enviar sem bloquear, mesmo
+                              que apenas o primeiro seja lido. O GC coleta o
+                              channel e as goroutines encerram normalmente. A
+                              opção D (select/default) descartaria
+                              silenciosamente resultados que chegassem quase ao
+                              mesmo tempo, o que pode ser incorreto.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod23-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Decisão de design</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você está implementando um sistema que processa
+                              imagens: (1) lê arquivos do disco, (2)
+                              redimensiona, (3) comprime, (4) faz upload para
+                              S3. As etapas 2 e 3 são CPU-bound e lentas. Qual
+                              combinação de padrões é mais adequada?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Pipeline simples (4 estágios sequenciais em
+                                    série) — mais fácil de entender e
+                                    depurar</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Fan-out puro: lançar uma goroutine por
+                                    arquivo desde o início, cada uma executando
+                                    as 4 etapas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Pipeline com fan-out nos estágios
+                                    CPU-bound: ler (1 goroutine) → fan-out de N
+                                    workers para redimensionar → fan-out de N
+                                    workers para comprimir → fan-in → upload (1
+                                    goroutine). Paraleliza onde há gargalo sem
+                                    sobrecarregar I/O</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Fan-in puro: múltiplas goroutines cada uma
+                                    lendo e fazendo todo o processamento,
+                                    consolidadas no upload</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A combinação pipeline + fan-out
+                              seletivo é o padrão ideal aqui. O pipeline conecta
+                              as etapas com backpressure natural. O fan-out é
+                              aplicado <em>apenas</em> nas etapas CPU-bound
+                              (redimensionar e comprimir), onde o paralelismo
+                              traz ganho real. Leitura e upload são I/O-bound e
+                              geralmente têm seus próprios limitadores (disco,
+                              banda de rede) — fan-out nessas etapas poderia
+                              saturar recursos sem ganho. A opção B (uma
+                              goroutine por arquivo) pode criar milhares de
+                              goroutines com uso de memória proporcional.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

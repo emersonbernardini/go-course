@@ -1,0 +1,2134 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="encoding/json em Go: Marshal, Unmarshal, struct tags, Encoder/Decoder, tipos customizados, omitempty e JSON dinâmico."
+      />
+      <title>Módulo 29 — encoding/json · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="29">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">encoding/json</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 29</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Marshal e Unmarshal
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Marshal e Unmarshal</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>encoding/json</code> converte valores Go
+                              para JSON (<strong>marshaling</strong>) e JSON
+                              para valores Go (<strong>unmarshaling</strong>). É
+                              a ponte entre o sistema de tipos estático de Go e
+                              o formato de dados dinâmico do JSON — a maioria
+                              das APIs REST e sistemas de configuração modernos
+                              depende dela.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              json.Marshal — Go → JSON
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >serialização básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Produto struct {
+    ID    int     `json:"id"`
+    Nome  string  `json:"nome"`
+    Preco float64 `json:"preco"`
+    Ativo bool    `json:"ativo"`
+}
+
+p := Produto{ID: 1, Nome: "Teclado", Preco: 299.90, Ativo: true}
+
+data, err := json.Marshal(p)
+if err != nil {
+    return fmt.Errorf("marshal: %w", err)
+}
+
+fmt.Println(string(data))
+// {"id":1,"nome":"Teclado","preco":299.9,"ativo":true}
+
+// Versão indentada para debug ou arquivos de configuração:
+data, _ = json.MarshalIndent(p, "", "  ")
+fmt.Println(string(data))
+// {
+//   "id": 1,
+//   "nome": "Teclado",
+//   "preco": 299.9,
+//   "ativo": true
+// }</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              json.Unmarshal — JSON → Go
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >desserialização básica</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">dados := []byte(`{"id":42,"nome":"Mouse","preco":89.90,"ativo":false}`)
+
+var p Produto
+if err := json.Unmarshal(dados, &p); err != nil {
+    return fmt.Errorf("unmarshal: %w", err)
+}
+
+fmt.Println(p.Nome)  // Mouse
+fmt.Println(p.Preco) // 89.9
+
+// Unmarshal em slice:
+dadosLista := []byte(`[{"id":1,"nome":"A"},{"id":2,"nome":"B"}]`)
+var lista []Produto
+json.Unmarshal(dadosLista, &lista)
+fmt.Println(len(lista))  // 2</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Mapeamento de tipos Go ↔ JSON
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo Go
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          JSON
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Observação
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          bool
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          true / false
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Direto
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          int, float64
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          number
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          JSON não distingue inteiro de float
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          string
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          string
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Escapes Unicode automáticos
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          []byte
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          string (base64)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Codificado automaticamente em base64
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          struct
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          object
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Apenas campos exportados
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          map[string]T
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          object
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Chave deve ser string ou tipo com
+                                          método String()
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          slice, array
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          array
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          nil slice → <code>null</code>; slice
+                                          vazio → <code>[]</code>
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          nil pointer
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          null
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Ponteiro não-nil serializa o valor
+                                          apontado
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Apenas campos exportados são serializados
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>json.Marshal</code> ignora
+                                    silenciosamente campos com letra minúscula.
+                                    Um campo <code>nome string</code>
+                                    (minúsculo) nunca aparece no JSON — sem
+                                    erro, sem aviso. Se um campo não aparece na
+                                    saída JSON e você não sabe por quê,
+                                    verifique se está exportado.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Struct tags
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Struct tags</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Struct tags são metadados em formato de string
+                              literal anexados a campos de struct. O pacote
+                              <code>encoding/json</code>
+                              as lê em tempo de execução via reflection para
+                              controlar como cada campo é serializado. São a
+                              principal ferramenta para mapear entre convenções
+                              de nomenclatura Go (<code>CamelCase</code>) e JSON
+                              (<code>snake_case</code>).
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >anatomia de uma struct tag</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Usuario struct {
+    //         ┌── chave   ┌── nome no JSON
+    ID          int    `json:"id"`
+    NomeCompleto string `json:"nome_completo"`
+    Email       string `json:"email"`
+    SenhaHash   string `json:"-"`           // "-" → sempre omitir do JSON
+    CreatedAt   time.Time `json:"created_at"`
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Opções da tag json
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >todas as opções</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pedido struct {
+    ID        int     `json:"id"`
+
+    // omitempty: omite o campo se for zero value (0, "", false, nil, slice/map vazio)
+    Desconto  float64 `json:"desconto,omitempty"`
+
+    // string: serializa número como string JSON (útil para IDs grandes em JS)
+    IDExterno int64   `json:"id_externo,string"`
+
+    // "-": campo nunca aparece no JSON (nem para leitura nem escrita)
+    Token     string  `json:"-"`
+
+    // "-,": nome do campo no JSON é literalmente "-" (raro mas válido)
+    Marcador  string  `json:"-,"`
+
+    // Sem tag: usa o nome do campo Go como está (PascalCase → "PascalCase")
+    Metadata  map[string]string
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Embedding e promoção de campos
+                           </h4>
+                           <p>
+                              Campos de structs embedded são promovidos para o
+                              nível superior do JSON — padrão útil para compor
+                              tipos sem aninhamento desnecessário:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >embedding e promoção</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Auditoria struct {
+    CriadoEm   time.Time `json:"criado_em"`
+    AtualizadoEm time.Time `json:"atualizado_em"`
+    CriadoPor  string    `json:"criado_por"`
+}
+
+type Produto struct {
+    ID    int    `json:"id"`
+    Nome  string `json:"nome"`
+    Auditoria     // embedded sem tag — campos promovidos ao nível raiz
+}
+
+p := Produto{
+    ID: 1, Nome: "Teclado",
+    Auditoria: Auditoria{CriadoPor: "admin"},
+}
+
+data, _ := json.Marshal(p)
+// {"id":1,"nome":"Teclado","criado_em":"0001-...","atualizado_em":"0001-...","criado_por":"admin"}
+// — não {"id":1,"nome":"Teclado","Auditoria":{...}}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Tags mal formadas falham silenciosamente
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>`json: "id"`</code> (espaço após o
+                                    dois-pontos) e
+                                    <code>`json:"id" json:"outro"`</code> (tag
+                                    duplicada) são mal formadas — o pacote as
+                                    ignora sem erro e usa o nome Go do campo.
+                                    Use <code>go vet</code> para detectar tags
+                                    inválidas antes de ir para produção.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — json.Encoder e json.Decoder
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>json.Encoder e json.Decoder</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>json.Marshal</code> e
+                              <code>json.Unmarshal</code> trabalham com
+                              <code>[]byte</code> em memória — o JSON inteiro
+                              precisa estar alocado antes de processar.
+                              <code>json.Encoder</code> e
+                              <code>json.Decoder</code> operam sobre
+                              <code>io.Writer</code> e <code>io.Reader</code>,
+                              respectivamente: processam o JSON
+                              <strong>em fluxo</strong>, sem carregar tudo na
+                              memória.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              json.Encoder — escrevendo JSON em um stream
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Encoder escrevendo direto no
+                                    ResponseWriter</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func handleListarProdutos(w http.ResponseWriter, r *http.Request) {
+    produtos, err := repo.Todos(r.Context())
+    if err != nil {
+        http.Error(w, "erro interno", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+
+    enc := json.NewEncoder(w)
+    enc.SetIndent("", "  ")       // opcional: saída indentada
+    enc.SetEscapeHTML(false)      // não escapa <, >, & em strings (útil para URLs)
+
+    if err := enc.Encode(produtos); err != nil {
+        // Header já enviado — só logar
+        slog.Error("encode JSON", "erro", err)
+    }
+    // Encode já adiciona '\n' ao final — não precisa de w.Write([]byte("\n"))
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              json.Decoder — lendo JSON de um stream
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Decoder lendo body de requisição</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func handleCriarProduto(w http.ResponseWriter, r *http.Request) {
+    r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB
+
+    dec := json.NewDecoder(r.Body)
+    dec.DisallowUnknownFields() // rejeita campos não mapeados na struct
+
+    var p Produto
+    if err := dec.Decode(&p); err != nil {
+        http.Error(w, "JSON inválido: "+err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    // Garantia: apenas um objeto JSON no body
+    if dec.More() {
+        http.Error(w, "body deve conter exatamente um objeto JSON", http.StatusBadRequest)
+        return
+    }
+
+    // ... salvar p
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Decoder para streams de múltiplos objetos
+                           </h4>
+                           <p>
+                              Uma vantagem do <code>Decoder</code> que o
+                              <code>Unmarshal</code>
+                              não oferece: ler múltiplos valores JSON
+                              sequenciais do mesmo stream (NDJSON — Newline
+                              Delimited JSON, comum em logs e eventos):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >lendo NDJSON linha a linha</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Arquivo com um JSON por linha:
+// {"id":1,"evento":"login","usuario":"ana"}
+// {"id":2,"evento":"compra","usuario":"bob"}
+// {"id":3,"evento":"logout","usuario":"ana"}
+
+func processarEventos(r io.Reader) error {
+    dec := json.NewDecoder(r)
+    for dec.More() {  // More() retorna false quando o stream acabou
+        var evento Evento
+        if err := dec.Decode(&evento); err != nil {
+            return fmt.Errorf("decodificar evento: %w", err)
+        }
+        processar(evento)
+    }
+    return nil
+}</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Função
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Entrada/Saída
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Quando usar
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          json.Marshal
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Go → <code>[]byte</code>
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Precisa do <code>[]byte</code> para
+                                          processar depois (ex: cache, hash)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          json.Unmarshal
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          <code>[]byte</code> → Go
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Já tem os bytes em memória (ex: leu
+                                          arquivo inteiro)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          json.NewEncoder
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Go → <code>io.Writer</code>
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Escrevendo em HTTP, arquivo ou conexão
+                                          de rede
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          json.NewDecoder
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          <code>io.Reader</code> → Go
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Lendo de HTTP body, arquivo, múltiplos
+                                          objetos sequenciais
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Tipos customizados: MarshalJSON / UnmarshalJSON
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>
+                              Tipos customizados: MarshalJSON / UnmarshalJSON
+                           </h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>encoding/json</code> verifica se o
+                              tipo implementa as interfaces
+                              <code>json.Marshaler</code> ou
+                              <code>json.Unmarshaler</code> antes de usar a
+                              lógica padrão baseada em reflection. Isso permite
+                              <strong>controle total</strong>
+                              sobre a representação JSON de qualquer tipo — útil
+                              para datas em formatos específicos, enums como
+                              strings, IDs com prefixo, ou qualquer
+                              transformação que as tags sozinhas não conseguem
+                              expressar.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >definição das interfaces</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Implementar qualquer uma (ou ambas) para controle customizado:
+type Marshaler interface {
+    MarshalJSON() ([]byte, error)
+}
+
+type Unmarshaler interface {
+    UnmarshalJSON([]byte) error
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exemplo real: data em formato brasileiro
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >time.Time com formato customizado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// DataBR serializa como "DD/MM/AAAA" em vez do RFC3339 padrão
+type DataBR struct {
+    time.Time
+}
+
+const formatoBR = "02/01/2006"
+
+func (d DataBR) MarshalJSON() ([]byte, error) {
+    return []byte(`"` + d.Time.Format(formatoBR) + `"`), nil
+}
+
+func (d *DataBR) UnmarshalJSON(b []byte) error {
+    s := strings.Trim(string(b), `"`)
+    t, err := time.Parse(formatoBR, s)
+    if err != nil {
+        return fmt.Errorf("data inválida %q: esperado DD/MM/AAAA", s)
+    }
+    d.Time = t
+    return nil
+}
+
+// Uso:
+type Fatura struct {
+    ID        int    `json:"id"`
+    Emissao   DataBR `json:"emissao"`
+    Vencimento DataBR `json:"vencimento"`
+}
+
+f := Fatura{ID: 1, Emissao: DataBR{time.Now()}}
+data, _ := json.Marshal(f)
+// {"id":1,"emissao":"14/06/2026","vencimento":"01/01/0001"}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exemplo real: enum como string
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tipo enum serializado como string
+                                    legível</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type StatusPedido int
+
+const (
+    StatusPendente   StatusPedido = iota
+    StatusAprovado
+    StatusEnviado
+    StatusEntregue
+    StatusCancelado
+)
+
+var statusNomes = map[StatusPedido]string{
+    StatusPendente:  "pendente",
+    StatusAprovado:  "aprovado",
+    StatusEnviado:   "enviado",
+    StatusEntregue:  "entregue",
+    StatusCancelado: "cancelado",
+}
+
+var statusCodigos = func() map[string]StatusPedido {
+    m := make(map[string]StatusPedido, len(statusNomes))
+    for k, v := range statusNomes {
+        m[v] = k
+    }
+    return m
+}()
+
+func (s StatusPedido) MarshalJSON() ([]byte, error) {
+    nome, ok := statusNomes[s]
+    if !ok {
+        return nil, fmt.Errorf("status desconhecido: %d", s)
+    }
+    return json.Marshal(nome)  // delega para string → sem risco de escape errado
+}
+
+func (s *StatusPedido) UnmarshalJSON(b []byte) error {
+    var nome string
+    if err := json.Unmarshal(b, &nome); err != nil {
+        return err
+    }
+    codigo, ok := statusCodigos[nome]
+    if !ok {
+        return fmt.Errorf("status inválido: %q", nome)
+    }
+    *s = codigo
+    return nil
+}
+
+// Resultado:
+// {"id":1,"status":"aprovado"}  → em vez de  {"id":1,"status":1}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Receiver por ponteiro em UnmarshalJSON
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>MarshalJSON</code> pode usar receiver
+                                    por valor ou ponteiro.
+                                    <code>UnmarshalJSON</code>
+                                    <strong>deve</strong>
+                                    usar receiver por ponteiro — ele precisa
+                                    modificar o valor no local apontado. Se usar
+                                    receiver por valor, a modificação é
+                                    descartada e o campo permanece com zero
+                                    value silenciosamente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Campos opcionais e omitempty
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Campos opcionais e omitempty</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Representar campos opcionais em JSON é um dos
+                              problemas mais comuns e mais mal resolvidos em Go.
+                              A distinção entre "campo ausente no JSON", "campo
+                              com valor nulo" e "campo com zero value legítimo"
+                              exige atenção ao design dos tipos.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              omitempty — quando e como funciona
+                           </h4>
+                           <p>
+                              A opção <code>omitempty</code> omite o campo do
+                              JSON se seu valor for o
+                              <strong>zero value do tipo</strong>:
+                              <code>0</code> para números, <code>""</code> para
+                              strings, <code>false</code> para bool,
+                              <code>nil</code> para ponteiros, interfaces, maps
+                              e slices.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >comportamento de omitempty</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Perfil struct {
+    Nome     string  `json:"nome"`
+    Bio      string  `json:"bio,omitempty"`       // omite se ""
+    Seguidores int   `json:"seguidores,omitempty"` // omite se 0
+    Verificado bool  `json:"verificado,omitempty"` // omite se false
+}
+
+p1 := Perfil{Nome: "Ana", Seguidores: 500, Verificado: true}
+// {"nome":"Ana","seguidores":500,"verificado":true}
+
+p2 := Perfil{Nome: "Bob"}
+// {"nome":"Bob"}  — bio, seguidores e verificado omitidos</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O problema do zero value legítimo
+                           </h4>
+                           <p>
+                              <code>omitempty</code> não distingue "zero porque
+                              não foi fornecido" de "zero como valor
+                              intencional". Para campos onde <code>0</code> ou
+                              <code>false</code> são valores válidos que devem
+                              aparecer no JSON, use <strong>ponteiros</strong>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ponteiros para distinguir ausente de
+                                    zero</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type ConfiguracaoNotificacao struct {
+    // Com omitempty em bool: false seria omitido — problema!
+    // EmailAtivo bool `json:"email_ativo,omitempty"` // ERRADO para este caso
+
+    // Ponteiro: nil → omitido; &false → aparece como false no JSON
+    EmailAtivo  *bool `json:"email_ativo,omitempty"`
+    PushAtivo   *bool `json:"push_ativo,omitempty"`
+    LimiteItens *int  `json:"limite_itens,omitempty"`
+}
+
+// Helper para criar ponteiros de literais:
+func ptr[T any](v T) *T { return &v }
+
+cfg := ConfiguracaoNotificacao{
+    EmailAtivo:  ptr(false),  // aparece no JSON como false
+    PushAtivo:   ptr(true),   // aparece como true
+    LimiteItens: nil,         // omitido (não configurado)
+}
+
+data, _ := json.Marshal(cfg)
+// {"email_ativo":false,"push_ativo":true}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              PATCH parcial — atualizando apenas campos
+                              fornecidos
+                           </h4>
+                           <p>
+                              Ponteiros são essenciais em endpoints PATCH, onde
+                              <code>nil</code> significa "não alterar" e um
+                              valor não-nil significa "atualizar para este
+                              valor":
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >request de PATCH com campos opcionais</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type AtualizarUsuarioReq struct {
+    Nome  *string `json:"nome,omitempty"`
+    Email *string `json:"email,omitempty"`
+    Bio   *string `json:"bio,omitempty"`
+}
+
+func handleAtualizarUsuario(w http.ResponseWriter, r *http.Request) {
+    var req AtualizarUsuarioReq
+    json.NewDecoder(r.Body).Decode(&req)
+
+    // JSON: {"nome": "Novo Nome"}
+    // req.Nome  → &"Novo Nome"   (atualizar)
+    // req.Email → nil            (não alterar)
+    // req.Bio   → nil            (não alterar)
+
+    if req.Nome != nil {
+        usuario.Nome = *req.Nome
+    }
+    if req.Email != nil {
+        usuario.Email = *req.Email
+    }
+    // ...
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    omitempty não funciona com structs
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>omitempty</code> em um campo do tipo
+                                    struct nunca omite — uma struct não tem zero
+                                    value vazio no sentido de
+                                    <code>encoding/json</code>, mesmo que todos
+                                    os campos sejam zero. Para omitir uma
+                                    struct, use ponteiro para struct:
+                                    <code
+                                       >*MinhaStruct
+                                       `json:"campo,omitempty"`</code
+                                    >
+                                    — <code>nil</code>
+                                    é omitido; valor não-nil é serializado
+                                    normalmente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — JSON dinâmico: json.RawMessage e map[string]any
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod29-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>
+                              JSON dinâmico: json.RawMessage e map[string]any
+                           </h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Nem sempre a estrutura do JSON é conhecida em
+                              tempo de compilação. APIs externas retornam
+                              estruturas variáveis, campos polimórficos mudam de
+                              tipo conforme o contexto, ou você precisa repassar
+                              JSON sem interpretá-lo. Para esses casos,
+                              <code>json.RawMessage</code> e
+                              <code>map[string]any</code>
+                              são as ferramentas certas.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              json.RawMessage — adiando a interpretação
+                           </h4>
+                           <p>
+                              <code>json.RawMessage</code> é simplesmente
+                              <code>[]byte</code> com os métodos
+                              <code>MarshalJSON</code> e
+                              <code>UnmarshalJSON</code> implementados para
+                              preservar o JSON literal sem interpretar. Útil
+                              quando a estrutura de um campo depende de outro
+                              campo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >campo polimórfico com RawMessage</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Eventos com payload que varia conforme o tipo:
+// {"tipo":"login",  "payload":{"usuario":"ana","ip":"1.2.3.4"}}
+// {"tipo":"compra", "payload":{"produto_id":42,"valor":99.90}}
+// {"tipo":"erro",   "payload":{"codigo":500,"msg":"timeout"}}
+
+type Evento struct {
+    Tipo    string          `json:"tipo"`
+    Payload json.RawMessage `json:"payload"` // preserva o JSON bruto
+}
+
+type PayloadLogin struct {
+    Usuario string `json:"usuario"`
+    IP      string `json:"ip"`
+}
+
+type PayloadCompra struct {
+    ProdutoID int     `json:"produto_id"`
+    Valor     float64 `json:"valor"`
+}
+
+func processarEvento(data []byte) error {
+    var ev Evento
+    if err := json.Unmarshal(data, &ev); err != nil {
+        return err
+    }
+
+    // Agora interpretamos o payload conforme o tipo:
+    switch ev.Tipo {
+    case "login":
+        var p PayloadLogin
+        if err := json.Unmarshal(ev.Payload, &p); err != nil {
+            return fmt.Errorf("payload login: %w", err)
+        }
+        fmt.Printf("login de %s via %s\n", p.Usuario, p.IP)
+
+    case "compra":
+        var p PayloadCompra
+        if err := json.Unmarshal(ev.Payload, &p); err != nil {
+            return fmt.Errorf("payload compra: %w", err)
+        }
+        fmt.Printf("compra produto %d: R$%.2f\n", p.ProdutoID, p.Valor)
+    }
+    return nil
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              map[string]any — estrutura completamente
+                              desconhecida
+                           </h4>
+                           <p>
+                              Quando o schema é totalmente desconhecido ou varia
+                              arbitrariamente, faça o unmarshal em
+                              <code>map[string]any</code>. O
+                              <code>encoding/json</code> usa um mapeamento fixo
+                              para os tipos Go nesse modo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >unmarshal em map[string]any</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">dados := []byte(`{
+    "nome": "Produto X",
+    "preco": 29.90,
+    "ativo": true,
+    "tags": ["novo", "destaque"],
+    "meta": {"cor": "azul", "peso": 1.2}
+}`)
+
+var m map[string]any
+json.Unmarshal(dados, &m)
+
+// Tipos resultantes (mapeamento fixo do encoding/json):
+// string  → string
+// number  → float64  (sempre float64, mesmo inteiros!)
+// boolean → bool
+// array   → []any
+// object  → map[string]any
+// null    → nil
+
+nome := m["nome"].(string)       // "Produto X"
+preco := m["preco"].(float64)    // 29.9
+tags := m["tags"].([]any)        // ["novo", "destaque"]
+meta := m["meta"].(map[string]any)
+cor := meta["cor"].(string)      // "azul"
+
+// IDs numéricos ficam como float64 — problema clássico:
+// {"id": 9007199254740993}  → float64 perde precisão além de 2^53
+// Solução: usar json.Decoder com UseNumber()
+dec := json.NewDecoder(bytes.NewReader(dados))
+dec.UseNumber()  // numbers → json.Number (string) em vez de float64
+var m2 map[string]any
+dec.Decode(&m2)
+// m2["preco"].(json.Number).Float64()  → (29.9, nil)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Números JSON sempre viram float64 em
+                                    map[string]any
+                                 </div>
+                                 <div class="callout__body">
+                                    Ao fazer unmarshal em
+                                    <code>map[string]any</code>, todos os
+                                    números JSON — incluindo inteiros — são
+                                    representados como <code>float64</code>.
+                                    Isso causa perda de precisão para inteiros
+                                    acima de 2⁵³ (comum com IDs de 64 bits de
+                                    sistemas externos). Use
+                                    <code>dec.UseNumber()</code> e converta com
+                                    <code>json.Number.Int64()</code> quando
+                                    precisão importa.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 29
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod29-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Marshal e Unmarshal'. Preste atenção especificamente no mapeamento de tipos entre Go e JSON — em particular como slices nil e slices vazios são tratados de forma diferente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Resp struct {
+    Tags []string `json:"tags"`
+}
+
+a, _ := json.Marshal(Resp{Tags: nil})
+b, _ := json.Marshal(Resp{Tags: []string{}})
+c, _ := json.Marshal(Resp{Tags: []string{"go"}})
+
+fmt.Println(string(a))
+fmt.Println(string(b))
+fmt.Println(string(c))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Todas as três produzem
+                                    <code>{"tags":[]}</code> — Go trata nil e
+                                    slice vazio da mesma forma em JSON</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>{"tags":null}</code> /
+                                    <code>{"tags":[]}</code> /
+                                    <code>{"tags":["go"]}</code> — nil slice
+                                    serializa como <code>null</code>, slice
+                                    vazio como array vazio</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>{"tags":[]}</code> /
+                                    <code>{"tags":[]}</code> /
+                                    <code>{"tags":["go"]}</code> — nil é
+                                    convertido para array vazio
+                                    automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>Tags: nil</code> não é válido para um
+                                    campo <code>[]string</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>encoding/json</code> distingue
+                              nil slice de slice vazio: nil → <code>null</code>,
+                              vazio → <code>[]</code>. Isso importa em APIs
+                              REST: clientes que recebem <code>null</code> podem
+                              tratar diferente de <code>[]</code>. Se sempre
+                              quiser <code>[]</code> em vez de
+                              <code>null</code>, inicialize o slice com
+                              <code>make([]string, 0)</code> ou use
+                              <code>Tags: []string{}</code> como zero value no
+                              retorno.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod29-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Campos opcionais e omitempty'. Preste atenção no que exatamente omitempty considera como 'vazio' para tipos struct — há um caso especial que surpreende."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo tem um comportamento inesperado. O
+                              que ele imprime?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Endereco struct {
+    Rua    string `json:"rua"`
+    Cidade string `json:"cidade"`
+}
+
+type Cliente struct {
+    Nome     string   `json:"nome"`
+    Endereco Endereco `json:"endereco,omitempty"`
+}
+
+c := Cliente{Nome: "Ana"}
+data, _ := json.Marshal(c)
+fmt.Println(string(data))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>{"nome":"Ana"}</code> —
+                                    <code>omitempty</code> omite a struct pois
+                                    todos os campos são zero value</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code
+                                       >{"nome":"Ana","endereco":{"rua":"","cidade":""}}</code
+                                    >
+                                    — <code>omitempty</code>
+                                    <strong>nunca</strong> omite structs; apenas
+                                    nil pointer, nil slice, nil map, zero
+                                    int/float e string vazia</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>{"nome":"Ana","endereco":{}}</code> —
+                                    struct com todos os campos zero vira objeto
+                                    vazio</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>omitempty</code> não é válido para
+                                    campos do tipo struct</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>omitempty</code> não omite
+                              structs mesmo que todos os campos sejam zero —
+                              structs não têm um conceito de "vazio" em
+                              <code>encoding/json</code>. O resultado inclui o
+                              objeto com <code>rua</code> e
+                              <code>cidade</code> como strings vazias. A solução
+                              para omitir uma struct é usar ponteiro:
+                              <code
+                                 >Endereco *Endereco
+                                 `json:"endereco,omitempty"`</code
+                              >
+                              — <code>nil</code> é omitido, valor não-nil é
+                              serializado.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod29-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'JSON dinâmico: json.RawMessage e map[string]any'. Preste atenção no mapeamento de tipos que o encoding/json usa ao desserializar para map[string]any — em particular o que acontece com números."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo causa um panic em runtime. Por
+                              quê?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">dados := []byte(`{"id": 123, "nome": "produto"}`)
+
+var m map[string]any
+json.Unmarshal(dados, &m)
+
+id := m["id"].(int)  // type assertion para int
+fmt.Println(id)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O panic ocorre porque
+                                    <code>json.Unmarshal</code> não consegue
+                                    inferir o tipo de <code>123</code> sem uma
+                                    struct de destino</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não há panic —
+                                    <code>m["id"].(int)</code> funciona porque
+                                    <code>123</code> é um inteiro JSON</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Panic: <code>encoding/json</code> sempre
+                                    desserializa números JSON como
+                                    <code>float64</code> em
+                                    <code>map[string]any</code>; a type
+                                    assertion para <code>int</code> falha porque
+                                    o tipo real é <code>float64</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Panic porque
+                                    <code>map[string]any</code> não é um destino
+                                    válido para
+                                    <code>json.Unmarshal</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Ao desserializar em
+                              <code>map[string]any</code>,
+                              <code>encoding/json</code> representa
+                              <em>todos</em> os números JSON como
+                              <code>float64</code> — sem exceção. A type
+                              assertion <code>.(int)</code> falha com panic
+                              porque o valor real é <code>float64(123)</code>. A
+                              correção é <code>m["id"].(float64)</code> e
+                              converter se necessário, ou usar
+                              <code>dec.UseNumber()</code> e então
+                              <code>m["id"].(json.Number).Int64()</code> para
+                              preservar precisão em IDs grandes.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 29
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod29-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Bug em produção</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma API de pagamentos retorna o seguinte JSON e o
+                              serviço Go consome e exibe os valores. Em
+                              produção, IDs grandes estão sendo corrompidos
+                              silenciosamente. Identifique o problema e a
+                              correção adequada.
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// JSON recebido:
+// {"transaction_id": 9007199254740993, "valor": 150.00, "status": "aprovado"}
+
+type Transacao struct {
+    ID     float64 `json:"transaction_id"`  // ← problema aqui
+    Valor  float64 `json:"valor"`
+    Status string  `json:"status"`
+}
+
+var t Transacao
+json.Unmarshal(resposta, &t)
+fmt.Println(t.ID)  // imprime 9007199254740992 — errado!</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Mudar o campo para
+                                    <code
+                                       >ID string `json:"transaction_id"`</code
+                                    >
+                                    e converter com
+                                    <code>strconv.ParseInt</code> após o
+                                    unmarshal</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Mudar o campo para
+                                    <code
+                                       >ID int64 `json:"transaction_id"`</code
+                                    >
+                                    — o <code>encoding/json</code> converte
+                                    números JSON para <code>int64</code> sem
+                                    perda de precisão quando o tipo de destino é
+                                    inteiro; <code>float64</code> perde precisão
+                                    além de 2⁵³</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>json.Number</code> como tipo do
+                                    campo e chamar <code>.Float64()</code> após
+                                    o unmarshal</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>dec.UseNumber()</code> no
+                                    Decoder — isso corrige automaticamente a
+                                    precisão de todos os campos float64</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>float64</code> tem 53 bits de
+                              mantissa — inteiros acima de 2⁵³ (9.007 trilhões)
+                              não podem ser representados exatamente. O ID
+                              <code>9007199254740993</code> vira
+                              <code>9007199254740992</code> após a conversão
+                              para <code>float64</code>. A solução é usar
+                              <code>int64</code> como tipo de destino: o
+                              <code>encoding/json</code> faz a conversão exata
+                              do número JSON para inteiro de 64 bits. A opção A
+                              funciona mas é desnecessariamente verbosa. A opção
+                              C (<code>json.Number</code>) resolve mas requer
+                              conversão manual e polui a struct com tipos de
+                              infraestrutura. A opção D é errada:
+                              <code>UseNumber()</code> afeta apenas unmarshal em
+                              <code>interface{}</code> / <code>any</code>, não
+                              em campos tipados.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod29-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Decisão de design</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você está integrando com um webhook externo que
+                              envia eventos com o seguinte formato: o campo
+                              <code>dados</code> é um objeto JSON cujo schema
+                              varia completamente conforme o campo
+                              <code>tipo</code>. Qual abordagem é mais
+                              idiomática e segura em Go para desserializar esses
+                              eventos?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// Exemplos de payload:
+// {"tipo":"pagamento", "dados":{"valor":99.90,"metodo":"pix"}}
+// {"tipo":"cancelamento", "dados":{"motivo":"fraude","reembolso":true}}
+// {"tipo":"envio", "dados":{"transportadora":"Correios","rastreio":"BR123"}}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Desserializar <code>dados</code> em
+                                    <code>map[string]any</code> e acessar os
+                                    campos com type assertions — flexível e sem
+                                    boilerplate de tipos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Criar uma única struct com todos os campos
+                                    possíveis de todos os tipos de evento,
+                                    usando <code>omitempty</code> nos campos
+                                    opcionais</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Usar <code>json.RawMessage</code> para o
+                                    campo <code>dados</code>, desserializar o
+                                    envelope primeiro para obter o
+                                    <code>tipo</code>, depois desserializar o
+                                    <code>RawMessage</code> na struct específica
+                                    daquele tipo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Implementar <code>UnmarshalJSON</code> no
+                                    tipo raiz que lê o campo
+                                    <code>tipo</code> com
+                                    <code>gjson</code> (biblioteca externa) e
+                                    despacha para a struct correta</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>json.RawMessage</code> é
+                              exatamente o padrão para campos polimórficos:
+                              preserva o JSON bruto do campo
+                              <code>dados</code> sem interpretá-lo, permite
+                              determinar o tipo do evento, e então desserializa
+                              o <code>RawMessage</code> na struct correta — com
+                              type safety completo e validação de campos. A
+                              opção A (<code>map[string]any</code>) perde type
+                              safety e exige type assertions em todo lugar —
+                              frágil e propenso a panic. A opção B (struct
+                              unificada) cria acoplamento entre todos os tipos
+                              de evento e dificulta adicionar novos. A opção D
+                              introduz uma dependência externa desnecessária
+                              quando a stdlib resolve o problema com elegância.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

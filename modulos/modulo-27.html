@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Pacote time em Go: time.Time, time.Duration, formatação e parsing, operações e comparações, Timer e Ticker, e fusos horários."
+      />
+      <title>Módulo 27 — time · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="27">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">time</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 27</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — time.Time
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>time.Time</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>time.Time</code> é o tipo central do pacote
+                              <code>time</code>. Ele representa um instante no
+                              tempo com precisão de nanosegundo, incluindo
+                              informação de fuso horário
+                              (<code>*time.Location</code>). Ao contrário de
+                              timestamps Unix simples (um inteiro),
+                              <code>time.Time</code>
+                              carrega o contexto de onde aquele instante foi
+                              registrado — o que é fundamental para formatação e
+                              aritmética correta com horário de verão.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >criação de instâncias</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Instante atual com fuso horário local
+agora := time.Now()
+
+// Instante específico: time.Date(ano, mês, dia, hora, min, seg, ns, loc)
+lançamento := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+
+// A partir de timestamp Unix (segundos desde 1970-01-01 UTC)
+t := time.Unix(1699900800, 0)         // segundos + nanosegundos
+t2 := time.UnixMilli(1699900800000)   // milissegundos (Go 1.17+)
+t3 := time.UnixMicro(1699900800000000) // microssegundos (Go 1.17+)
+
+// Zero value de time.Time: January 1, year 1, 00:00:00 UTC
+var zero time.Time
+fmt.Println(zero.IsZero())  // true
+
+// Extrair componentes
+fmt.Println(agora.Year())        // 2024
+fmt.Println(agora.Month())       // November (tipo time.Month)
+fmt.Println(int(agora.Month()))  // 11
+fmt.Println(agora.Day())         // dia do mês
+fmt.Println(agora.Hour())        // hora (0-23)
+fmt.Println(agora.Minute())      // minuto
+fmt.Println(agora.Second())      // segundo
+fmt.Println(agora.Nanosecond())  // nanosegundo
+fmt.Println(agora.Weekday())     // Sunday, Monday, ..., Saturday
+fmt.Println(agora.YearDay())     // dia do ano (1-366)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Convertendo para timestamp Unix
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">t := time.Now()
+
+// Para armazenar em banco ou serializar — sempre UTC
+fmt.Println(t.Unix())      // segundos desde epoch (int64)
+fmt.Println(t.UnixMilli()) // milissegundos (int64)
+fmt.Println(t.UnixMicro()) // microssegundos (int64)
+fmt.Println(t.UnixNano())  // nanosegundos (int64) — cuidado: estoura em 2262
+
+// Normalizar para UTC antes de armazenar
+armazenar := t.UTC()
+fmt.Println(armazenar.Location())  // UTC</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    time.Time não é comparável com ==
+                                 </div>
+                                 <div class="callout__body">
+                                    Dois valores <code>time.Time</code> que
+                                    representam o mesmo instante mas em fusos
+                                    horários diferentes
+                                    <em>não são iguais</em> com
+                                    <code>==</code> — o operador compara a
+                                    representação interna, incluindo o fuso. Use
+                                    sempre <code>t1.Equal(t2)</code> para
+                                    comparar instantes independentemente do fuso
+                                    horário. <code>==</code> só é seguro se
+                                    ambos vierem de <code>time.UTC</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — time.Duration
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>time.Duration</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>time.Duration</code> é um
+                              <code>int64</code> que representa uma duração em
+                              <strong>nanosegundos</strong>. O pacote
+                              <code>time</code>
+                              expõe constantes nomeadas para as unidades comuns,
+                              o que torna o código legível sem ambiguidade — sem
+                              precisar adivinhar se
+                              <code>30</code> significa segundos, milissegundos
+                              ou minutos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >constantes e composição</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Constantes da stdlib
+time.Nanosecond   // 1
+time.Microsecond  // 1000
+time.Millisecond  // 1000000
+time.Second       // 1000000000
+time.Minute       // 60000000000
+time.Hour         // 3600000000000
+
+// Compor durações — idioma Go: multiplicar a constante
+timeout := 30 * time.Second         // 30s
+intervalo := 500 * time.Millisecond // 500ms
+janela := 2*time.Hour + 30*time.Minute + 15*time.Second  // 2h30m15s
+
+// Usar em funções da stdlib
+time.Sleep(500 * time.Millisecond)
+ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+defer cancel()</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Inspecionando e convertendo durações
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">d := 2*time.Hour + 35*time.Minute + 10*time.Second
+
+// Métodos de conversão — retornam float64
+fmt.Println(d.Hours())   // 2.5861...
+fmt.Println(d.Minutes()) // 155.166...
+fmt.Println(d.Seconds()) // 9310.0
+
+// Representação legível por humanos
+fmt.Println(d.String())  // "2h35m10s"
+
+// Truncar e arredondar
+fmt.Println(d.Truncate(time.Hour))   // 2h0m0s
+fmt.Println(d.Round(time.Minute))    // 2h35m0s
+
+// Parsear a partir de string
+parsed, err := time.ParseDuration("1h30m45s")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(parsed.Hours())  // 1.5125
+
+// Parsear formatos suportados: ns, us/µs, ms, s, m, h
+// Combinações: "300ms", "1.5h", "2h45m"</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nunca use um número literal como Duration
+                                    diretamente
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>time.Sleep(30)</code> dorme por 30
+                                    <em>nanosegundos</em>, não 30 segundos — o
+                                    que provavelmente não é o que você quer.
+                                    Como <code>Duration</code> é
+                                    <code>int64</code>, o compilador aceita o
+                                    literal sem reclamar. Sempre use a
+                                    multiplicação com a constante:
+                                    <code>time.Sleep(30 * time.Second)</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Formatação e parsing
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Formatação e parsing</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem uma abordagem única para formatação de
+                              datas: em vez de tokens genéricos como
+                              <code>%Y</code>, <code>%m</code> ou
+                              <code>YYYY-MM-DD</code>, Go usa um
+                              <strong>instante de referência fixo</strong> como
+                              template. Esse instante é
+                              <code>Mon Jan 2 15:04:05 MST 2006</code> — ou em
+                              números: <code>01/02 03:04:05PM '06 -0700</code>.
+                           </p>
+                           <p>
+                              O truque para memorizar:
+                              <code>1 2 3 4 5 6 7</code> corresponde a mês, dia,
+                              hora, minuto, segundo, ano, fuso. O formato que
+                              você quer para a saída é escrito usando esses
+                              valores de referência.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Format — do Time para string</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">t := time.Date(2024, time.March, 15, 14, 30, 45, 0, time.UTC)
+
+// Referência: Mon Jan 2 15:04:05 MST 2006
+// Mês=1, Dia=2, Hora=15, Min=04, Seg=05, Ano=2006, Fuso=MST/-0700
+
+// Formatos comuns
+fmt.Println(t.Format("2006-01-02"))                    // 2024-03-15
+fmt.Println(t.Format("02/01/2006"))                    // 15/03/2024  (DD/MM/AAAA)
+fmt.Println(t.Format("2006-01-02 15:04:05"))           // 2024-03-15 14:30:45
+fmt.Println(t.Format("2006-01-02T15:04:05Z07:00"))     // 2024-03-15T14:30:45Z (RFC3339)
+fmt.Println(t.Format("Monday, 02 January 2006"))       // Friday, 15 March 2024
+fmt.Println(t.Format("Jan 2, 2006 at 3:04pm (MST)"))  // Mar 15, 2024 at 2:30pm (UTC)
+
+// Constantes prontas da stdlib (evitam reescrever formatos comuns)
+fmt.Println(t.Format(time.RFC3339))      // 2024-03-15T14:30:45Z
+fmt.Println(t.Format(time.RFC3339Nano))  // 2024-03-15T14:30:45.000000000Z
+fmt.Println(t.Format(time.DateTime))     // 2024-03-15 14:30:45  (Go 1.20+)
+fmt.Println(t.Format(time.DateOnly))     // 2024-03-15            (Go 1.20+)
+fmt.Println(t.Format(time.TimeOnly))     // 14:30:45              (Go 1.20+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Parse — de string para time.Time
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >time.Parse e time.ParseInLocation</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// time.Parse: layout + string de entrada
+// O layout usa os mesmos valores de referência do Format
+t, err := time.Parse("2006-01-02", "2024-03-15")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(t)  // 2024-03-15 00:00:00 +0000 UTC
+
+// Parsear com horário e fuso
+t, err = time.Parse(time.RFC3339, "2024-03-15T14:30:45-03:00")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(t.UTC())  // 2024-03-15 17:30:45 +0000 UTC
+
+// time.Parse sem fuso no layout → resultado em UTC
+// Use time.ParseInLocation quando a string não tem fuso mas você sabe qual é
+loc, _ := time.LoadLocation("America/Sao_Paulo")
+t, err = time.ParseInLocation("2006-01-02 15:04:05", "2024-03-15 14:30:45", loc)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(t)        // 2024-03-15 14:30:45 -0300 -03
+fmt.Println(t.UTC())  // 2024-03-15 17:30:45 +0000 UTC</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    O layout e a string devem ter a mesma
+                                    estrutura
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>time.Parse</code> exige
+                                    correspondência exata entre o layout e a
+                                    string de entrada.
+                                    <code
+                                       >time.Parse("2006-01-02",
+                                       "15/03/2024")</code
+                                    >
+                                    falha — o separador é diferente. Se a string
+                                    vier de uma fonte externa (API, banco,
+                                    formulário), sempre valide o
+                                    <code>err</code> retornado e documente o
+                                    formato esperado. Para formatos ambíguos
+                                    como <code>01/02/03</code>, prefira RFC3339
+                                    que é inequívoco.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Operações e comparações
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operações e comparações</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>time</code> fornece um conjunto de
+                              métodos para aritmética e comparação de instantes.
+                              A regra fundamental é:
+                              <strong>Time ± Duration = Time</strong> e
+                              <strong>Time − Time = Duration</strong>. Você
+                              nunca soma dois <code>Time</code> — isso seria
+                              semanticamente absurdo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Add, Sub e Since/Until</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">agora := time.Now()
+
+// Add: Time + Duration → Time
+daqui1h := agora.Add(1 * time.Hour)
+ontem    := agora.Add(-24 * time.Hour)  // subtrai com negativo
+proxMes  := agora.AddDate(0, 1, 0)      // AddDate(anos, meses, dias)
+proxAno  := agora.AddDate(1, 0, 0)
+
+// Sub: Time − Time → Duration
+inicio := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+elapsed := agora.Sub(inicio)
+fmt.Println(elapsed.Hours())  // horas desde 2024-01-01
+
+// Since e Until — atalhos comuns em produção
+fmt.Println(time.Since(inicio))   // equivale a time.Now().Sub(inicio)
+fmt.Println(time.Until(daqui1h))  // equivale a daqui1h.Sub(time.Now())
+
+// Medir tempo de execução — padrão idiomático
+start := time.Now()
+operacaoCara()
+fmt.Printf("levou %v\n", time.Since(start))</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comparando instantes
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">t1 := time.Now()
+t2 := t1.Add(5 * time.Second)
+
+// Equal — compara o instante, ignora fuso horário
+fmt.Println(t1.Equal(t2))  // false
+// Nunca use == para comparar time.Time quando os fusos podem diferir
+
+// Before e After
+fmt.Println(t1.Before(t2))  // true  — t1 é anterior a t2
+fmt.Println(t2.After(t1))   // true  — t2 é posterior a t1
+fmt.Println(t1.After(t2))   // false
+
+// Verificar se está dentro de um intervalo
+func dentroDoIntervalo(t, inicio, fim time.Time) bool {
+    return (t.Equal(inicio) || t.After(inicio)) &&
+           (t.Equal(fim)    || t.Before(fim))
+}
+
+// Truncar — zerando componentes abaixo de uma precisão
+t := time.Now()
+fmt.Println(t.Truncate(time.Hour))   // arredonda para baixo à hora inteira
+fmt.Println(t.Truncate(24*time.Hour)) // início do dia em UTC (cuidado com fuso)</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    AddDate lida com calendário — Add não
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>Add(30 * 24 * time.Hour)</code> sempre
+                                    soma exatamente 720 horas — ignora quantos
+                                    dias tem o mês e horário de verão.
+                                    <code>AddDate(0, 1, 0)</code> soma um mês
+                                    calendario: de 31 de janeiro chega a 28 (ou
+                                    29) de fevereiro. Para lógica de negócio com
+                                    calendário (vencimentos, prazos), sempre
+                                    prefira <code>AddDate</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Timer e Ticker
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Timer e Ticker</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>time</code> fornece duas primitivas
+                              para executar código ao longo do tempo:
+                              <code>time.Timer</code> dispara
+                              <strong>uma vez</strong> após uma duração;
+                              <code>time.Ticker</code> dispara
+                              <strong>repetidamente</strong> em intervalos
+                              regulares. Ambos comunicam os disparos via
+                              channel, integrando naturalmente com
+                              <code>select</code> e goroutines.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              time.Timer
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Timer — dispara uma vez</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// NewTimer retorna um Timer com channel C que recebe após a duração
+timer := time.NewTimer(2 * time.Second)
+
+// Bloqueia até o timer disparar
+t := <-timer.C
+fmt.Println("disparou às", t.Format(time.TimeOnly))
+
+// Cancelar um timer antes de disparar
+timer2 := time.NewTimer(10 * time.Second)
+if !timer2.Stop() {
+    // Stop retorna false se o timer já disparou — drenar o channel
+    <-timer2.C
+}
+
+// Reset só é seguro após Stop (com dreno se necessário)
+timer2.Reset(5 * time.Second)
+
+// Forma atalho quando não precisa cancelar
+// time.AfterFunc executa a função em nova goroutine após a duração
+time.AfterFunc(1*time.Second, func() {
+    fmt.Println("executou após 1 segundo")
+})
+
+// time.After — atalho para <-timer.C (cuidado: não permite cancelar o timer)
+select {
+case <-time.After(5 * time.Second):
+    fmt.Println("timeout")
+case resultado := <-operacao():
+    fmt.Println("concluído:", resultado)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              time.Ticker
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Ticker — dispara periodicamente</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// NewTicker dispara no channel C a cada intervalo
+ticker := time.NewTicker(500 * time.Millisecond)
+defer ticker.Stop()  // sempre parar o ticker para evitar goroutine leak
+
+done := make(chan struct{})
+
+go func() {
+    for {
+        select {
+        case t := <-ticker.C:
+            fmt.Println("tick às", t.Format("15:04:05.000"))
+        case <-done:
+            return
+        }
+    }
+}()
+
+time.Sleep(2 * time.Second)
+close(done)  // sinaliza para a goroutine parar
+
+// time.Tick — atalho sem possibilidade de parar (evite em produção)
+// for t := range time.Tick(500 * time.Millisecond) {
+//     fmt.Println(t)  // vazamento de goroutine se o loop parar
+// }</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       ></th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Timer
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Ticker
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Disparos
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Uma vez
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Repetidamente
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Uso típico
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Timeout, delay, deadline
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Polling, métricas, heartbeat
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Parar
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          <code>timer.Stop()</code>
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          <code>ticker.Stop()</code>
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                          "
+                                       >
+                                          Atalho
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          <code>time.After(d)</code> /
+                                          <code>time.AfterFunc</code>
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Evitar <code>time.Tick</code> em
+                                          produção
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Sempre chame Stop() — nunca deixe Tickers
+                                    vazando
+                                 </div>
+                                 <div class="callout__body">
+                                    Um <code>Ticker</code> não parado continua
+                                    consumindo recursos indefinidamente. A
+                                    goroutine interna do runtime que alimenta o
+                                    channel <code>C</code> permanece ativa mesmo
+                                    que ninguém mais esteja lendo. Em servers de
+                                    longa duração, isso acumula goroutines e
+                                    memória até o processo reiniciar. Use sempre
+                                    <code>defer ticker.Stop()</code>
+                                    imediatamente após criar o Ticker.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Fusos horários
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod27-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Fusos horários</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Fusos horários são a fonte de muitos bugs
+                              silenciosos em sistemas que lidam com datas e
+                              horários. Go centraliza o gerenciamento de fusos
+                              no tipo <code>*time.Location</code> e expõe a base
+                              de dados IANA completa via
+                              <code>time.LoadLocation</code>. A regra de ouro
+                              para sistemas é:
+                              <strong
+                                 >armazene sempre em UTC, converta para o fuso
+                                 local apenas na exibição</strong
+                              >.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Location e conversão de fuso</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Localizações predefinidas
+time.UTC   // *time.Location para UTC
+time.Local // *time.Location do sistema operacional
+
+// Carregar fuso pelo nome IANA (requer tzdata no sistema ou embed)
+sp, err := time.LoadLocation("America/Sao_Paulo")
+if err != nil {
+    log.Fatal(err)
+}
+
+tokyo, err := time.LoadLocation("Asia/Tokyo")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Converter um mesmo instante para diferentes fusos
+agora := time.Now().UTC()
+
+fmt.Println(agora.In(sp).Format("2006-01-02 15:04:05 MST"))    // horário de SP
+fmt.Println(agora.In(tokyo).Format("2006-01-02 15:04:05 MST")) // horário de Tóquio
+fmt.Println(agora.UTC().Format("2006-01-02 15:04:05 MST"))     // UTC
+
+// In() não muda o instante — muda apenas a apresentação
+fmt.Println(agora.Equal(agora.In(sp)))  // true — é o mesmo instante</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              time.FixedZone — fuso sem banco IANA
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// FixedZone cria um fuso com offset fixo em segundos (sem regras de horário de verão)
+brst := time.FixedZone("BRT", -3*60*60)  // UTC-3
+
+t := time.Date(2024, time.June, 15, 12, 0, 0, 0, brst)
+fmt.Println(t)         // 2024-06-15 12:00:00 -0300 BRT
+fmt.Println(t.UTC())   // 2024-06-15 15:00:00 +0000 UTC
+
+// Cuidado: FixedZone não respeita horário de verão
+// Para São Paulo (que tem horário de verão), use LoadLocation("America/Sao_Paulo")</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              tzdata embutido — binários portáveis
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >embed do banco de fusos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Em containers minimalistas (alpine, scratch), o banco IANA pode não existir
+// Solução: importar o pacote time/tzdata para embutir o banco no binário
+import _ "time/tzdata"  // blank import — inclui tzdata no binário
+
+// Após esse import, LoadLocation funciona em qualquer ambiente
+loc, err := time.LoadLocation("America/Sao_Paulo")  // sempre funciona
+
+// Alternativa: flag de build
+// go build -tags timetzdata .
+
+// O banco adiciona ~450KB ao binário — aceitável para a maioria dos serviços</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Horário de verão e a armadilha do Truncate
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>t.Truncate(24 * time.Hour)</code>
+                                    trunca em múltiplos de 24h desde o epoch UTC
+                                    — não retorna meia-noite no fuso local. Em
+                                    dias de transição de horário de verão
+                                    (quando o dia tem 23h ou 25h), isso pode
+                                    retornar o horário errado. Para obter
+                                    meia-noite no fuso local, extraia os
+                                    componentes e reconstrua:
+                                    <code
+                                       >time.Date(t.Year(), t.Month(), t.Day(),
+                                       0, 0, 0, 0, t.Location())</code
+                                    >.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 27
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod27-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'time.Duration'. Preste atenção na unidade base de Duration e o que acontece quando um literal numérico é passado diretamente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por quanto tempo o código abaixo vai dormir?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">time.Sleep(500)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >500 milissegundos —
+                                    <code>time.Sleep</code> aceita millisegundos
+                                    por convenção</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >500 segundos — o compilador converte o
+                                    literal para <code>time.Second</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >500 nanosegundos —
+                                    <code>time.Duration</code> é
+                                    <code>int64</code> em nanosegundos; o
+                                    literal <code>500</code> é convertido para
+                                    <code>500ns</code>, o que é
+                                    imperceptível</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>time.Sleep</code> não aceita literais
+                                    inteiros sem a constante de unidade</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>time.Duration</code> é um
+                              <code>int64</code> que representa nanosegundos. O
+                              literal <code>500</code> é implicitamente
+                              convertido para <code>time.Duration(500)</code>,
+                              ou seja, 500 nanosegundos — quase instantâneo. O
+                              compilador aceita o literal sem reclamar porque a
+                              conversão é válida. O código correto seria
+                              <code>time.Sleep(500 * time.Millisecond)</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod27-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Formatação e parsing'. A abordagem de Go para layouts de data é diferente de todas as outras linguagens — preste atenção no instante de referência."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual chamada produz corretamente a string
+                              <code>"25/12/2024"</code> a partir de
+                              <code
+                                 >t := time.Date(2024, 12, 25, 0, 0, 0, 0,
+                                 time.UTC)</code
+                              >?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>t.Format("DD/MM/YYYY")</code> —
+                                    tokens maiúsculos comuns em outras
+                                    linguagens</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>t.Format("%d/%m/%Y")</code> —
+                                    diretivas estilo C/Python</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>t.Format("02/01/2006")</code> — Go
+                                    usa o instante de referência: dia=02,
+                                    mês=01, ano=2006</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>t.Format("2/1/2024")</code> — usa o
+                                    ano real do instante como parte do
+                                    layout</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Go usa um instante de referência fixo
+                              como template:
+                              <code>Mon Jan 2 15:04:05 MST 2006</code>. Para
+                              obter <code>DD/MM/YYYY</code>, o layout deve usar
+                              os valores correspondentes desse instante: dia =
+                              <code>02</code>, mês = <code>01</code>, ano =
+                              <code>2006</code>. O resultado de
+                              <code>t.Format("02/01/2006")</code> com
+                              <code>time.Date(2024, 12, 25, ...)</code> é
+                              <code>"25/12/2024"</code>. Os tokens como
+                              <code>%d</code> e <code>DD</code> não existem em
+                              Go.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod27-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'time.Time' e 'Fusos horários'. Preste atenção na diferença entre comparar com == e com o método Equal()."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">sp, _ := time.LoadLocation("America/Sao_Paulo")
+
+t1 := time.Date(2024, 6, 15, 12, 0, 0, 0, time.UTC)
+t2 := t1.In(sp)
+
+fmt.Println(t1 == t2)
+fmt.Println(t1.Equal(t2))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>true</code> e <code>true</code> —
+                                    <code>In()</code> cria uma cópia idêntica;
+                                    ambas as comparações são equivalentes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>false</code> e <code>false</code> —
+                                    fusos diferentes significam instantes
+                                    diferentes em ambos os métodos de
+                                    comparação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>false</code> e <code>true</code> —
+                                    <code>==</code> compara a representação
+                                    interna (inclui o Location) e retorna false;
+                                    <code>Equal()</code> compara o instante no
+                                    tempo e retorna true</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>time.Time</code> não suporta o
+                                    operador <code>==</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>t1.In(sp)</code> retorna o mesmo
+                              instante representado no fuso de São Paulo — o
+                              ponto no tempo é idêntico, mas a estrutura interna
+                              muda porque o <code>*Location</code> é diferente.
+                              O operador <code>==</code> em structs compara
+                              campo a campo, incluindo o ponteiro do Location —
+                              por isso retorna <code>false</code>. Já
+                              <code>Equal()</code> converte ambos para UTC antes
+                              de comparar — retorna <code>true</code>. Nunca use
+                              <code>==</code> para comparar
+                              <code>time.Time</code> quando os fusos podem
+                              diferir.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 27
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod27-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Bug de fuso horário em
+                              relatório</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um sistema de vendas armazena timestamps em UTC no
+                              banco de dados. O relatório de vendas do dia deve
+                              agrupar pedidos por dia no fuso de São Paulo
+                              (UTC-3). O código abaixo está incorreto — qual é o
+                              problema e a correção?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func diaDoRelatorio(t time.Time) string {
+    // t vem do banco em UTC
+    return t.Truncate(24 * time.Hour).Format("2006-01-02")
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O problema é usar <code>Truncate</code> em
+                                    vez de <code>Round</code>; substituir por
+                                    <code>t.Round(24 * time.Hour)</code> corrige
+                                    o fuso</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não há problema —
+                                    <code>Truncate(24 * time.Hour)</code> já
+                                    respeita o fuso local do sistema operacional
+                                    automaticamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>Truncate</code> calcula em UTC,
+                                    ignorando o fuso de SP; pedidos entre 21h e
+                                    meia-noite UTC (18h–21h em SP) aparecem no
+                                    dia seguinte. Correção: converter para o
+                                    fuso antes e reconstruir meia-noite:
+                                    <code
+                                       >tSP := t.In(sp); return
+                                       time.Date(tSP.Year(), tSP.Month(),
+                                       tSP.Day(), 0, 0, 0, 0,
+                                       sp).Format("2006-01-02")</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Armazenar os timestamps já no fuso de SP no
+                                    banco de dados, eliminando a necessidade de
+                                    conversão</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto!
+                              <code>Truncate(24 * time.Hour)</code> arredonda
+                              para múltiplos de 24h desde o epoch UTC — ignora
+                              completamente o fuso de SP. Um pedido feito às 22h
+                              em SP (01h UTC do dia seguinte) seria agrupado no
+                              dia seguinte no relatório. A correção correta é
+                              converter o instante para o fuso de São Paulo com
+                              <code>In(sp)</code> e então reconstruir meia-noite
+                              <em>naquele fuso</em> com
+                              <code>time.Date()</code>. Armazenar em SP no banco
+                              é má prática: fusos mudam (o Brasil aboliu horário
+                              de verão em 2019), e datas armazenadas em fuso
+                              local ficam ambíguas em transições.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod27-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Ticker com vazamento de
+                              goroutine</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo coleta métricas a cada segundo em
+                              um servidor HTTP de longa duração. Qual é o
+                              problema e como corrigi-lo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func iniciarColeta(ctx context.Context) {
+    go func() {
+        for range time.Tick(1 * time.Second) {
+            coletarMetricas()
+        }
+    }()
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O problema é usar <code>go func()</code>;
+                                    mover o
+                                    <code>for range time.Tick</code> diretamente
+                                    para a goroutine principal resolve o
+                                    vazamento</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não há problema — <code>time.Tick</code> é
+                                    garbage-collected automaticamente quando a
+                                    goroutine termina</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Trocar <code>time.Tick</code> por
+                                    <code>time.Sleep(1 * time.Second)</code>
+                                    dentro de um loop infinito — resolve o
+                                    vazamento sem perder a periodicidade</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>time.Tick</code> cria um Ticker que
+                                    nunca pode ser parado — quando o contexto
+                                    cancelar, a goroutine não termina. Correção:
+                                    usar <code>time.NewTicker</code> +
+                                    <code>defer ticker.Stop()</code> +
+                                    <code>select</code> com
+                                    <code>ctx.Done()</code> para encerrar limpo
+                                    quando o contexto for cancelado</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>time.Tick</code> cria um
+                              <code>Ticker</code>
+                              interno que nunca é exposto e, portanto, nunca
+                              pode ser parado. Mesmo que o contexto seja
+                              cancelado, a goroutine continua rodando
+                              indefinidamente — um goroutine leak clássico em
+                              servidores de longa duração. A correção é:
+                              <code
+                                 >ticker := time.NewTicker(1 * time.Second);
+                                 defer ticker.Stop()</code
+                              >
+                              e dentro do loop:
+                              <code
+                                 >select { case &lt;-ticker.C:
+                                 coletarMetricas(); case &lt;-ctx.Done(): return
+                                 }</code
+                              >. Assim, quando o contexto for cancelado
+                              (shutdown do servidor, por exemplo), a goroutine
+                              encerra limpo e o Ticker é parado.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

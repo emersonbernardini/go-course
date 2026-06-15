@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Maps em Go: declaração, make, leitura, escrita, deleção, comma ok, iteração e thread-safety."
+      />
+      <title>Módulo 11 — Maps · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="11">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 3 — Estruturas de Dados
+                        </div>
+                        <h1 class="module-header__title">Maps</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 11</span>
+                           <span class="badge badge-default">7 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Declaração e inicialização
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Declaração e inicialização</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um map é uma estrutura de dados que associa
+                              <strong>chaves</strong> a
+                              <strong>valores</strong>. Internamente é uma hash
+                              table — acesso, inserção e deleção têm
+                              complexidade média O(1). O tipo é declarado como
+                              <code>map[TipoChave]TipoValor</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >declaração e map literal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Map literal — forma mais comum quando os valores iniciais são conhecidos
+capitais := map[string]string{
+    "Brasil":   "Brasília",
+    "França":   "Paris",
+    "Japão":    "Tóquio",
+}
+
+// Map com tipo numérico como valor
+frequencia := map[string]int{
+    "go":   150,
+    "rust": 80,
+    "c":    200,
+}
+
+// Acessando valores
+fmt.Println(capitais["Brasil"])  // Brasília
+fmt.Println(frequencia["go"])    // 150</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tipos válidos como chave
+                           </h4>
+                           <p>
+                              A chave de um map deve ser um tipo
+                              <strong>comparável</strong> — que suporte o
+                              operador <code>==</code>. Tipos válidos: todos os
+                              tipos básicos (<code>int</code>,
+                              <code>string</code>, <code>bool</code>, etc.),
+                              ponteiros, arrays (não slices), e structs cujos
+                              campos sejam todos comparáveis. Slices, maps e
+                              funções <strong>não podem ser chaves</strong>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ Tipos válidos como chave
+var m1 map[string]int
+var m2 map[int]string
+var m3 map[[2]int]string    // array é comparável
+var m4 map[bool]string
+
+// ✗ Tipos inválidos como chave — erro de compilação
+var m5 map[[]int]string     // slice não é comparável
+var m6 map[map[string]int]string  // map não é comparável</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Map nil vs map vazio
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>var m map[string]int</code> é
+                                    <code>nil</code>. Ler de um map nil retorna
+                                    o zero value sem panic.
+                                    <strong
+                                       >Escrever em um map nil causa
+                                       panic.</strong
+                                    >
+                                    Sempre inicialize maps antes de escrever —
+                                    use literal ou <code>make</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — make
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>make — criando maps dinamicamente</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando os valores iniciais não são conhecidos em
+                              tempo de compilação, use <code>make</code> para
+                              criar um map vazio pronto para uso. A segunda
+                              forma de <code>make</code> aceita uma dica de
+                              capacidade inicial — não é um limite, apenas uma
+                              otimização de alocação:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// make sem dica de capacidade
+m := make(map[string]int)
+
+// make com dica de capacidade — evita rehashing para N entradas iniciais
+m2 := make(map[string]int, 100)
+
+// Ambos estão prontos para leitura e escrita imediatamente
+m["go"] = 1
+m2["go"] = 1
+
+// Diferença de make vs literal
+// Use make quando: construindo o map incrementalmente (loop, inputs dinâmicos)
+// Use literal quando: os pares chave-valor são conhecidos no momento da criação</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Leitura, escrita e deleção
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Leitura, escrita e deleção</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>As três operações básicas de um map em Go:</p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">m := map[string]int{"a": 1, "b": 2}
+
+// Escrita — insere ou sobrescreve
+m["c"] = 3
+m["a"] = 99  // sobrescreve
+
+// Leitura
+fmt.Println(m["a"])  // 99
+fmt.Println(m["z"])  // 0 — chave inexistente retorna zero value, sem panic
+
+// Deleção
+delete(m, "b")       // remove a chave "b"
+delete(m, "z")       // deletar chave inexistente é uma no-op — sem panic
+
+fmt.Println(len(m))  // len retorna o número de pares chave-valor</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Leitura retorna zero value para chaves
+                              inexistentes
+                           </h4>
+                           <p>
+                              Este comportamento é importante e tem uma
+                              consequência prática: você não consegue distinguir
+                              "a chave existe com valor zero" de "a chave não
+                              existe" usando apenas a leitura simples. Para isso
+                              existe o padrão <em>comma ok</em> — próximo
+                              tópico.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">contagem := map[string]int{
+    "erros": 0,  // valor zero intencional
+}
+
+// Impossível distinguir sem comma ok:
+fmt.Println(contagem["erros"])   // 0 — chave existe com valor 0
+fmt.Println(contagem["avisos"])  // 0 — chave não existe</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Comma ok
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Comma ok — verificando existência de chave</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O idioma <em>comma ok</em> é a forma correta de
+                              verificar se uma chave existe em um map. A leitura
+                              retorna dois valores: o valor associado e um
+                              booleano que indica se a chave estava presente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >comma ok</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">m := map[string]int{
+    "go":   1,
+    "rust": 2,
+}
+
+// Forma simples — não distingue zero value de ausência
+v := m["python"]  // 0 — mas não sabemos se a chave existe
+
+// Comma ok — forma correta
+valor, ok := m["go"]
+if ok {
+    fmt.Println("encontrado:", valor)  // encontrado: 1
+}
+
+valor2, ok2 := m["python"]
+if !ok2 {
+    fmt.Println("python não existe")  // python não existe
+    _ = valor2  // 0 — zero value de int
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrão idiomático com if de inicialização
+                           </h4>
+                           <p>
+                              Combinado com o <code>if</code> de inicialização
+                              que estudamos no Módulo 07, o comma ok fica ainda
+                              mais conciso:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">config := map[string]string{
+    "host": "localhost",
+    "port": "8080",
+}
+
+if porta, ok := config["port"]; ok {
+    fmt.Println("porta configurada:", porta)
+} else {
+    fmt.Println("porta não definida, usando padrão")
+}
+// porta e ok só existem dentro do if</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Iteração e ordem não garantida
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Iteração e ordem não garantida</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Iterar sobre um map com
+                              <code>for range</code> retorna pares chave-valor.
+                              A ordem de iteração é
+                              <strong
+                                 >intencionalmente não determinística</strong
+                              >
+                              — muda entre execuções, e até entre iterações da
+                              mesma execução. Go aleatoriza a ordem
+                              deliberadamente para evitar que código dependa de
+                              um comportamento que não é garantido pela
+                              especificação.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">m := map[string]int{"c": 3, "a": 1, "b": 2}
+
+// Iteração — ordem não garantida
+for k, v := range m {
+    fmt.Printf("%s: %d\n", k, v)
+}
+// Pode imprimir em qualquer ordem: a, b, c ou c, a, b, etc.
+
+// Apenas chaves
+for k := range m {
+    fmt.Println(k)
+}
+
+// Apenas valores (raro — normalmente a chave é necessária)
+for _, v := range m {
+    fmt.Println(v)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Iteração em ordem determinística
+                           </h4>
+                           <p>
+                              Quando a ordem importa, extraia as chaves para um
+                              slice, ordene-o, e então acesse o map via o slice
+                              ordenado:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "sort"
+
+m := map[string]int{"banana": 3, "abacate": 1, "cereja": 2}
+
+// Extrai chaves
+chaves := make([]string, 0, len(m))
+for k := range m {
+    chaves = append(chaves, k)
+}
+
+// Ordena
+sort.Strings(chaves)
+
+// Itera em ordem alfabética
+for _, k := range chaves {
+    fmt.Printf("%s: %d\n", k, m[k])
+}
+// abacate: 1
+// banana: 3
+// cereja: 2</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Maps não são thread-safe
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Maps não são thread-safe</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Acessar um map concorrentemente — mesmo apenas
+                              para leitura simultânea com uma escrita — causa
+                              uma race condition que resulta em
+                              <strong>panic com fatal error</strong> em Go. O
+                              runtime do Go detecta escritas concorrentes em
+                              maps e encerra o programa imediatamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >race condition — fatal error</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">m := make(map[string]int)
+
+// PERIGO: goroutines acessando o mesmo map sem sincronização
+go func() { m["a"] = 1 }()
+go func() { m["b"] = 2 }()
+
+// fatal error: concurrent map writes</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Solução 1: sync.RWMutex
+                           </h4>
+                           <p>
+                              Para casos gerais — múltiplos leitores, múltiplos
+                              escritores:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "sync"
+
+type MapSeguro struct {
+    mu sync.RWMutex
+    m  map[string]int
+}
+
+func (ms *MapSeguro) Get(k string) (int, bool) {
+    ms.mu.RLock()         // múltiplos leitores simultâneos
+    defer ms.mu.RUnlock()
+    v, ok := ms.m[k]
+    return v, ok
+}
+
+func (ms *MapSeguro) Set(k string, v int) {
+    ms.mu.Lock()          // exclusão mútua para escrita
+    defer ms.mu.Unlock()
+    ms.m[k] = v
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Solução 2: sync.Map
+                           </h4>
+                           <p>
+                              Para casos de alta concorrência com padrão de
+                              acesso específico (chaves estáveis, muitas
+                              leituras, poucas escritas):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "sync"
+
+var m sync.Map
+
+// Escrita
+m.Store("chave", 42)
+
+// Leitura com comma ok
+if v, ok := m.Load("chave"); ok {
+    fmt.Println(v.(int))  // type assertion necessária — sync.Map usa interface{}
+}
+
+// Deleção
+m.Delete("chave")
+
+// Iteração
+m.Range(func(k, v interface{}) bool {
+    fmt.Println(k, v)
+    return true  // false encerra a iteração
+})</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    sync.Map vs mutex: quando usar cada um
+                                 </div>
+                                 <div class="callout__body">
+                                    Use <code>sync.RWMutex</code> com map
+                                    regular para a maioria dos casos — é mais
+                                    simples e tipado. Use <code>sync.Map</code>
+                                    apenas quando benchmarks mostram vantagem:
+                                    chaves escritas uma vez e lidas muitas vezes
+                                    por goroutines diferentes, ou quando cada
+                                    goroutine lê/escreve um conjunto disjunto de
+                                    chaves. Estudaremos sync em detalhes no
+                                    Módulo 24.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 7 — Gotchas
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod11-t07">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Gotchas</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Os erros mais frequentes ao trabalhar com maps em
+                              Go:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 1: escrever em map nil
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var m map[string]int  // nil
+
+// Leitura de nil map — OK, retorna zero value
+fmt.Println(m["x"])   // 0
+
+// Escrita em nil map — PANIC
+m["x"] = 1  // panic: assignment to entry in nil map
+
+// Correção
+m = make(map[string]int)
+m["x"] = 1  // OK</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 2: modificar struct armazenada em map
+                           </h4>
+                           <p>
+                              Valores em maps não são endereçáveis — você não
+                              pode modificar um campo de uma struct armazenada
+                              diretamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Ponto struct{ X, Y int }
+
+m := map[string]Ponto{
+    "origem": {0, 0},
+}
+
+// ✗ ERRO de compilação — valor de map não é endereçável
+m["origem"].X = 10
+
+// ✓ Solução 1: copiar, modificar, reatribuir
+p := m["origem"]
+p.X = 10
+m["origem"] = p
+
+// ✓ Solução 2: usar ponteiro como valor
+mp := map[string]*Ponto{
+    "origem": {0, 0},
+}
+mp["origem"].X = 10  // OK — modifica via ponteiro</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 3: maps são referências — comportam como
+                              slices
+                           </h4>
+                           <p>
+                              Assim como slices, maps são tipos de referência.
+                              Atribuir um map a outra variável não copia os
+                              dados — ambas apontam para a mesma hash table:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := map[string]int{"x": 1}
+b := a  // b é uma referência ao mesmo map
+
+b["x"] = 99
+fmt.Println(a["x"])  // 99 — a foi afetado!
+
+// Para clonar um map, copie manualmente
+clone := make(map[string]int, len(a))
+for k, v := range a {
+    clone[k] = v
+}
+clone["x"] = 0
+fmt.Println(a["x"])  // 99 — a não foi afetado</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Gotcha 4: incrementar contador inexistente
+                              funciona
+                           </h4>
+                           <p>
+                              Esse é um comportamento <em>intencional</em> e
+                              útil, mas pode surpreender: como leitura de chave
+                              ausente retorna zero value, incrementar um
+                              contador inexistente funciona corretamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">frequencia := make(map[string]int)
+palavras := []string{"go", "é", "rápido", "go", "é", "go"}
+
+for _, p := range palavras {
+    frequencia[p]++  // se p não existe, começa do zero value (0) e incrementa
+}
+
+fmt.Println(frequencia)
+// map[é:2 go:3 rápido:1]</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 11
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod11-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Declaração e inicialização'. Preste atenção no que acontece ao escrever em um map nil versus ler de um."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece ao executar o código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var m map[string]int
+fmt.Println(m["x"])
+m["x"] = 1</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Panic na primeira linha — ler de um map nil
+                                    causa panic</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Imprime <code>0</code> sem erro; panic na
+                                    terceira linha — leitura de map nil é
+                                    segura, escrita não</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — map nil não pode ser
+                                    usado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Executa sem erros — Go inicializa o map
+                                    automaticamente na primeira escrita</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Ler de um map nil retorna o zero value
+                              do tipo do valor — aqui <code>0</code> — sem
+                              panic. Escrever em um map nil causa panic:
+                              <code>assignment to entry in nil map</code>.
+                              Sempre inicialize maps com <code>make</code> ou
+                              literal antes de escrever.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod11-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Comma ok'. Lembre-se de como distinguir zero value de chave ausente de zero value de chave existente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um map <code>map[string]int</code> armazena
+                              pontuações de jogadores. A chave
+                              <code>"alice"</code> existe com valor
+                              <code>0</code>. Como verificar se Alice está
+                              registrada (distinguindo de jogador não
+                              registrado)?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>if pontuacoes["alice"] != 0</code> —
+                                    se o valor for diferente de zero, a chave
+                                    existe</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code
+                                       >if _, ok := pontuacoes["alice"];
+                                       ok</code
+                                    >
+                                    — o comma ok é a única forma confiável de
+                                    verificar existência de chave</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>if pontuacoes["alice"] != nil</code>
+                                    — nil indica chave ausente em maps</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code
+                                       >if len(pontuacoes["alice"]) > 0</code
+                                    >
+                                    — len verifica a existência</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto!
+                              <code>pontuacoes["alice"] != 0</code> seria
+                              <code>false</code> para Alice com pontuação 0 —
+                              indistinguível de um jogador não registrado. O
+                              comma ok é a única forma confiável:
+                              <code>v, ok := m[k]</code>; <code>ok</code> é
+                              <code>true</code> se e somente se a chave existe,
+                              independente do valor.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod11-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Iteração e ordem não garantida'. Lembre-se por que Go aleatoriza a ordem de iteração em maps."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que Go aleatoriza a ordem de iteração de maps
+                              deliberadamente?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Para melhorar a performance — iteração
+                                    aleatória é mais rápida que ordenada</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Por limitação da implementação da hash
+                                    table — não é possível garantir ordem</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Para evitar que código dependa de uma ordem
+                                    que não é garantida pela especificação — se
+                                    a ordem fosse consistente, código incorreto
+                                    poderia funcionar por acidente e quebrar em
+                                    versões futuras</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Por segurança — ordem aleatória dificulta
+                                    ataques de timing em maps com dados
+                                    sensíveis</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A aleatorização é uma decisão
+                              deliberada da equipe Go para evitar que
+                              programadores escrevam código que dependa
+                              implicitamente de uma ordem. Nas versões antigas
+                              do Go, a ordem era consistente entre execuções — e
+                              código incorreto funcionava por acidente. A
+                              aleatorização força o programador a ser explícito
+                              quando ordem importa.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 11
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod11-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Gotcha de struct em map</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Por que o código abaixo não compila e qual é a
+                              correção correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Usuario struct{ Nome string; Ativo bool }
+
+usuarios := map[int]Usuario{
+    1: {"Alice", true},
+}
+
+usuarios[1].Ativo = false  // linha problemática</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não compila porque structs não podem ser
+                                    armazenadas em maps — use apenas tipos
+                                    primitivos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Não compila porque valores de map não são
+                                    endereçáveis. Correção: copiar o valor,
+                                    modificar, reatribuir — ou usar
+                                    <code>map[int]*Usuario</code> para modificar
+                                    via ponteiro</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não compila porque <code>Ativo</code> é um
+                                    campo booleano e não pode ser modificado
+                                    diretamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Compila normalmente — o erro é apenas em
+                                    tempo de execução</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto!
+                              <code>usuarios[1].Ativo = false</code> falha
+                              porque <code>usuarios[1]</code> retorna uma cópia
+                              não endereçável — você não pode tomar o endereço
+                              de um valor de map para modificá-lo. Solução 1:
+                              <code
+                                 >u := usuarios[1]; u.Ativo = false; usuarios[1]
+                                 = u</code
+                              >. Solução 2: <code>map[int]*Usuario</code> — aí
+                              <code>usuarios[1].Ativo = false</code> funciona
+                              via ponteiro.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod11-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Contagem de frequência</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual é a forma mais idiomática em Go de contar a
+                              frequência de cada palavra em um slice de strings?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar dois slices paralelos — um para
+                                    palavras e outro para contagens — e buscar
+                                    com loop</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>freq := make(map[string]int)</code>
+                                    seguido de
+                                    <code
+                                       >for _, p := range palavras { freq[p]++
+                                       }</code
+                                    >
+                                    — aproveita que leitura de chave ausente
+                                    retorna zero value</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar comma ok para verificar existência
+                                    antes de incrementar:
+                                    <code
+                                       >if _, ok := freq[p]; ok { freq[p]++ }
+                                       else { freq[p] = 1 }</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Ordenar o slice primeiro e então contar
+                                    sequências consecutivas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>freq[p]++</code> é idiomático e
+                              correto porque ler uma chave ausente retorna
+                              <code>0</code> (zero value de int), então o
+                              incremento começa de 0 automaticamente. A
+                              alternativa com comma ok funciona, mas é
+                              redundante e mais verbosa — não é necessária aqui.
+                              Dois slices paralelos seriam O(n) por busca,
+                              ineficiente e propenso a bugs de sincronização
+                              entre os dois slices.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1583 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Reflection em Go: pacote reflect, Type e Value, inspecionar structs, modificar valores, casos de uso reais e quando evitar."
+      />
+      <title>Módulo 32 — Reflection · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="32">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 10 — Tópicos Avançados
+                        </div>
+                        <h1 class="module-header__title">Reflection</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 32</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Avançado</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é reflection e por que existe
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod32-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é reflection e por que existe</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go é uma linguagem estaticamente tipada: o
+                              compilador conhece o tipo de cada variável em
+                              tempo de compilação. Isso torna o código
+                              previsível e seguro — mas cria um problema: como
+                              escrever código que opere sobre
+                              <em>qualquer</em> tipo, sem conhecê-lo com
+                              antecedência?
+                           </p>
+                           <p>
+                              É exatamente essa a função de
+                              <strong>reflection</strong>: inspecionar e
+                              manipular tipos e valores em
+                              <strong>tempo de execução</strong>. O pacote
+                              <code>reflect</code> da stdlib expõe uma API que
+                              permite descobrir o tipo de um valor, ler e
+                              escrever campos de structs, chamar métodos e
+                              funções — tudo dinamicamente, sem que o compilador
+                              precise saber o tipo em questão.
+                           </p>
+                           <p>
+                              Isso é o que possibilita pacotes como
+                              <code>encoding/json</code>,
+                              <code>database/sql</code>,
+                              <code>text/template</code> e frameworks de teste
+                              como <code>testify</code>: eles recebem
+                              <code>any</code>
+                              e precisam entender a estrutura interna do valor
+                              para serializar, mapear ou comparar.
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Reflection tem custo real
+                                 </div>
+                                 <div class="callout__body">
+                                    Operações via <code>reflect</code> são
+                                    significativamente mais lentas que código
+                                    estático — 5x a 100x dependendo da operação.
+                                    O compilador não consegue otimizar código
+                                    reflexivo da mesma forma. Use reflection
+                                    apenas quando não há alternativa estática
+                                    viável — jamais no caminho quente de
+                                    sistemas de alta performance.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Os dois tipos centrais: reflect.Type e
+                              reflect.Value
+                           </h4>
+                           <p>
+                              Toda a API de reflection gira em torno de dois
+                              tipos:
+                           </p>
+
+                           <div
+                              class="card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="width: 100%; border-collapse: collapse"
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             color: var(--color-text-muted);
+                                             font-size: var(--font-size-sm);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             color: var(--color-text-muted);
+                                             font-size: var(--font-size-sm);
+                                          "
+                                       >
+                                          Obtido via
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             color: var(--color-text-muted);
+                                             font-size: var(--font-size-sm);
+                                          "
+                                       >
+                                          Representa
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          <code>reflect.Type</code>
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          <code>reflect.TypeOf(x)</code>
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          A descrição estática do tipo (nome,
+                                          campos, métodos)
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          <code>reflect.Value</code>
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          <code>reflect.ValueOf(x)</code>
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          O container que envolve o valor em
+                                          tempo de execução
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >TypeOf vs ValueOf</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "reflect"
+
+x := 3.14
+
+t := reflect.TypeOf(x)
+fmt.Println(t)         // float64
+fmt.Println(t.Kind())  // float64  (Kind é mais granular que o nome do tipo)
+
+v := reflect.ValueOf(x)
+fmt.Println(v)         // 3.14
+fmt.Println(v.Type())  // float64
+fmt.Println(v.Float()) // 3.14  (extrai o valor concreto como float64)</code></pre>
+                           </div>
+
+                           <p>
+                              <code>Type</code> descreve o tipo em si — seus
+                              campos, métodos, nome, pacote.
+                              <code>Value</code> carrega o valor concreto e
+                              permite ler ou escrever dados. Na prática, você
+                              usará os dois em conjunto.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">Kind vs Type</div>
+                                 <div class="callout__body">
+                                    <code>Kind</code> é a categoria primitiva do
+                                    tipo: <code>Int</code>, <code>Struct</code>,
+                                    <code>Slice</code>, <code>Ptr</code>,
+                                    <code>Func</code> etc. <code>Type</code> é o
+                                    tipo nomeado: <code>http.Request</code>,
+                                    <code>time.Duration</code>,
+                                    <code>MyStruct</code>. Um
+                                    <code>time.Duration</code> tem Kind
+                                    <code>Int64</code>. Ao escrever código
+                                    reflexivo genérico, trate o Kind — não o
+                                    Type.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Inspecionando structs com reflect
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod32-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Inspecionando structs com reflect</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O caso de uso mais frequente de reflection em
+                              código real é inspecionar structs: descobrir seus
+                              campos, tipos, valores e tags em tempo de
+                              execução. É assim que <code>encoding/json</code>
+                              sabe quais campos de uma struct serializar e com
+                              qual nome JSON.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >inspecionar campos de struct</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Produto struct {
+    Nome  string  `json:"nome" validate:"required"`
+    Preco float64 `json:"preco" validate:"min=0"`
+    Ativo bool    `json:"ativo"`
+}
+
+func inspecionarStruct(v any) {
+    t := reflect.TypeOf(v)
+    val := reflect.ValueOf(v)
+
+    // Se for ponteiro, dereferenciar
+    if t.Kind() == reflect.Ptr {
+        t = t.Elem()
+        val = val.Elem()
+    }
+
+    if t.Kind() != reflect.Struct {
+        fmt.Println("não é uma struct")
+        return
+    }
+
+    fmt.Printf("Struct: %s (%d campos)\n", t.Name(), t.NumField())
+
+    for i := 0; i < t.NumField(); i++ {
+        field := t.Field(i)        // reflect.StructField — metadados estáticos
+        value := val.Field(i)     // reflect.Value — valor em runtime
+
+        jsonTag := field.Tag.Get("json")
+        validateTag := field.Tag.Get("validate")
+
+        fmt.Printf("  [%d] %s %s = %v  json:%q validate:%q\n",
+            i, field.Name, field.Type, value.Interface(),
+            jsonTag, validateTag)
+    }
+}
+
+p := Produto{Nome: "Teclado", Preco: 299.90, Ativo: true}
+inspecionarStruct(p)
+
+// Saída:
+// Struct: Produto (3 campos)
+//   [0] Nome string = Teclado  json:"nome" validate:"required"
+//   [1] Preco float64 = 299.9  json:"preco" validate:"min=0"
+//   [2] Ativo bool = true      json:"ativo" validate:""</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tags de struct como metadados extensíveis
+                           </h4>
+                           <p>
+                              <code>reflect.StructTag</code> é apenas uma string
+                              com um formato convencional:
+                              <code>chave:"valor"</code>. O método
+                              <code>Get("chave")</code>
+                              extrai o valor para uma chave específica. Isso é a
+                              base de todo o ecossistema de tags em Go — não há
+                              mágica do compilador, apenas reflection em
+                              runtime.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >validador simples via tags</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Mini-validador: usa a tag `required` para checar campos string vazios
+func validar(v any) []string {
+    var erros []string
+
+    t := reflect.TypeOf(v)
+    val := reflect.ValueOf(v)
+
+    if t.Kind() == reflect.Ptr {
+        t, val = t.Elem(), val.Elem()
+    }
+
+    for i := 0; i < t.NumField(); i++ {
+        field := t.Field(i)
+        value := val.Field(i)
+
+        tag := field.Tag.Get("validate")
+        if tag == "required" && field.Type.Kind() == reflect.String {
+            if value.String() == "" {
+                erros = append(erros, field.Name+" é obrigatório")
+            }
+        }
+    }
+    return erros
+}
+
+p := Produto{Preco: 10.0}
+fmt.Println(validar(p))  // [Nome é obrigatório]</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Campos não exportados são inacessíveis
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>val.Field(i).Interface()</code> entra
+                                    em panic se o campo for não exportado (letra
+                                    minúscula). Antes de chamar
+                                    <code>Interface()</code>, verifique
+                                    <code>field.IsExported()</code> (Go 1.17+)
+                                    ou <code>field.PkgPath == ""</code> em
+                                    versões anteriores. Campos não exportados
+                                    existem para encapsulamento — reflection não
+                                    é uma porta dos fundos para ignorar isso.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Modificando valores com reflect
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod32-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Modificando valores com reflect</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Ler valores via reflection é direto. Modificá-los
+                              exige um passo extra: o valor precisa ser
+                              <strong>endereçável</strong>
+                              (<em>addressable</em>). Um valor só é endereçável
+                              quando passado como ponteiro — do contrário, você
+                              estaria modificando uma cópia dentro do
+                              <code>reflect.Value</code>, o que não teria efeito
+                              no valor original.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >por que ponteiro é obrigatório</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 42
+
+// Tentativa com valor — entra em panic
+v := reflect.ValueOf(x)
+// v.SetInt(100)  // panic: reflect: reflect.Value.SetInt using unaddressable value
+
+// Correto: passar o ponteiro, depois Elem() para chegar ao valor subjacente
+v = reflect.ValueOf(&x).Elem()
+fmt.Println(v.CanSet())  // true
+v.SetInt(100)
+fmt.Println(x)           // 100 — o valor original foi modificado</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Modificando campos de struct
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >set de campos via reflect</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Config struct {
+    Host    string
+    Port    int
+    Debug   bool
+}
+
+// Preenche uma struct a partir de um map[string]any — padrão usado em ORMs e deserializadores
+func preencherStruct(dst any, dados map[string]any) error {
+    val := reflect.ValueOf(dst)
+    if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
+        return fmt.Errorf("dst deve ser um ponteiro para struct")
+    }
+
+    val = val.Elem()
+    typ := val.Type()
+
+    for i := 0; i < typ.NumField(); i++ {
+        field := typ.Field(i)
+        if !field.IsExported() {
+            continue
+        }
+
+        dado, ok := dados[field.Name]
+        if !ok {
+            continue
+        }
+
+        fieldVal := val.Field(i)
+        srcVal := reflect.ValueOf(dado)
+
+        // Apenas atribui se os tipos forem compatíveis
+        if srcVal.Type().AssignableTo(field.Type) {
+            fieldVal.Set(srcVal)
+        }
+    }
+    return nil
+}
+
+cfg := Config{}
+preencherStruct(&cfg, map[string]any{
+    "Host":  "localhost",
+    "Port":  5432,
+    "Debug": true,
+})
+fmt.Printf("%+v\n", cfg)
+// {Host:localhost Port:5432 Debug:true}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              CanSet vs CanAddr
+                           </h4>
+                           <p>
+                              <code>CanAddr()</code> indica se o valor tem
+                              endereço de memória (foi derivado de um ponteiro).
+                              <code>CanSet()</code> é mais restrito: exige
+                              endereçabilidade <em>e</em> que o campo seja
+                              exportado. Um campo não exportado de uma struct é
+                              endereçável mas não settável — a distinção existe
+                              para preservar encapsulamento mesmo sob
+                              reflection.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Exemplo struct {
+    Exportado    string
+    naoExportado string
+}
+
+e := Exemplo{Exportado: "a", naoExportado: "b"}
+val := reflect.ValueOf(&e).Elem()
+
+fmt.Println(val.Field(0).CanSet())  // true  — Exportado
+fmt.Println(val.Field(1).CanSet())  // false — naoExportado
+fmt.Println(val.Field(1).CanAddr()) // true  — endereçável, mas não settável</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Chamando funções e métodos dinamicamente
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod32-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Chamando funções e métodos dinamicamente</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Além de ler e escrever dados, reflection permite
+                              chamar funções e métodos pelo nome em tempo de
+                              execução. A API central é
+                              <code>Value.Call([]reflect.Value)</code> — que
+                              recebe e retorna slices de
+                              <code>reflect.Value</code>, um por
+                              argumento/retorno.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >chamar método por nome</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Calculadora struct{}
+
+func (c Calculadora) Somar(a, b int) int     { return a + b }
+func (c Calculadora) Multiplicar(a, b int) int { return a * b }
+
+func chamarMetodo(obj any, nome string, args ...any) ([]reflect.Value, error) {
+    val := reflect.ValueOf(obj)
+    metodo := val.MethodByName(nome)
+
+    if !metodo.IsValid() {
+        return nil, fmt.Errorf("método %q não encontrado", nome)
+    }
+
+    // Converte args para []reflect.Value
+    in := make([]reflect.Value, len(args))
+    for i, arg := range args {
+        in[i] = reflect.ValueOf(arg)
+    }
+
+    return metodo.Call(in), nil
+}
+
+calc := Calculadora{}
+
+resultados, _ := chamarMetodo(calc, "Somar", 10, 5)
+fmt.Println(resultados[0].Int())  // 15
+
+resultados, _ = chamarMetodo(calc, "Multiplicar", 4, 7)
+fmt.Println(resultados[0].Int())  // 28
+
+_, err := chamarMetodo(calc, "Dividir", 10, 2)
+fmt.Println(err)  // método "Dividir" não encontrado</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Inspecionando a assinatura antes de chamar
+                           </h4>
+                           <p>
+                              Chamar um método com número ou tipo de argumentos
+                              errados causa panic. Em código de produção que usa
+                              chamadas dinâmicas, sempre valide a assinatura
+                              antes de chamar:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func chamarComValidacao(obj any, nome string, args []any) ([]reflect.Value, error) {
+    val := reflect.ValueOf(obj)
+    metodo := val.MethodByName(nome)
+
+    if !metodo.IsValid() {
+        return nil, fmt.Errorf("método %q não existe", nome)
+    }
+
+    mt := metodo.Type()
+
+    // Verifica aridade (exceto variádicosms)
+    if !mt.IsVariadic() && mt.NumIn() != len(args) {
+        return nil, fmt.Errorf("método %q espera %d args, recebeu %d",
+            nome, mt.NumIn(), len(args))
+    }
+
+    in := make([]reflect.Value, len(args))
+    for i, arg := range args {
+        v := reflect.ValueOf(arg)
+        expected := mt.In(i)
+        if !v.Type().AssignableTo(expected) {
+            return nil, fmt.Errorf("arg %d: esperado %s, recebeu %s",
+                i, expected, v.Type())
+        }
+        in[i] = v
+    }
+
+    return metodo.Call(in), nil
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Onde isso aparece na stdlib
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>text/template</code> e
+                                    <code>html/template</code> chamam funções e
+                                    métodos de structs passadas como dados do
+                                    template exatamente assim — via
+                                    <code>Value.Call()</code> em runtime. O
+                                    pacote <code>testing</code> usa reflection
+                                    para executar funções cujo nome começa com
+                                    <code>Test</code>, <code>Bench</code> ou
+                                    <code>Fuzz</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Quando usar (e quando não usar) reflection
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod32-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Quando usar (e quando não usar) reflection</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Rob Pike, um dos criadores de Go, escreveu três
+                              leis de reflection. A terceira é a mais importante
+                              na prática:
+                              <em>"Reflection is fragile."</em> Código reflexivo
+                              não é verificado pelo compilador — erros de tipo,
+                              campos faltando, métodos com nome errado: tudo
+                              explode em runtime. Isso inverte a garantia
+                              central que faz Go atraente.
+                           </p>
+
+                           <div
+                              class="card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="width: 100%; border-collapse: collapse"
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             color: var(--color-text-muted);
+                                             font-size: var(--font-size-sm);
+                                          "
+                                       >
+                                          Use reflection quando...
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             color: var(--color-text-muted);
+                                             font-size: var(--font-size-sm);
+                                          "
+                                       >
+                                          Prefira alternativa quando...
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Escrevendo serialização/deserialização
+                                          genérica (JSON, YAML, BSON)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Os tipos são conhecidos em tempo de
+                                          compilação — use type switch ou
+                                          interfaces
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Implementando frameworks que precisam
+                                          operar sobre tipos arbitrários de
+                                          usuários
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Os tipos têm estrutura comum — defina
+                                          uma interface explícita
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Código de teste que compara structs
+                                          arbitrárias
+                                          (<code>reflect.DeepEqual</code>)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Generics (Go 1.18+) resolvem o
+                                          problema com verificação estática
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          Injeção de dependência automática via
+                                          tags (como GORM, Beego)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             vertical-align: top;
+                                          "
+                                       >
+                                          O código está no caminho crítico de
+                                          performance — o custo é proibitivo
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              reflect.DeepEqual — o caso de uso mais comum
+                           </h4>
+                           <p>
+                              O uso mais frequente de reflection em código de
+                              aplicação (não de framework) é via
+                              <code>reflect.DeepEqual</code> — que compara dois
+                              valores recursivamente, independente de tipo. É o
+                              coração do <code>assert.Equal</code> do testify:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// DeepEqual compara estruturas aninhadas recursivamente
+a := []map[string]int{{"x": 1}, {"y": 2}}
+b := []map[string]int{{"x": 1}, {"y": 2}}
+c := []map[string]int{{"x": 1}, {"y": 99}}
+
+fmt.Println(reflect.DeepEqual(a, b))  // true
+fmt.Println(reflect.DeepEqual(a, c))  // false
+
+// Cuidado: nil slice != empty slice para DeepEqual
+var s1 []int
+s2 := []int{}
+fmt.Println(reflect.DeepEqual(s1, s2))  // false — nil != []</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Generics como alternativa moderna
+                           </h4>
+                           <p>
+                              Com generics (Go 1.18+), parte dos casos que antes
+                              exigiam reflection podem ser resolvidos de forma
+                              estática — com verificação de tipo em compilação e
+                              sem custo de runtime:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >reflect vs generics</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Antes: reflection para encontrar o máximo de qualquer slice numérico
+func maxReflect(slice any) any {
+    val := reflect.ValueOf(slice)
+    if val.Kind() != reflect.Slice || val.Len() == 0 {
+        return nil
+    }
+    max := val.Index(0)
+    for i := 1; i < val.Len(); i++ {
+        cur := val.Index(i)
+        // Comparação reflexiva — frágil, sem checagem de tipo
+        if cur.Float() > max.Float() {
+            max = cur
+        }
+    }
+    return max.Interface()
+}
+
+// Depois: genérico — verificado pelo compilador, sem custo de runtime
+func maxGenerico[T int | int64 | float64](slice []T) T {
+    m := slice[0]
+    for _, v := range slice[1:] {
+        if v > m {
+            m = v
+        }
+    }
+    return m
+}
+
+// Uso — tipagem verificada em compilação
+fmt.Println(maxGenerico([]int{3, 1, 4, 1, 5, 9}))      // 9
+fmt.Println(maxGenerico([]float64{1.1, 2.2, 0.5}))      // 2.2</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    As três leis de reflection (Rob Pike)
+                                 </div>
+                                 <div class="callout__body">
+                                    <strong>1.</strong> Reflection vai de
+                                    interface value para reflect object.<br />
+                                    <strong>2.</strong> Reflection vai de
+                                    reflect object para interface value.<br />
+                                    <strong>3.</strong> Para modificar um
+                                    reflect object, o value deve ser
+                                    settável.<br /><br />
+                                    A regra implícita não escrita é a quarta: se
+                                    você não consegue fazer sem reflection,
+                                    pergunte primeiro se a arquitetura não está
+                                    errada. A maioria dos usos de reflection em
+                                    código de aplicação pode ser eliminada com
+                                    interfaces bem definidas ou generics.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 32
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod32-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'O que é reflection e por que existe'. Preste atenção na diferença entre Kind e Type, e o que cada um representa."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Celsius float64
+
+c := Celsius(36.6)
+t := reflect.TypeOf(c)
+
+fmt.Println(t.Name())
+fmt.Println(t.Kind())</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>float64</code> /
+                                    <code>float64</code> — o tipo subjacente
+                                    prevalece sobre o nome</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>Celsius</code> /
+                                    <code>Celsius</code> — Type e Kind refletem
+                                    o mesmo nome</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>Celsius</code> /
+                                    <code>float64</code> — Name retorna o nome
+                                    do tipo definido; Kind retorna a categoria
+                                    primitiva subjacente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — tipos definidos pelo
+                                    usuário não são suportados por
+                                    <code>reflect.TypeOf</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>Type.Name()</code> retorna o nome
+                              do tipo como declarado — <code>"Celsius"</code>.
+                              <code>Type.Kind()</code> retorna a categoria
+                              primitiva subjacente — <code>float64</code>,
+                              porque <code>Celsius</code> é definido como
+                              <code>float64</code>. Essa distinção é
+                              fundamental: ao escrever código reflexivo
+                              genérico, trate o Kind (para saber
+                              <em>como</em> operar) e consulte o Name apenas
+                              quando precisar identificar um tipo específico.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod32-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Modificando valores com reflect'. A restrição de endereçabilidade é o ponto central — pense no que acontece quando você passa um valor por cópia para reflect.ValueOf."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo compila mas entra em panic em
+                              runtime. Qual é a causa?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Ponto struct {
+    X, Y int
+}
+
+func dobrar(v any) {
+    val := reflect.ValueOf(v)
+    val.FieldByName("X").SetInt(val.FieldByName("X").Int() * 2)
+    val.FieldByName("Y").SetInt(val.FieldByName("Y").Int() * 2)
+}
+
+func main() {
+    p := Ponto{X: 3, Y: 4}
+    dobrar(p)
+    fmt.Println(p)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>FieldByName</code> só funciona com
+                                    ponteiros; com structs por valor retorna um
+                                    <code>Value</code> inválido</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>dobrar</code> recebe
+                                    <code>p</code> por valor — o
+                                    <code>reflect.Value</code> encapsula uma
+                                    cópia não-endereçável;
+                                    <code>SetInt</code> entra em panic porque
+                                    <code>CanSet()</code> é <code>false</code>.
+                                    A correção é passar <code>&amp;p</code> e
+                                    chamar <code>val.Elem()</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O panic é porque <code>X</code> e
+                                    <code>Y</code> não são exportados —
+                                    reflection não acessa campos com letra
+                                    maiúscula</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O panic é causado por overflow: multiplicar
+                                    dois ints sem verificar o limite causa
+                                    undefined behavior em Go</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A causa é a falta de endereçabilidade.
+                              Quando <code>dobrar(p)</code> é chamada,
+                              <code>p</code> é copiado para o parâmetro
+                              <code>v any</code>. O
+                              <code>reflect.ValueOf(v)</code> encapsula essa
+                              cópia — que não tem endereço de memória estável,
+                              logo não é settável. A correção é
+                              <code>dobrar(&amp;p)</code> e dentro da função:
+                              <code>val := reflect.ValueOf(v).Elem()</code>.
+                              <code>Elem()</code> derreferencia o ponteiro e
+                              retorna um <code>Value</code> com
+                              <code>CanSet() == true</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod32-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Quando usar (e quando não usar) reflection'. Pense no que reflect.DeepEqual considera ao comparar slices nil e vazios."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">Qual é o output?</p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Resp struct {
+    Items []string
+    Total int
+}
+
+a := Resp{Items: nil,      Total: 0}
+b := Resp{Items: []string{}, Total: 0}
+c := Resp{Items: nil,      Total: 0}
+
+fmt.Println(reflect.DeepEqual(a, b))
+fmt.Println(reflect.DeepEqual(a, c))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>true</code> / <code>true</code> — nil
+                                    slice e slice vazio são equivalentes;
+                                    DeepEqual trata ambos como "sem
+                                    elementos"</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>false</code> / <code>false</code> —
+                                    DeepEqual compara ponteiros internos, logo
+                                    nunca são iguais a menos que sejam a mesma
+                                    variável</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>false</code> / <code>true</code> —
+                                    nil slice e slice vazio são distintos para
+                                    DeepEqual; duas structs com nil são
+                                    iguais</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>reflect.DeepEqual</code> não aceita
+                                    structs como argumento diretamente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto!
+                              <code>reflect.DeepEqual</code> distingue
+                              <code>nil</code> de slice vazio
+                              (<code>[]string{}</code>). Internamente, um slice
+                              nil tem ponteiro <code>nil</code> enquanto um
+                              slice vazio tem um ponteiro válido para zero
+                              bytes. Por isso <code>DeepEqual(a, b)</code> é
+                              <code>false</code> — <code>a.Items</code> é nil,
+                              <code>b.Items</code> não é.
+                              <code>DeepEqual(a, c)</code> é
+                              <code>true</code> porque ambos têm
+                              <code>Items == nil</code> e
+                              <code>Total == 0</code>. Esse comportamento é uma
+                              fonte real de bugs em testes onde JSON
+                              unmarshaling produz <code>[]string{}</code> e o
+                              esperado tem <code>nil</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 32
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod32-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Bug em deserializador
+                              reflexivo</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um deserializador genérico percorre os campos de
+                              uma struct via reflection e preenche seus valores
+                              a partir de um <code>map[string]any</code>. O
+                              código abaixo tem um bug sutil que causa panic em
+                              produção quando a struct tem campos não
+                              exportados. Qual é a correção correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func deserializar(dst any, dados map[string]any) {
+    val := reflect.ValueOf(dst).Elem()
+    typ := val.Type()
+
+    for i := 0; i < typ.NumField(); i++ {
+        field := typ.Field(i)
+        dado, ok := dados[field.Name]
+        if !ok {
+            continue
+        }
+        // BUG: panic se field for não exportado
+        val.Field(i).Set(reflect.ValueOf(dado))
+    }
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Envolver o <code>Set</code> em um
+                                    <code>recover()</code> para capturar panics
+                                    de campos não exportados e continuar a
+                                    iteração</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Converter <code>dst</code> para
+                                    <code>reflect.Value</code> com
+                                    <code>reflect.New</code> antes de chamar
+                                    <code>Elem()</code> — isso torna todos os
+                                    campos settáveis</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Adicionar
+                                    <code
+                                       >if !field.IsExported() { continue
+                                       }</code
+                                    >
+                                    antes do <code>Set</code> — campos não
+                                    exportados têm
+                                    <code>CanSet() == false</code> e devem ser
+                                    ignorados explicitamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar
+                                    <code>val.Field(i).CanAddr()</code> como
+                                    guarda — campos não exportados não são
+                                    endereçáveis</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A guarda correta é
+                              <code>field.IsExported()</code>
+                              (disponível desde Go 1.17; equivale a checar
+                              <code>field.PkgPath == ""</code> em versões
+                              anteriores). Campos não exportados são
+                              endereçáveis (<code>CanAddr()</code> pode ser
+                              <code>true</code>), mas não são settáveis (<code
+                                 >CanSet()</code
+                              >
+                              é sempre <code>false</code>) — por isso a opção D
+                              está errada. Usar
+                              <code>recover()</code> funcionaria, mas é uma má
+                              prática: oculta bugs reais e tem custo de
+                              performance. A solução correta é verificar
+                              explicitamente antes de tentar o Set.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod32-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Reflection vs interface</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um colega implementou uma função de logging que
+                              usa reflection para imprimir o nome e o valor de
+                              cada campo de qualquer struct recebida como
+                              <code>any</code>. Você precisa adicionar suporte a
+                              um novo tipo <code>Conexao</code> que tem um campo
+                              <code>senha string</code> (não exportado por
+                              segurança) e um campo <code>URL string</code>.
+                              Qual abordagem é mais robusta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Exportar o campo <code>Senha</code> com
+                                    letra maiúscula e adicionar uma tag
+                                    <code>log:"-"</code> para que o logger
+                                    reflexivo o ignore — consistente com o
+                                    padrão de tags do projeto</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Deixar o campo não exportado e confiar que
+                                    <code>field.IsExported()</code> no logger já
+                                    o omite automaticamente — sem necessidade de
+                                    mudanças adicionais</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Implementar a interface
+                                    <code>fmt.Stringer</code> em
+                                    <code>Conexao</code> com um método
+                                    <code>String()</code> que formata apenas os
+                                    campos seguros — e fazer o logger verificar
+                                    se o valor implementa
+                                    <code>fmt.Stringer</code> antes de usar
+                                    reflection</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Criar uma segunda struct
+                                    <code>ConexaoLog</code> só com os campos
+                                    seguros e converter manualmente antes de
+                                    passar ao logger</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Esta é a solução mais robusta porque
+                              aplica o princípio Go corretamente: quando um tipo
+                              precisa de representação personalizada, ele
+                              implementa uma interface — não força o chamador a
+                              tratar seu caso especial. O logger faz
+                              <code
+                                 >if s, ok := v.(fmt.Stringer); ok { use
+                                 s.String() }</code
+                              >
+                              antes de cair no caminho reflexivo genérico. A
+                              opção B é segura quanto ao vazamento de senha, mas
+                              frágil: qualquer campo não exportado futuro também
+                              seria omitido silenciosamente, mesmo que fosse
+                              desejável logá-lo. A opção D funciona mas é
+                              verbosa e quebra a encapsulação — dois tipos para
+                              representar a mesma entidade. A opção A exporta
+                              dados sensíveis, o que é uma decisão de design
+                              ruim independente da tag.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

@@ -1,0 +1,1424 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Sincronização em Go: sync.Mutex, sync.RWMutex, sync.Once, sync.Map e operações atômicas com o pacote sync/atomic."
+      />
+      <title>Módulo 24 — Sincronização · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="24">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 8 — Concorrência
+                        </div>
+                        <h1 class="module-header__title">Sincronização</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 24</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Avançado</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — sync.Mutex
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod24-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>sync.Mutex</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Goroutines compartilham memória — e isso cria um
+                              problema: quando duas goroutines leem e escrevem a
+                              mesma variável ao mesmo tempo, o resultado é uma
+                              <strong>race condition</strong>. O valor final
+                              depende de qual goroutine executou por último, e
+                              isso muda a cada run. O programa parece funcionar
+                              em testes e quebra em produção.
+                           </p>
+                           <p>
+                              O <code>sync.Mutex</code> (mutual exclusion lock)
+                              garante que apenas uma goroutine execute uma seção
+                              de código por vez. Quem tenta entrar enquanto o
+                              mutex está bloqueado fica <em>suspenso</em> — não
+                              ocupa CPU, apenas aguarda.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >contador seguro para concorrência</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "sync"
+
+type Contador struct {
+    mu    sync.Mutex
+    valor int
+}
+
+func (c *Contador) Incrementar() {
+    c.mu.Lock()
+    defer c.mu.Unlock()  // garante unlock mesmo se houver panic
+    c.valor++
+}
+
+func (c *Contador) Valor() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.valor
+}
+
+// Uso correto: 1000 goroutines incrementando o mesmo contador
+func main() {
+    var wg sync.WaitGroup
+    c := &Contador{}
+
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            c.Incrementar()
+        }()
+    }
+
+    wg.Wait()
+    fmt.Println(c.Valor())  // sempre 1000 — nunca 997 ou 1001
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Regras do Mutex
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >erros comuns</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var mu sync.Mutex
+
+// ✗ DEADLOCK: a mesma goroutine tenta Lock duas vezes
+// sync.Mutex não é reentrante — bloqueia para sempre
+mu.Lock()
+mu.Lock()  // trava aqui eternamente
+
+// ✗ Unlock sem Lock anterior: panic em runtime
+mu.Unlock()
+
+// ✗ Copiar um Mutex após primeiro uso invalida o estado
+// Mutex deve ser passado por ponteiro, nunca por valor
+type Cache struct{ mu sync.Mutex }
+c1 := Cache{}
+c2 := c1  // ✗ copia o mutex — c2.mu está em estado indefinido
+_ = c2
+
+// ✓ Sempre: Lock → seção crítica → Unlock (via defer)
+mu.Lock()
+defer mu.Unlock()
+// ... operações seguras aqui</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não copie tipos do pacote sync
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>sync.Mutex</code>,
+                                    <code>sync.WaitGroup</code>,
+                                    <code>sync.Once</code> e outros tipos do
+                                    pacote <code>sync</code> não devem ser
+                                    copiados após o primeiro uso. O
+                                    <code>go vet</code>
+                                    detecta isso e emite um aviso. Sempre
+                                    embuta-os em structs e passe a struct por
+                                    ponteiro.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — sync.RWMutex
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod24-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>sync.RWMutex</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um <code>sync.Mutex</code> trata leitura e escrita
+                              da mesma forma: bloqueia tudo para todos. Mas
+                              leituras concorrentes são seguras — o problema é
+                              leitura simultânea a uma escrita. Quando o padrão
+                              de acesso é
+                              <strong>muitas leituras, poucas escritas</strong>,
+                              bloquear leitores desnecessariamente desperdiça
+                              performance.
+                           </p>
+                           <p>
+                              O <code>sync.RWMutex</code> resolve isso com dois
+                              tipos de lock: múltiplos leitores podem segurar
+                              <code>RLock()</code> ao mesmo tempo, mas uma
+                              escrita com <code>Lock()</code> exclui todos —
+                              leitores e escritores.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >cache com leitura concorrente</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Cache struct {
+    mu    sync.RWMutex
+    dados map[string]string
+}
+
+// Leitura: múltiplas goroutines podem chamar ao mesmo tempo
+func (c *Cache) Get(chave string) (string, bool) {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    v, ok := c.dados[chave]
+    return v, ok
+}
+
+// Escrita: exclusiva — bloqueia todos os outros acessos
+func (c *Cache) Set(chave, valor string) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    if c.dados == nil {
+        c.dados = make(map[string]string)
+    }
+    c.dados[chave] = valor
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando RWMutex é a escolha certa
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Situação
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Escolha
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Leitura e escrita em proporção similar
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          sync.Mutex
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Muitas leituras, escritas raras
+                                          (cache, config, lookup)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          sync.RWMutex
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Contagem, flag, ponteiro simples sob
+                                          concorrência intensa
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          sync/atomic
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Writer starvation: escritores podem ficar
+                                    bloqueados indefinidamente
+                                 </div>
+                                 <div class="callout__body">
+                                    Se leitores chegam continuamente, um
+                                    escritor aguardando
+                                    <code>Lock()</code> pode esperar muito tempo
+                                    — os leitores já ativos terminam, mas novos
+                                    são admitidos antes do escritor ter chance.
+                                    Na implementação do Go, quando um escritor
+                                    está aguardando, novos
+                                    <code>RLock()</code> ficam bloqueados — mas
+                                    isso é um detalhe de implementação, não uma
+                                    garantia de spec. Em cargas extremas, meça
+                                    antes de assumir que RWMutex é mais rápido.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — sync.Once
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod24-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>sync.Once</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Algumas inicializações devem acontecer exatamente
+                              uma vez — não importa quantas goroutines chamem o
+                              código ao mesmo tempo. O padrão naive com um bool
+                              e um mutex funciona, mas é verboso e fácil de
+                              errar. <code>sync.Once</code> encapsula esse
+                              padrão de forma idiomática e com garantias
+                              formais.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >singleton de conexão de banco</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type DB struct {
+    pool *sql.DB
+    once sync.Once
+    err  error
+}
+
+func (db *DB) Conectar(dsn string) (*sql.DB, error) {
+    db.once.Do(func() {
+        db.pool, db.err = sql.Open("postgres", dsn)
+        if db.err == nil {
+            db.err = db.pool.Ping()
+        }
+    })
+    return db.pool, db.err
+}
+
+// Mesmo que 100 goroutines chamem Conectar simultaneamente,
+// sql.Open é chamado uma única vez. As outras 99 aguardam o
+// Do terminar e recebem o pool já inicializado.</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comportamento com erro
+                           </h4>
+                           <p>
+                              <code>sync.Once</code> tem uma propriedade
+                              importante e às vezes surpreendente:
+                              <strong
+                                 >se a função passada ao <code>Do</code> falhar,
+                                 ela não é chamada novamente</strong
+                              >. Uma vez executada, o Once está "queimado" para
+                              sempre.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >armadilha do Once com erro</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var once sync.Once
+var config *Config
+
+func CarregarConfig(caminho string) (*Config, error) {
+    var err error
+    once.Do(func() {
+        config, err = lerArquivo(caminho)
+    })
+    // ✗ Problema: se lerArquivo falhou, once.Do não vai rodar de novo.
+    // Chamadas subsequentes retornam config=nil, err=nil — silenciosamente errado.
+    return config, err
+}
+
+// ✓ Solução: armazenar o erro no estado compartilhado
+type Loader struct {
+    once   sync.Once
+    config *Config
+    err    error
+}
+
+func (l *Loader) Carregar(caminho string) (*Config, error) {
+    l.once.Do(func() {
+        l.config, l.err = lerArquivo(caminho)
+    })
+    return l.config, l.err  // err preservado entre chamadas
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    sync.OnceValue e sync.OnceFunc (Go 1.21+)
+                                 </div>
+                                 <div class="callout__body">
+                                    Go 1.21 adicionou
+                                    <code>sync.OnceValue[T]</code> e
+                                    <code>sync.OnceFunc</code> — wrappers
+                                    genéricos que tornam o padrão de
+                                    inicialização única ainda mais ergonômico:
+                                    <code
+                                       >getConfig := sync.OnceValue(func()
+                                       *Config { return lerConfig() })</code
+                                    >. Cada chamada a
+                                    <code>getConfig()</code> retorna o mesmo
+                                    valor, calculado apenas uma vez.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — sync.Map
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod24-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>sync.Map</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Maps em Go não são thread-safe. Leituras
+                              concorrentes são permitidas, mas qualquer escrita
+                              simultânea — mesmo que em chaves diferentes —
+                              causa um panic de runtime com a mensagem
+                              <em>concurrent map writes</em>. O módulo 11 cobriu
+                              isso.
+                           </p>
+                           <p>
+                              A solução direta é proteger o map com um mutex.
+                              Mas o pacote
+                              <code>sync</code> oferece <code>sync.Map</code>:
+                              um map otimizado para dois casos de uso
+                              específicos onde ele supera
+                              <code>map + RWMutex</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >API do sync.Map</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var m sync.Map
+
+// Store: armazenar
+m.Store("sessão-abc", &Sessao{UserID: 42})
+
+// Load: ler — retorna (value any, ok bool)
+if v, ok := m.Load("sessão-abc"); ok {
+    sessao := v.(*Sessao)  // type assertion necessária — sync.Map usa any
+    fmt.Println(sessao.UserID)
+}
+
+// LoadOrStore: atomic — carrega se existe, armazena se não existe
+// Retorna o valor atual e se já existia
+valor, carregado := m.LoadOrStore("chave", "valor-padrão")
+
+// Delete
+m.Delete("sessão-abc")
+
+// Range: itera — não garante ordem, snapshot pode ser inconsistente
+m.Range(func(k, v any) bool {
+    fmt.Printf("%v: %v\n", k, v)
+    return true  // retornar false interrompe a iteração
+})</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar sync.Map vs map+mutex
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use sync.Map quando
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use map+RWMutex quando
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Chaves são escritas uma vez e lidas
+                                          muitas vezes (cache de rotas,
+                                          resultados de lookup)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Leituras e escritas são frequentes e
+                                          nas mesmas chaves
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: var(--color-border);
+                                          "
+                                       >
+                                          Muitas goroutines lendo/escrevendo
+                                          chaves <em>disjuntas</em> (sharding
+                                          por chave)
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Você precisa de type safety (sync.Map
+                                          usa <code>any</code>)
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    sync.Map não é o map padrão com lock por
+                                    cima
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>sync.Map</code> tem uma estrutura
+                                    interna de dois estágios (read map e dirty
+                                    map) que o torna mais rápido que
+                                    <code>map+Mutex</code> nos dois cenários
+                                    acima, mas <em>mais lento</em> no caso
+                                    geral. A documentação oficial diz
+                                    explicitamente: "O tipo Map deve ser usado
+                                    apenas em casos de uso específicos". Na
+                                    dúvida, use <code>map+RWMutex</code>
+                                    — é mais simples, type-safe e mais fácil de
+                                    raciocinar.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — atomic
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod24-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>atomic</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Mutex suspende goroutines — há custo de context
+                              switch. Para operações simples em valores
+                              escalares (contadores, flags, ponteiros), o pacote
+                              <code>sync/atomic</code> oferece operações que o
+                              hardware executa atomicamente: sem locks, sem
+                              suspensão, sem context switch. São as operações
+                              mais baratas disponíveis para sincronização.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operações atômicas básicas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "sync/atomic"
+
+var (
+    contadorReqs atomic.Int64   // Go 1.19+ — tipo genérico, zero value seguro
+    servidorVivo atomic.Bool
+    config       atomic.Pointer[Config]
+)
+
+// Incremento atômico — sem mutex, sem race condition
+contadorReqs.Add(1)
+total := contadorReqs.Load()
+
+// Flag de shutdown
+servidorVivo.Store(true)
+// ... em outra goroutine:
+if !servidorVivo.Load() {
+    return  // servidor sendo desligado
+}
+
+// Troca atômica de ponteiro — config hot-reload sem downtime
+novaConfig := &Config{Timeout: 30 * time.Second}
+config.Store(novaConfig)
+// Leitores obtêm sempre um ponteiro consistente:
+cfg := config.Load()  // nunca um ponteiro parcialmente escrito</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              CompareAndSwap — operação fundamental de lock-free
+                           </h4>
+                           <p>
+                              <code>CompareAndSwap</code> (CAS) é a operação
+                              atômica mais poderosa: troca o valor
+                              <em>somente se</em> ele ainda é o valor esperado.
+                              É a base de estruturas lock-free e de padrões como
+                              o spin-lock.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >CAS: compare and swap</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var estado atomic.Int32
+const (
+    Parado  int32 = 0
+    Rodando int32 = 1
+)
+
+// Tenta transitar de Parado para Rodando atomicamente
+// Retorna true apenas se conseguiu — evita que duas goroutines
+// "iniciem o servidor" ao mesmo tempo
+func iniciar() bool {
+    return estado.CompareAndSwap(Parado, Rodando)
+}
+
+// Em produção: implementação de rate limiter lock-free
+type RateLimiter struct {
+    reqs atomic.Int64
+}
+
+func (r *RateLimiter) Allow(limite int64) bool {
+    atual := r.reqs.Add(1)
+    return atual <= limite
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go 1.19: atomic.Int64, atomic.Bool,
+                                    atomic.Pointer
+                                 </div>
+                                 <div class="callout__body">
+                                    Antes de Go 1.19, o pacote
+                                    <code>sync/atomic</code> exportava apenas
+                                    funções como
+                                    <code>atomic.AddInt64(&n, 1)</code> —
+                                    exigindo que você gerenciasse o alinhamento
+                                    de memória manualmente em structs. Go 1.19
+                                    adicionou os tipos
+                                    <code>atomic.Int32</code>,
+                                    <code>atomic.Int64</code>,
+                                    <code>atomic.Bool</code>,
+                                    <code>atomic.Pointer[T]</code> e
+                                    <code>atomic.Uint64</code>
+                                    — mais seguros, mais ergonômicos, e com zero
+                                    value funcional. Prefira-os às funções
+                                    legadas em código novo.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Atomic não compõe — mutex sim
+                                 </div>
+                                 <div class="callout__body">
+                                    Operações atômicas garantem atomicidade
+                                    <em>individualmente</em>. Se você precisar
+                                    de uma operação que lê <em>e</em> escreve
+                                    dois campos atomicamente (ex: incrementar um
+                                    contador e atualizar um timestamp juntos),
+                                    atomic não resolve — você precisa de um
+                                    mutex em torno das duas operações. Atomic é
+                                    para escalares simples; mutex é para
+                                    invariantes compostos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 24
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod24-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'sync.Mutex'. Preste atenção no comportamento quando a mesma goroutine tenta adquirir o lock duas vezes."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece quando a função abaixo é chamada?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var mu sync.Mutex
+
+func operacao() int {
+    mu.Lock()
+    defer mu.Unlock()
+    return calcular()
+}
+
+func calcular() int {
+    mu.Lock()
+    defer mu.Unlock()
+    return 42
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Retorna 42 normalmente — Go detecta que é a
+                                    mesma goroutine e permite o segundo
+                                    Lock</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — não é permitido chamar
+                                    Lock dentro de uma função já protegida</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Deadlock — <code>sync.Mutex</code> não é
+                                    reentrante; a goroutine trava esperando um
+                                    lock que ela mesma segura</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Panic com "lock acquired twice" em
+                                    runtime</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>sync.Mutex</code> não é
+                              reentrante — ao contrário de locks em Java ou
+                              Python, a mesma goroutine bloqueará tentando
+                              adquirir um lock que ela mesma segura. O programa
+                              trava para sempre (deadlock detectado pelo runtime
+                              somente se <em>todas</em> as goroutines estiverem
+                              bloqueadas). A solução é refatorar para não chamar
+                              funções que fazem Lock a partir de dentro de uma
+                              seção crítica, ou expor uma versão interna sem
+                              lock.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod24-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'sync.Once'. Atenção no que acontece quando a função passada ao Do produz um erro — o Once roda de novo?"
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo parece correto. Qual é o bug?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var (
+    once sync.Once
+    db   *sql.DB
+)
+
+func GetDB() (*sql.DB, error) {
+    var err error
+    once.Do(func() {
+        db, err = sql.Open("postgres", os.Getenv("DSN"))
+    })
+    return db, err
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Race condition — <code>db</code> e
+                                    <code>err</code> são variáveis globais
+                                    acessadas sem mutex</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — closures passadas ao
+                                    <code>once.Do</code> não podem capturar
+                                    variáveis externas</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Se <code>sql.Open</code> falhar, chamadas
+                                    subsequentes a <code>GetDB()</code> retornam
+                                    <code>db=nil, err=nil</code> — o erro é
+                                    perdido porque <code>err</code> é local à
+                                    chamada, não ao estado compartilhado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O <code>once.Do</code> vai rodar novamente
+                                    na próxima chamada se <code>db</code> ainda
+                                    for nil</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>err</code> é uma variável local
+                              de <code>GetDB()</code>. Na primeira chamada, a
+                              closure captura e escreve nela — mas essa variável
+                              desaparece após o retorno. Na segunda chamada,
+                              <code>once.Do</code> não roda mais;
+                              <code>err</code> é uma nova variável local
+                              inicializada com <code>nil</code>. O chamador
+                              recebe <code>nil, nil</code> e não sabe que a
+                              inicialização falhou. A correção é declarar
+                              <code>err</code> como parte do estado global junto
+                              com <code>db</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod24-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'atomic'. Lembre-se da diferença entre atomicidade individual de uma operação e atomicidade de múltiplas operações compostas."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual afirmação sobre o código abaixo é verdadeira?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Estatisticas struct {
+    reqs     atomic.Int64
+    bytes    atomic.Int64
+}
+
+func (e *Estatisticas) Registrar(tamanho int64) {
+    e.reqs.Add(1)
+    e.bytes.Add(tamanho)
+}
+
+func (e *Estatisticas) Snapshot() (reqs, bytes int64) {
+    return e.reqs.Load(), e.bytes.Load()
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O código é completamente seguro para
+                                    concorrência — ambos os campos usam
+                                    atomic</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>Registrar</code> e
+                                    <code>Snapshot</code> são race-free
+                                    individualmente, mas
+                                    <code>Snapshot</code> pode retornar um par
+                                    inconsistente: <code>reqs</code> já
+                                    incrementado mas <code>bytes</code> ainda
+                                    sem o Add correspondente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação — atomic.Int64 não pode
+                                    ser campo de struct</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Race condition em <code>Registrar</code> —
+                                    os dois <code>Add</code> precisam de um
+                                    mutex entre eles</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Cada <code>Add</code> e
+                              <code>Load</code> individual é atômico — sem race
+                              condition em nenhum campo isolado. Mas
+                              <code>Snapshot</code> lê dois campos em dois
+                              instantes diferentes: entre o <code>Load</code> de
+                              <code>reqs</code> e o de <code>bytes</code>, outra
+                              goroutine pode ter chamado
+                              <code>Registrar</code> e incrementado
+                              <code>bytes</code>. O snapshot retorna
+                              <code>reqs=5, bytes=1020</code> quando o estado
+                              real coerente seria
+                              <code>reqs=4, bytes=820</code> ou
+                              <code>reqs=5, bytes=1220</code>. Para snapshots
+                              consistentes entre campos, use mutex.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 24
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod24-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Escolha do primitivo</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um servidor HTTP precisa manter um cache de
+                              configuração em memória. A config é carregada do
+                              disco na inicialização e pode ser recarregada via
+                              sinal do OS (SIGHUP), enquanto todas as goroutines
+                              de handlers leem a config a cada requisição. Qual
+                              primitivo de sincronização é mais adequado para o
+                              campo que guarda a config?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>sync.Mutex</code> — protege tanto a
+                                    leitura quanto a escrita da config com
+                                    exclusão mútua total</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>sync.Once</code> — garante que a
+                                    config é carregada uma única vez e nunca
+                                    sobrescrita</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>atomic.Pointer[Config]</code> —
+                                    handlers leem com <code>Load()</code> sem
+                                    bloquear entre si; o recarregamento troca o
+                                    ponteiro atomicamente com
+                                    <code>Store()</code>. Padrão read-heavy com
+                                    escritas raras e atômicas — caso ideal para
+                                    atomic.Pointer</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>sync.Map</code> — permite que cada
+                                    campo da config seja atualizado
+                                    independentemente sem travar os outros</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>atomic.Pointer[Config]</code> é a
+                              solução idiomática para hot-reload de
+                              configuração. Handlers chamam
+                              <code>cfg := configPtr.Load()</code> e obtêm um
+                              ponteiro imutável para a config atual — sem
+                              bloquear, sem esperar. O handler de SIGHUP cria
+                              uma nova <code>*Config</code>, popula e chama
+                              <code>configPtr.Store(novaCfg)</code>. A troca é
+                              instantânea e atômica: handlers já em execução
+                              terminam com a config antiga, novos começam com a
+                              nova — sem inconsistência.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod24-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Bug de sincronização</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo usa <code>sync.RWMutex</code> mas
+                              tem um bug sutil que pode causar deadlock. Qual é
+                              o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Repositorio struct {
+    mu   sync.RWMutex
+    dados map[string]int
+}
+
+func (r *Repositorio) IncrementarOuCriar(chave string) {
+    r.mu.RLock()
+    v, ok := r.dados[chave]
+    r.mu.RUnlock()
+
+    if !ok {
+        v = 0
+    }
+    r.mu.Lock()
+    r.dados[chave] = v + 1
+    r.mu.Unlock()
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O código está correto — RLock para ler e
+                                    Lock para escrever é o padrão exato do
+                                    RWMutex</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Deadlock porque <code>RUnlock</code> é
+                                    chamado antes de <code>Lock</code> — a ordem
+                                    deve ser Lock antes de RUnlock</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Race condition lógica: entre o
+                                    <code>RUnlock</code> e o <code>Lock</code>,
+                                    outra goroutine pode escrever. Duas
+                                    goroutines leem <code>v=0</code>, ambas
+                                    escrevem <code>1</code> — o incremento duplo
+                                    é perdido. Para operação atômica de
+                                    leitura+escrita, é necessário usar
+                                    <code>Lock</code> desde o início</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O método deveria usar
+                                    <code>sync.Mutex</code> em vez de
+                                    <code>sync.RWMutex</code> — RWMutex não
+                                    suporta upgrade de RLock para Lock</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O intervalo entre
+                              <code>RUnlock</code> e <code>Lock</code> é uma
+                              janela de race condition: duas goroutines podem
+                              ler <code>v=5</code>, ambas desbloqueiam o RLock,
+                              ambas adquirem o Lock separadamente e escrevem
+                              <code>6</code> — quando o resultado correto seria
+                              <code>7</code>. Isso é um problema clássico de
+                              <em>check-then-act</em> não atômico. A correção é
+                              usar <code>mu.Lock()</code> desde o início da
+                              operação, que abrange tanto a leitura quanto a
+                              escrita. O RWMutex aqui não traz benefício — o
+                              padrão correto é Mutex simples.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

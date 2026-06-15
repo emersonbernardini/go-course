@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Tratamento de erros em Go: error como tipo, errors.New, fmt.Errorf, erros personalizados, errors.Is, errors.As e wrapping com %w."
+      />
+      <title>Módulo 18 — Tratamento de erros · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="18">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">Bloco 6 — Erros</div>
+                        <h1 class="module-header__title">
+                           Tratamento de erros
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 18</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — error como tipo
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>error como tipo</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, erros não são exceções lançadas e
+                              capturadas — são
+                              <strong
+                                 >valores retornados como qualquer outro</strong
+                              >. O tipo <code>error</code> é uma interface da
+                              stdlib com um único método:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >a interface error</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Definição na stdlib — é tudo que existe
+type error interface {
+    Error() string
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Por ser uma interface, qualquer tipo que
+                              implemente
+                              <code>Error() string</code> é um
+                              <code>error</code> válido. A convenção em Go é
+                              retornar o erro como <strong>último valor</strong>
+                              da função e verificá-lo imediatamente após a
+                              chamada:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrão idiomático</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Assinatura típica: retorno útil + error
+func lerArquivo(nome string) ([]byte, error) {
+    f, err := os.Open(nome)
+    if err != nil {
+        return nil, err  // propaga o erro; retorno útil é nil
+    }
+    defer f.Close()
+
+    return io.ReadAll(f)
+}
+
+// Chamada: verificar antes de usar o resultado
+dados, err := lerArquivo("config.json")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(len(dados))  // seguro: só chega aqui se err == nil</code></pre>
+                           </div>
+
+                           <p>
+                              Quando não há erro, a função retorna
+                              <code>nil</code> como <code>error</code> —
+                              <code>nil</code> é o zero value de qualquer
+                              interface e significa "sem erro". A verificação
+                              <code>if err != nil</code>
+                              é o padrão universal em Go.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que não exceções?
+                                 </div>
+                                 <div class="callout__body">
+                                    Em linguagens com exceções, um erro pode
+                                    "pular" vários níveis do stack antes de ser
+                                    tratado — ou nunca ser tratado. Em Go, o
+                                    erro é um valor explícito: o compilador
+                                    garante que você <em>viu</em> o retorno.
+                                    Você pode ignorá-lo com <code>_</code>, mas
+                                    é uma escolha consciente — não acidental.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — errors.New e fmt.Errorf
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>errors.New e fmt.Errorf</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A stdlib oferece duas formas principais de criar
+                              erros novos. Escolher entre elas é uma decisão de
+                              design, não de preferência:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >errors.New — erro simples e estático</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "errors"
+
+var ErrNaoEncontrado = errors.New("recurso não encontrado")
+var ErrPermissao     = errors.New("permissão negada")
+
+func buscar(id int) (*Usuario, error) {
+    u, ok := db[id]
+    if !ok {
+        return nil, ErrNaoEncontrado  // retorna a sentinel var
+    }
+    return u, nil
+}
+
+// Comparação com == (ou errors.Is — veremos no tópico 4)
+u, err := buscar(42)
+if err == ErrNaoEncontrado {
+    // trata ausência de recurso
+}</code></pre>
+                           </div>
+
+                           <p>
+                              <code>errors.New</code> cria um erro opaco — uma
+                              mensagem fixa sem contexto dinâmico. Quando você
+                              precisa incluir valores (o ID que causou o erro, o
+                              nome do arquivo), use <code>fmt.Errorf</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >fmt.Errorf — erro com contexto</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "fmt"
+
+func buscar(id int) (*Usuario, error) {
+    u, ok := db[id]
+    if !ok {
+        return nil, fmt.Errorf("buscar: usuário %d não encontrado", id)
+    }
+    return u, nil
+}
+
+// Cada chamada gera uma string diferente:
+// "buscar: usuário 42 não encontrado"
+// "buscar: usuário 99 não encontrado"</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Função
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use quando
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          errors.New
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Erro sentinela — quem chama vai
+                                          comparar com <code>==</code> ou
+                                          <code>errors.Is</code>
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          fmt.Errorf
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Erro com dados dinâmicos — mensagem
+                                          varia por chamada
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Erros sentinela: declare como variáveis de
+                                    pacote
+                                 </div>
+                                 <div class="callout__body">
+                                    Por convenção, erros sentinela começam com
+                                    <code>Err</code> e ficam no nível de pacote
+                                    (não dentro de funções). Isso permite que
+                                    quem usa seu pacote importe e compare contra
+                                    eles. Nunca use
+                                    <code>errors.New</code> dentro de uma função
+                                    se precisar comparar o erro depois — cada
+                                    chamada cria um valor distinto na memória.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Erros personalizados
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Erros personalizados</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando uma string de erro não é suficiente —
+                              quando quem chama precisa extrair dados
+                              estruturados do erro (código HTTP, campo inválido,
+                              linha do arquivo) — você cria um tipo próprio que
+                              implementa a interface <code>error</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tipo de erro personalizado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Erro com campos estruturados
+type ErroValidacao struct {
+    Campo   string
+    Valor   any
+    Motivo  string
+}
+
+// Implementa a interface error
+func (e *ErroValidacao) Error() string {
+    return fmt.Sprintf("validação falhou: campo %q, valor %v — %s",
+        e.Campo, e.Valor, e.Motivo)
+}
+
+func validarIdade(idade int) error {
+    if idade < 0 {
+        return &ErroValidacao{
+            Campo:  "idade",
+            Valor:  idade,
+            Motivo: "não pode ser negativa",
+        }
+    }
+    if idade > 150 {
+        return &ErroValidacao{
+            Campo:  "idade",
+            Valor:  idade,
+            Motivo: "valor implausível",
+        }
+    }
+    return nil
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Quem recebe o erro pode extrair os campos usando
+                              <code>errors.As</code> (que veremos no tópico 4) —
+                              sem precisar fazer parsing da string de mensagem:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >extraindo dados do erro</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">err := validarIdade(-5)
+
+var ev *ErroValidacao
+if errors.As(err, &ev) {
+    fmt.Printf("campo com problema: %s\n", ev.Campo)
+    fmt.Printf("valor recebido: %v\n", ev.Valor)
+    // resposta HTTP 422 com detalhe do campo, por exemplo
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Receiver por ponteiro é obrigatório aqui
+                           </h4>
+                           <p>
+                              Note que o receiver de <code>Error()</code> é
+                              <code>*ErroValidacao</code> (ponteiro). Se você
+                              implementar com receiver por valor
+                              (<code>ErroValidacao</code>), o tipo
+                              <code>*ErroValidacao</code> também satisfaz a
+                              interface — mas o contrário não vale. Use ponteiro
+                              como receiver para erros personalizados para
+                              evitar cópias e problemas com
+                              <code>errors.As</code>.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Quando criar um tipo de erro
+                                 </div>
+                                 <div class="callout__body">
+                                    Crie um tipo de erro personalizado quando
+                                    quem chama sua função precisar inspecionar
+                                    campos do erro programaticamente — não
+                                    apenas exibir a mensagem. Se a mensagem de
+                                    texto é tudo que será usado,
+                                    <code>fmt.Errorf</code> é suficiente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Wrapping de erros com %w
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Wrapping de erros com %w</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Ao propagar um erro entre camadas do programa, é
+                              bom adicionar contexto sem perder o erro original.
+                              O verbo <code>%w</code> do
+                              <code>fmt.Errorf</code> (introduzido em Go 1.13)
+                              faz exatamente isso: cria um novo erro que
+                              <strong>encapsula</strong> o original, formando
+                              uma cadeia (<em>error chain</em>):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >wrapping com %w</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var ErrNaoAutorizado = errors.New("não autorizado")
+
+func buscarPerfil(userID int) (*Perfil, error) {
+    perfil, err := db.Buscar(userID)
+    if err != nil {
+        // %w encapsula err dentro do novo erro
+        return nil, fmt.Errorf("buscarPerfil(%d): %w", userID, err)
+    }
+    return perfil, nil
+}
+
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+    perfil, err := buscarPerfil(42)
+    if err != nil {
+        // %w preserva a cadeia — o erro original continua acessível
+        return nil, fmt.Errorf("handleRequest: %w", err)
+    }
+    // ...
+}</code></pre>
+                           </div>
+
+                           <p>
+                              A cadeia resultante seria algo como:<br />
+                              <code
+                                 >"handleRequest: buscarPerfil(42): não
+                                 autorizado"</code
+                              >
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              %w vs %v — a diferença crítica
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var original = errors.New("disco cheio")
+
+// %v — apenas formata a mensagem, perde o erro original
+comV := fmt.Errorf("salvar: %v", original)
+fmt.Println(errors.Is(comV, original))  // false — cadeia quebrada
+
+// %w — encapsula o erro, preserva a cadeia
+comW := fmt.Errorf("salvar: %w", original)
+fmt.Println(errors.Is(comW, original))  // true — cadeia intacta</code></pre>
+                           </div>
+
+                           <p>
+                              O verbo <code>%w</code> faz com que o novo erro
+                              implemente o método <code>Unwrap() error</code>,
+                              que retorna o erro encapsulado.
+                              <code>errors.Is</code> e <code>errors.As</code>
+                              percorrem essa cadeia automaticamente.
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Use %w com intenção — não sempre
+                                 </div>
+                                 <div class="callout__body">
+                                    Ao usar <code>%w</code>, você está expondo o
+                                    erro interno como parte da API pública da
+                                    sua função. Quem chama poderá inspecionar a
+                                    cadeia com <code>errors.Is</code>. Se o erro
+                                    interno é um detalhe de implementação que
+                                    pode mudar, use <code>%v</code> para não
+                                    vazar a dependência.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — errors.Is e errors.As
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>errors.Is e errors.As</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Com erros encapsulados por <code>%w</code>, a
+                              comparação direta com <code>==</code> não funciona
+                              mais — o erro original está embrulhado dentro de
+                              outro. As funções <code>errors.Is</code> e
+                              <code>errors.As</code> percorrem a cadeia
+                              automaticamente:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              errors.Is — verifica identidade
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >errors.Is percorre a cadeia</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var ErrNaoEncontrado = errors.New("não encontrado")
+
+// Função que encapsula o erro
+func buscar(id int) error {
+    return fmt.Errorf("buscar(%d): %w", id, ErrNaoEncontrado)
+}
+
+err := buscar(42)
+
+// == não funciona com erros encapsulados
+fmt.Println(err == ErrNaoEncontrado)          // false
+
+// errors.Is percorre a cadeia
+fmt.Println(errors.Is(err, ErrNaoEncontrado)) // true
+
+// Uso em ramificação de lógica
+if errors.Is(err, ErrNaoEncontrado) {
+    // retornar 404, tentar criar o recurso, etc.
+} else if errors.Is(err, ErrNaoAutorizado) {
+    // retornar 401
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              errors.As — extrai o tipo
+                           </h4>
+                           <p>
+                              Enquanto <code>errors.Is</code> compara por
+                              identidade (o mesmo valor),
+                              <code>errors.As</code> procura um tipo específico
+                              na cadeia e atribui a variável alvo — equivalente
+                              a um type assertion que percorre o wrapping:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >errors.As extrai dados estruturados</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type ErroHTTP struct {
+    Codigo int
+    Metodo string
+}
+
+func (e *ErroHTTP) Error() string {
+    return fmt.Sprintf("HTTP %d em %s", e.Codigo, e.Metodo)
+}
+
+func fazerRequisicao() error {
+    err := &ErroHTTP{Codigo: 503, Metodo: "GET"}
+    return fmt.Errorf("fazerRequisicao: %w", err)
+}
+
+err := fazerRequisicao()
+
+var httpErr *ErroHTTP
+if errors.As(err, &httpErr) {
+    // httpErr agora está preenchido com os campos do ErroHTTP
+    fmt.Printf("falha HTTP %d — retry em 5s\n", httpErr.Codigo)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    errors.Is vs errors.As — resumo rápido
+                                 </div>
+                                 <div class="callout__body">
+                                    Use <code>errors.Is</code> para verificar se
+                                    um erro <em>é</em> um valor específico
+                                    (erros sentinela como <code>io.EOF</code>,
+                                    <code>sql.ErrNoRows</code>). Use
+                                    <code>errors.As</code> para verificar se um
+                                    erro <em>é de um tipo</em> específico e
+                                    extrair seus campos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Filosofia: erros explícitos vs exceções
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod18-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Filosofia: erros explícitos vs exceções</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A abordagem de Go para erros é uma escolha
+                              deliberada de design — não uma limitação. Entender
+                              o raciocínio por trás dela ajuda a escrever código
+                              Go idiomático em vez de lutar contra a linguagem.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O problema com exceções
+                           </h4>
+                           <p>
+                              Em linguagens como Java ou Python, exceções criam
+                              caminhos de saída invisíveis. Uma função que "não
+                              lança nada" pode na prática falhar em qualquer
+                              linha que chame outra função. O código parece
+                              linear mas não é — o tratamento de erros fica
+                              disperso em blocos
+                              <code>try/catch</code> que muitas vezes ficam
+                              genéricos demais ou são simplesmente omitidos.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Erros como valores: o que muda
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >legibilidade do fluxo de erros</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Em Go, todo ponto de falha é explícito no código
+func processarPedido(id int) error {
+    pedido, err := buscarPedido(id)
+    if err != nil {
+        return fmt.Errorf("processarPedido: %w", err)
+    }
+
+    if err := validarEstoque(pedido); err != nil {
+        return fmt.Errorf("processarPedido: %w", err)
+    }
+
+    if err := cobrarCartao(pedido); err != nil {
+        return fmt.Errorf("processarPedido: %w", err)
+    }
+
+    return enviarConfirmacao(pedido)
+    // Cada linha que pode falhar está visível.
+    // Não há surpresas de stack unwinding silencioso.
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrões comuns no código Go real
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >padrões idiomáticos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Early return — sem else após o if de erro
+func abrirConexao(dsn string) (*sql.DB, error) {
+    db, err := sql.Open("postgres", dsn)
+    if err != nil {
+        return nil, fmt.Errorf("abrirConexao: %w", err)
+    }
+    // sem else — o código "feliz" continua no nível raiz
+    return db, nil
+}
+
+// 2. Adicionar contexto em cada camada
+func (s *Service) CriarUsuario(nome string) error {
+    if err := s.db.Inserir(nome); err != nil {
+        return fmt.Errorf("Service.CriarUsuario %q: %w", nome, err)
+    }
+    return nil
+}
+
+// 3. Nunca silenciar erros sem razão explícita
+f, _ := os.Open("config.json")  // ✗ erro silenciado — evitar
+f, err := os.Open("config.json")
+if err != nil {
+    // ✓ tratar ou propagar — nunca ignorar acidentalmente
+    return fmt.Errorf("config: %w", err)
+}</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Exceções (outras linguagens)
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Erros como valores (Go)
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Caminhos de falha implícitos
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Caminhos de falha explícitos no código
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Fácil de esquecer de tratar
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Difícil de ignorar acidentalmente
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Stack unwinding automático
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Propagação manual, rastreável
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td style="padding: var(--space-3)">
+                                          Difícil de saber o que uma função pode
+                                          lançar
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          A assinatura da função documenta
+                                          falhas possíveis
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    O "problema" do if err != nil
+                                 </div>
+                                 <div class="callout__body">
+                                    Quem vem de outras linguagens frequentemente
+                                    reclama da verbosidade dos checks de erro em
+                                    Go. Mas isso é o ponto: o código verbose é
+                                    uma escolha explícita de visibilidade. Cada
+                                    <code>if err != nil</code> é uma
+                                    documentação inline de que aquela operação
+                                    pode falhar — e de como a falha é tratada.
+                                    Esse custo visual compra clareza de
+                                    comportamento.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 18
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod18-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Wrapping de erros com %w'. A diferença entre %v e %w determina se a cadeia de erros é preservada."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var ErrBase = errors.New("base")
+
+comV := fmt.Errorf("camada: %v", ErrBase)
+comW := fmt.Errorf("camada: %w", ErrBase)
+
+fmt.Println(errors.Is(comV, ErrBase))
+fmt.Println(errors.Is(comW, ErrBase))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>true</code> e <code>true</code> —
+                                    ambos preservam o erro original</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>false</code> e <code>false</code> —
+                                    fmt.Errorf sempre cria um erro novo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>false</code> e <code>true</code> —
+                                    <code>%v</code> quebra a cadeia;
+                                    <code>%w</code> a preserva via Unwrap</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>true</code> e <code>false</code> —
+                                    <code>%v</code> compara strings,
+                                    <code>%w</code> cria um novo tipo</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>%v</code> apenas formata a
+                              mensagem do erro como string — a conexão com o
+                              erro original é perdida. <code>%w</code> chama
+                              <code>Unwrap()</code> implicitamente, mantendo a
+                              cadeia intacta para que
+                              <code>errors.Is</code> consiga percorrê-la.
+                              Resultado: <code>false</code>, <code>true</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod18-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'errors.New e fmt.Errorf'. Lembre-se da distinção entre erros sentinela declarados no nível de pacote versus erros criados dentro de funções."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo tem um bug sutil. Qual é ele?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func buscar(id int) (*Item, error) {
+    if id <= 0 {
+        return nil, errors.New("id inválido")
+    }
+    // ...
+}
+
+// Em outro lugar:
+err := buscar(-1)
+if err == errors.New("id inválido") {  // verificação
+    fmt.Println("id era inválido")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Erro de compilação — não é possível usar
+                                    <code>==</code> com <code>error</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Funciona corretamente —
+                                    <code>errors.New</code> com a mesma string
+                                    retorna o mesmo valor</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >A comparação sempre será
+                                    <code>false</code> — cada chamada a
+                                    <code>errors.New</code> cria um ponteiro
+                                    distinto na memória, mesmo com a mesma
+                                    string</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O bug é que <code>errors.New</code> não
+                                    pode ser usado dentro de funções</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>errors.New</code> retorna um
+                              ponteiro para uma struct interna. Cada chamada
+                              aloca um ponteiro novo — mesmo que a string seja
+                              idêntica, os endereços são diferentes, portanto
+                              <code>==</code> sempre retorna <code>false</code>.
+                              A correção é declarar um erro sentinela no nível
+                              de pacote:
+                              <code
+                                 >var ErrIDInvalido = errors.New("id
+                                 inválido")</code
+                              >
+                              e comparar com
+                              <code>errors.Is(err, ErrIDInvalido)</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod18-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'errors.Is e errors.As'. Lembre-se da diferença semântica entre as duas funções — uma verifica identidade, a outra extrai um tipo."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um servidor retorna um erro encapsulado com um
+                              tipo
+                              <code>*ErroHTTP</code> que tem um campo
+                              <code>Codigo int</code>. Qual abordagem extrai o
+                              código HTTP corretamente?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">err := fazerRequisicao()  // retorna fmt.Errorf("req: %w", &ErroHTTP{Codigo: 503})</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code
+                                       >if errors.Is(err, &ErroHTTP{}) { ...
+                                       }</code
+                                    >
+                                    — verifica se é do tipo ErroHTTP</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>httpErr := err.(*ErroHTTP)</code> —
+                                    type assertion direta no erro
+                                    encapsulado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code
+                                       >var httpErr *ErroHTTP; if errors.As(err,
+                                       &httpErr) { fmt.Println(httpErr.Codigo)
+                                       }</code
+                                    >
+                                    — percorre a cadeia e extrai o tipo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code
+                                       >if errors.Is(err, ErrHTTP503) { ...
+                                       }</code
+                                    >
+                                    — comparação com sentinela de status</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>errors.As</code> é a ferramenta
+                              certa quando você precisa de um tipo específico e
+                              seus campos — não apenas verificar se o erro é
+                              "algum" valor. A type assertion direta
+                              (<code>err.(*ErroHTTP)</code>) falharia porque
+                              <code>err</code> é do tipo
+                              <code>*fmt.wrapError</code> após o encapsulamento
+                              com <code>%w</code>.
+                              <code>errors.As</code> percorre a cadeia até
+                              encontrar um valor do tipo pedido.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 18
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod18-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Wrapping e inspeção de cadeia</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função de repositório retorna
+                              <code>sql.ErrNoRows</code> encapsulado em três
+                              camadas de contexto via <code>%w</code>. Na camada
+                              HTTP, você precisa retornar 404 quando o recurso
+                              não existe. Qual código faz isso corretamente?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">// Repositório
+func (r *Repo) BuscarUsuario(id int) (*Usuario, error) {
+    u, err := r.db.QueryRow("SELECT ...", id)
+    if err != nil {
+        return nil, fmt.Errorf("Repo.BuscarUsuario: %w", err)
+    }
+    return u, nil
+}
+
+// Serviço
+func (s *Service) Usuario(id int) (*Usuario, error) {
+    u, err := s.repo.BuscarUsuario(id)
+    if err != nil {
+        return nil, fmt.Errorf("Service.Usuario: %w", err)
+    }
+    return u, nil
+}
+
+// Handler HTTP — como detectar o 404?
+func (h *Handler) GetUsuario(w http.ResponseWriter, r *http.Request) {
+    u, err := h.svc.Usuario(idDaURL(r))
+    if err != nil {
+        // ???
+    }
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >if err == sql.ErrNoRows {
+                                       w.WriteHeader(404) }</code
+                                    >
+                                    — compara diretamente com o erro
+                                    original</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >if err.Error() == "sql: no rows in
+                                       result set" { w.WriteHeader(404) }</code
+                                    >
+                                    — compara as strings de mensagem</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code
+                                       >if errors.Is(err, sql.ErrNoRows) {
+                                       w.WriteHeader(404) }</code
+                                    >
+                                    — percorre as três camadas de wrapping e
+                                    encontra o sql.ErrNoRows original</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não é possível detectar o tipo original
+                                    após múltiplos wrappings — seria necessário
+                                    criar um erro sentinela próprio em cada
+                                    camada</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>errors.Is</code> percorre a
+                              cadeia de <code>Unwrap()</code> automaticamente —
+                              não importa quantas camadas de
+                              <code>fmt.Errorf("%w", ...)</code> existam.
+                              Comparar com <code>==</code> falharia porque o
+                              valor retornado é um <code>*fmt.wrapError</code>,
+                              não o <code>sql.ErrNoRows</code>
+                              diretamente. Comparar strings de mensagem é um
+                              anti-padrão frágil — a mensagem pode mudar entre
+                              versões da stdlib.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod18-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Tipo de erro personalizado</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você está construindo uma API de validação. A
+                              função
+                              <code>validar</code> deve retornar um erro que
+                              inclua qual campo falhou e por quê — para que o
+                              handler HTTP possa montar uma resposta JSON com
+                              detalhes. Qual design resolve isso corretamente?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >return fmt.Errorf("campo %s: %s", campo,
+                                       motivo)</code
+                                    >
+                                    — e no handler fazer parse da string para
+                                    extrair o campo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>panic</code> com uma struct
+                                    contendo os dados, e <code>recover</code> no
+                                    handler — equivalente a exceções
+                                    estruturadas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Criar
+                                    <code
+                                       >type ErroValidacao struct { Campo,
+                                       Motivo string }</code
+                                    >
+                                    com método <code>Error() string</code>,
+                                    retorná-lo como <code>error</code>, e no
+                                    handler usar
+                                    <code>errors.As(err, &ev)</code> para
+                                    acessar os campos</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Retornar dois valores separados:
+                                    <code
+                                       >func validar() (campoErro string, err
+                                       error)</code
+                                    >
+                                    — um para o campo, outro para a
+                                    mensagem</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Tipo personalizado +
+                              <code>errors.As</code> é o padrão idiomático Go
+                              para erros estruturados. Fazer parse de strings é
+                              frágil e acopla código a detalhes de mensagem.
+                              Usar <code>panic/recover</code> para controle de
+                              fluxo normal é anti-padrão. Retornar múltiplos
+                              valores extras funciona, mas não compõe bem com
+                              camadas de wrapping — quem usa só vê o
+                              <code>error</code> após propagação. O tipo
+                              personalizado permanece inspecionável através de
+                              qualquer número de camadas de <code>%w</code>.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

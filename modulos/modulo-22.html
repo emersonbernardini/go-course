@@ -1,0 +1,1770 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Channels em Go: comunicação entre goroutines, buffered vs unbuffered, direção de channels, range, close e deadlocks — o mecanismo central de concorrência idiomático em Go."
+      />
+      <title>Módulo 22 — Channels · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="22">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 8 — Concorrência
+                        </div>
+                        <h1 class="module-header__title">Channels</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 22</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que é um channel
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é um channel</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um channel é um <strong>cano tipado</strong> por
+                              onde goroutines enviam e recebem valores. É o
+                              mecanismo central de comunicação da concorrência
+                              em Go — a linguagem preferiu channels a memória
+                              compartilhada, seguindo o princípio criado por
+                              Tony Hoare nos anos 1970 e adotado como lema do
+                              Go:
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    O princípio central do Go
+                                 </div>
+                                 <div class="callout__body">
+                                    <em
+                                       >"Do not communicate by sharing memory;
+                                       instead, share memory by
+                                       communicating."</em
+                                    >
+                                    <br /><br />
+                                    Em vez de duas goroutines competirem por
+                                    acesso a uma variável com locks, elas passam
+                                    o dado por um channel. Quem tem o dado é
+                                    quem está segurando o valor recebido — sem
+                                    disputa de acesso, sem corrida.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Criando e usando um channel
+                           </h4>
+                           <p>
+                              Channels são criados com <code>make</code>, pois
+                              são referências a estruturas internas do runtime —
+                              não podem ser declarados com <code>var</code> sem
+                              <code>make</code> (resultariam em
+                              <code>nil</code>):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >channel básico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// make(chan T) cria um channel unbuffered do tipo T
+ch := make(chan int)
+
+// Enviar e receber em goroutines separadas
+go func() {
+    ch <- 42  // envia o valor 42 para o channel
+}()
+
+v := <-ch      // recebe o valor do channel
+fmt.Println(v) // 42</code></pre>
+                           </div>
+
+                           <p>
+                              O operador <code>&lt;-</code> serve para ambas as
+                              direções. Quando à esquerda de um channel (<code
+                                 >ch &lt;- v</code
+                              >), envia. Quando à esquerda de uma variável
+                              (<code>v := &lt;-ch</code>), recebe. A sintaxe foi
+                              escolhida para lembrar visualmente o fluxo de
+                              dados.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Sincronização implícita
+                           </h4>
+                           <p>
+                              Um channel unbuffered garante sincronia: o envio
+                              só completa quando alguém está pronto para
+                              receber, e vice-versa. Isso cria um
+                              <strong>ponto de encontro</strong>
+                              (<em>rendezvous</em>) entre goroutines — e é ao
+                              mesmo tempo mecanismo de comunicação e de
+                              sincronização:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >channel como sincronizador</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    done := make(chan struct{})  // canal de sinalização — não carrega dados
+
+    go func() {
+        fmt.Println("trabalhando...")
+        time.Sleep(500 * time.Millisecond)
+        fmt.Println("concluído!")
+        done <- struct{}{}  // sinaliza que terminou
+    }()
+
+    <-done  // main bloqueia aqui até receber o sinal
+    fmt.Println("goroutine concluída, encerrando")
+}
+// Sem o <-done, main poderia encerrar antes da goroutine imprimir qualquer coisa</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    var ch chan int cria um channel nil
+                                 </div>
+                                 <div class="callout__body">
+                                    Declarar <code>var ch chan int</code> sem
+                                    <code>make</code> resulta em
+                                    <code>ch == nil</code>. Enviar ou receber de
+                                    um channel nil bloqueia
+                                    <em>para sempre</em> — causando deadlock.
+                                    Sempre use <code>make(chan T)</code> ou
+                                    <code>make(chan T, n)</code>
+                                    para criar um channel utilizável.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Buffered vs Unbuffered
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Buffered vs Unbuffered</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A diferença entre os dois tipos de channel é a
+                              presença (ou não) de uma fila interna de
+                              capacidade fixa. Essa distinção muda completamente
+                              o comportamento de bloqueio — e portanto o design
+                              dos programas concorrentes.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Unbuffered — sincronização estrita
+                           </h4>
+                           <p>
+                              Criado com <code>make(chan T)</code> (sem
+                              capacidade). Envio e recebimento
+                              <strong>bloqueiam</strong> até que o outro lado
+                              esteja pronto. É como uma passagem de mão em mão —
+                              os dois precisam estar presentes:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >unbuffered — bloqueio mútuo</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan string)
+
+go func() {
+    fmt.Println("produtor: pronto para enviar")
+    ch <- "mensagem"  // BLOQUEIA até alguém receber
+    fmt.Println("produtor: enviou")
+}()
+
+time.Sleep(100 * time.Millisecond)  // atraso artificial
+fmt.Println("consumidor: pronto para receber")
+msg := <-ch  // só aqui o produtor desbloqueia
+fmt.Println("consumidor recebeu:", msg)
+
+// Saída garantida:
+// produtor: pronto para enviar
+// consumidor: pronto para receber
+// produtor: enviou        ← só depois que o consumidor recebeu
+// consumidor recebeu: mensagem</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Buffered — fila assíncrona com limite
+                           </h4>
+                           <p>
+                              Criado com <code>make(chan T, n)</code> onde
+                              <code>n</code> é a capacidade. O envio só bloqueia
+                              quando o buffer está <em>cheio</em>; o recebimento
+                              só bloqueia quando está <em>vazio</em>. Permite
+                              que produtor e consumidor trabalhem sem esperar um
+                              pelo outro — até o limite da capacidade:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >buffered — fila com capacidade 3</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan int, 3)  // buffer para 3 valores
+
+// Estes três envios NÃO bloqueiam — o buffer absorve
+ch <- 1
+ch <- 2
+ch <- 3
+
+// O quarto BLOQUEARIA — buffer cheio (não faça isso na goroutine principal sem receptor)
+// ch <- 4  // deadlock!
+
+fmt.Println(len(ch), cap(ch))  // 3 3 — len=itens atuais, cap=capacidade total
+
+fmt.Println(<-ch)  // 1  — FIFO: primeiro que entrou, primeiro que sai
+fmt.Println(<-ch)  // 2
+fmt.Println(<-ch)  // 3</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Quando usar cada um
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Tipo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Bloqueia no envio
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use quando
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          make(chan T)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Sempre, até ter receptor
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Sincronização precisa; sinalização;
+                                          handshake entre goroutines
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          make(chan T, n)
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Somente quando buffer está cheio
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Produtor/consumidor com ritmos
+                                          diferentes; limitar concorrência;
+                                          evitar goroutine ociosa
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Buffer não elimina sincronização — só a adia
+                                 </div>
+                                 <div class="callout__body">
+                                    Um erro comum é usar buffer para "resolver"
+                                    um deadlock sem entender a causa. Se o
+                                    buffer for 3 e houver 4 envios sem receptor,
+                                    ainda há deadlock. Buffer ajuda quando há
+                                    diferença de ritmo legítima e temporária
+                                    entre produtor e consumidor — não é um
+                                    atalho para código mal estruturado.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Direção de channels
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Direção de channels</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Por padrão, um channel criado com
+                              <code>make</code> é
+                              <strong>bidirecional</strong> — aceita envio e
+                              recebimento. Mas ao passar um channel como
+                              parâmetro de função, você pode restringir a
+                              direção no tipo. Isso transforma a intenção em
+                              contrato verificado em tempo de compilação.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe de direção</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Bidirecional — pode enviar e receber
+var ch chan int = make(chan int)
+
+// Somente envio — a seta aponta para o channel
+var envio chan<- int = ch
+
+// Somente recebimento — a seta aponta para fora
+var recv <-chan int = ch
+
+// Atribuições acima são válidas: bidirecional é atribuível a qualquer direção
+// O inverso NÃO funciona: chan<- não é atribuível a chan</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Direção em parâmetros de função
+                           </h4>
+                           <p>
+                              O uso mais importante de direção é em assinaturas
+                              de funções. Comunicar intenção e proteger contra
+                              uso incorreto:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >produtor e consumidor com direção</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// produtor: só envia — chan<- int
+// Se tentar receber dentro desta função, erro de compilação
+func gerarNumeros(out chan<- int, n int) {
+    for i := 0; i < n; i++ {
+        out <- i
+    }
+    close(out)  // close é permitido em chan<- (quem envia fecha)
+}
+
+// consumidor: só recebe — <-chan int
+// Se tentar enviar dentro desta função, erro de compilação
+func somarNumeros(in <-chan int) int {
+    total := 0
+    for v := range in {
+        total += v
+    }
+    return total
+}
+
+func main() {
+    ch := make(chan int, 5)  // bidirecional — criado aqui
+
+    go gerarNumeros(ch, 5)   // conversão implícita: chan int → chan<- int
+    total := somarNumeros(ch)  // conversão implícita: chan int → <-chan int
+
+    fmt.Println(total)  // 0+1+2+3+4 = 10
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções que retornam channels direcionados
+                           </h4>
+                           <p>
+                              Um padrão idiomático em Go é criar o channel
+                              <em>dentro</em> da função e retornar apenas a
+                              direção de leitura. O chamador não pode enviar nem
+                              fechar — o canal pertence à função:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >factory de channel direcionado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Retorna <-chan int — chamador só pode ler
+func contador(ate int) <-chan int {
+    ch := make(chan int)  // bidirecional internamente
+
+    go func() {
+        for i := 0; i <= ate; i++ {
+            ch <- i
+        }
+        close(ch)  // responsabilidade de quem criou
+    }()
+
+    return ch  // conversão implícita para <-chan int
+}
+
+// Chamador só consegue receber — tentar enviar é erro de compilação
+for v := range contador(5) {
+    fmt.Println(v)  // 0 1 2 3 4 5
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Direção é documentação executável
+                                 </div>
+                                 <div class="callout__body">
+                                    Um parâmetro
+                                    <code>chan&lt;- int</code> documenta ao
+                                    leitor — sem precisar ler a implementação —
+                                    que esta função <em>produz</em> dados. Um
+                                    <code>&lt;-chan int</code> documenta que ela
+                                    <em>consome</em>. O compilador garante que o
+                                    código honra essa promessa. É o princípio do
+                                    menor privilégio aplicado a channels.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — range em channels
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>range em channels</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Assim como em slices e maps,
+                              <code>range</code> funciona em channels. A
+                              diferença crucial: ao iterar um channel com
+                              <code>range</code>, o loop continua recebendo
+                              valores
+                              <strong>até que o channel seja fechado</strong>.
+                              Se o channel nunca for fechado, o loop bloqueia
+                              para sempre.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >range sobre channel</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func gerarTarefas() <-chan string {
+    ch := make(chan string)
+    go func() {
+        tarefas := []string{"indexar", "processar", "notificar", "arquivar"}
+        for _, t := range tarefas {
+            ch <- t
+        }
+        close(ch)  // OBRIGATÓRIO para que o range do consumidor termine
+    }()
+    return ch
+}
+
+// range recebe cada valor e para quando o channel é fechado
+for tarefa := range gerarTarefas() {
+    fmt.Printf("executando: %s\n", tarefa)
+}
+fmt.Println("todas as tarefas concluídas")</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              A forma longa — receive com ok
+                           </h4>
+                           <p>
+                              O <code>range</code> é equivalente a uma forma
+                              explícita com a variável <code>ok</code>. Entender
+                              essa forma ajuda a compreender o que
+                              <code>range</code> faz internamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >receive com ok — equivalente ao range</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan int, 3)
+ch <- 10
+ch <- 20
+ch <- 30
+close(ch)
+
+// Forma longa — ok é false quando o channel está fechado E vazio
+for {
+    v, ok := <-ch
+    if !ok {
+        break  // channel fechado e sem mais valores
+    }
+    fmt.Println(v)
+}
+
+// Equivalente com range — mais conciso, mais idiomático
+for v := range ch {
+    fmt.Println(v)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Receber de channel fechado não bloqueia —
+                                    retorna zero value
+                                 </div>
+                                 <div class="callout__body">
+                                    Após <code>close(ch)</code>, receber do
+                                    channel não bloqueia: retorna imediatamente
+                                    o zero value do tipo (<code>0</code> para
+                                    int, <code>""</code> para string,
+                                    <code>nil</code> para ponteiros) com
+                                    <code>ok == false</code>. Isso pode causar
+                                    bugs silenciosos se você ignorar o
+                                    <code>ok</code> e continuar processando zero
+                                    values como se fossem dados reais.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Pipeline com range
+                           </h4>
+                           <p>
+                              <code>range</code> em channels é o bloco de
+                              construção de pipelines — cada estágio lê do
+                              anterior com <code>range</code> e escreve no
+                              próximo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >mini-pipeline com range</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func quadrados(in <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        for v := range in {  // lê até in ser fechado
+            out <- v * v
+        }
+        close(out)  // fecha o próximo estágio quando este terminar
+    }()
+    return out
+}
+
+nums := make(chan int, 5)
+for i := 1; i <= 5; i++ { nums <- i }
+close(nums)
+
+for q := range quadrados(nums) {
+    fmt.Println(q)  // 1 4 9 16 25
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — close
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>close</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>close(ch)</code> sinaliza que nenhum valor
+                              adicional será enviado pelo channel. Não é sobre
+                              liberar memória — é uma
+                              <strong>sinalização semântica</strong>: o produtor
+                              avisa o consumidor que terminou.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Regras de close
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >comportamentos de close</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan int, 2)
+ch <- 1
+ch <- 2
+close(ch)
+
+// ✓ Receber valores pendentes do buffer — funciona normalmente
+fmt.Println(<-ch)  // 1
+fmt.Println(<-ch)  // 2
+
+// ✓ Receber após esvaziar retorna zero value + ok=false
+v, ok := <-ch
+fmt.Println(v, ok)  // 0 false
+
+// ✗ Enviar para channel fechado → panic em runtime
+// ch <- 3  // panic: send on closed channel
+
+// ✗ Fechar canal já fechado → panic em runtime
+// close(ch)  // panic: close of closed channel
+
+// ✗ Fechar canal nil → panic em runtime
+// var nilCh chan int
+// close(nilCh)  // panic: close of nil channel</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              A regra fundamental: quem envia fecha
+                           </h4>
+                           <p>
+                              Fechar um channel é responsabilidade do produtor —
+                              nunca do consumidor. Se múltiplos produtores
+                              enviam para o mesmo channel, nenhum deles pode
+                              fechar com segurança (outro pode ainda querer
+                              enviar). A solução idiomática é usar um
+                              <code>sync.WaitGroup</code> e uma goroutine
+                              coordenadora:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >múltiplos produtores — fechar com
+                                    segurança</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func fanIn(produtores int, trabalho func(int, chan<- string)) <-chan string {
+    ch := make(chan string)
+    var wg sync.WaitGroup
+
+    for i := 0; i < produtores; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            trabalho(id, ch)  // cada produtor envia ao channel
+        }(i)
+    }
+
+    // Goroutine coordenadora: espera todos terminarem, então fecha
+    go func() {
+        wg.Wait()
+        close(ch)  // seguro — nenhum produtor mais ativo
+    }()
+
+    return ch
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Fechar como broadcast
+                           </h4>
+                           <p>
+                              Uma propriedade poderosa: fechar um channel
+                              <strong
+                                 >desbloqueia todos os receptores
+                                 simultaneamente</strong
+                              >. É o único mecanismo nativo de Go para enviar um
+                              sinal de "pare" para N goroutines ao mesmo tempo
+                              sem loops:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >close como broadcast</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    stop := make(chan struct{})
+
+    // Inicia 5 workers — todos aguardam o mesmo sinal
+    for i := 0; i < 5; i++ {
+        go func(id int) {
+            <-stop  // bloqueia até o channel ser fechado
+            fmt.Printf("worker %d encerrando\n", id)
+        }(i)
+    }
+
+    time.Sleep(200 * time.Millisecond)
+    close(stop)  // desbloqueia TODOS os workers simultaneamente
+    time.Sleep(50 * time.Millisecond)
+}
+// Todos os 5 workers imprimem quase ao mesmo tempo após close(stop)</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    context.Context na prática
+                                 </div>
+                                 <div class="callout__body">
+                                    O padrão <em>done channel</em> mostrado
+                                    acima é a base do
+                                    <code>context.Context</code> da stdlib.
+                                    Quando você usa <code>ctx.Done()</code>,
+                                    recebe exatamente um
+                                    <code>&lt;-chan struct{}</code> que é
+                                    fechado quando o contexto é cancelado ou
+                                    expira. Entender <code>close</code> como
+                                    broadcast é pré-requisito para entender
+                                    <code>context</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Deadlocks
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod22-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Deadlocks</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um deadlock em Go ocorre quando
+                              <strong
+                                 >todas as goroutines estão bloqueadas</strong
+                              >
+                              sem nenhuma chance de progredir. O runtime detecta
+                              isso e encerra o programa imediatamente com a
+                              mensagem
+                              <code
+                                 >fatal error: all goroutines are asleep -
+                                 deadlock!</code
+                              >
+                              — diferente de um deadlock silencioso que trava o
+                              processo indefinidamente.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Deadlock 1 — envio sem receptor
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >envio na goroutine principal sem
+                                    receptor</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✗ DEADLOCK — envia na goroutine principal, ninguém recebe
+func main() {
+    ch := make(chan int)
+    ch <- 1  // bloqueia para sempre — nenhuma goroutine vai receber
+    fmt.Println(<-ch)
+}
+// fatal error: all goroutines are asleep - deadlock!
+
+// ✓ Correção: receptor em goroutine separada
+func main() {
+    ch := make(chan int)
+    go func() { fmt.Println(<-ch) }()
+    ch <- 1  // agora há um receptor
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Deadlock 2 — range sem close
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >range em channel nunca fechado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✗ DEADLOCK — range aguarda mais valores que nunca chegam
+func main() {
+    ch := make(chan int, 3)
+    ch <- 1
+    ch <- 2
+    ch <- 3
+    // Esqueceu close(ch) !
+
+    for v := range ch {  // consome 1, 2, 3 e então bloqueia esperando mais
+        fmt.Println(v)
+    }
+}
+// fatal error: all goroutines are asleep - deadlock!
+
+// ✓ Correção: fechar o channel após enviar todos os valores
+close(ch)
+for v := range ch { fmt.Println(v) }</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Deadlock 3 — dependência circular
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >goroutines esperando uma pela outra</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✗ DEADLOCK — cada goroutine espera a outra enviar primeiro
+func main() {
+    a := make(chan int)
+    b := make(chan int)
+
+    go func() {
+        v := <-a  // espera goroutine 2 enviar em 'a'
+        b <- v
+    }()
+
+    go func() {
+        v := <-b  // espera goroutine 1 enviar em 'b'
+        a <- v
+    }()
+
+    time.Sleep(time.Second)
+    // Nenhuma goroutine progride — ambas bloqueadas esperando receber
+}
+
+// ✓ Correção: uma das goroutines precisa ENVIAR primeiro, não receber
+go func() {
+    a <- 42  // inicia o fluxo
+}()</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Deadlock 4 — goroutine vazada (leak)
+                           </h4>
+                           <p>
+                              Goroutines bloqueadas em channels sem receptor não
+                              causam o erro de deadlock do runtime se a
+                              goroutine <em>principal</em> ainda está rodando.
+                              São goroutines vazadas — consomem memória e
+                              goroutine stack para sempre:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >goroutine leak — sem erro, mas
+                                    problemático</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func buscarComTimeout(url string) (string, error) {
+    ch := make(chan string)  // unbuffered!
+
+    go func() {
+        resp := fazerRequisicao(url)  // pode demorar muito
+        ch <- resp  // se o chamador já saiu (timeout), ninguém vai receber
+        // → esta goroutine fica bloqueada para sempre: LEAK
+    }()
+
+    select {
+    case result := <-ch:
+        return result, nil
+    case <-time.After(2 * time.Second):
+        return "", errors.New("timeout")
+        // goroutine ainda está rodando tentando enviar para ch...
+    }
+}
+
+// ✓ Correção: usar channel buffered — goroutine pode enviar e encerrar
+ch := make(chan string, 1)  // buffer de 1 — envio não bloqueia</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Como o runtime detecta deadlocks
+                                 </div>
+                                 <div class="callout__body">
+                                    O runtime do Go mantém uma contagem de
+                                    goroutines rodando. Quando todas as
+                                    goroutines estão em estado de espera
+                                    (blocked), o runtime conclui que nenhuma
+                                    pode progredir e dispara o panic de
+                                    deadlock. Isso cobre apenas deadlocks totais
+                                    — goroutines individuais vazadas (onde a
+                                    goroutine principal ainda roda) não são
+                                    detectadas automaticamente. Para isso, use
+                                    ferramentas como
+                                    <code>runtime.NumGoroutine()</code> em
+                                    testes ou o pacote <code>goleak</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 22
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod22-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Buffered vs Unbuffered'. Lembre-se de quando envio e recebimento bloqueiam em cada tipo."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que acontece ao executar o código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    ch := make(chan int, 2)
+    ch <- 10
+    ch <- 20
+    ch <- 30
+    fmt.Println(<-ch)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Imprime <code>10</code> — o buffer tem
+                                    capacidade 2 e o terceiro valor cabe
+                                    normalmente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Deadlock — o buffer tem capacidade 2; o
+                                    terceiro envio (<code>ch &lt;- 30</code>)
+                                    bloqueia porque o buffer está cheio e não há
+                                    receptor disponível</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Imprime <code>30</code> — channels buffered
+                                    são LIFO (último a entrar, primeiro a
+                                    sair)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — não é possível enviar
+                                    mais valores do que a capacidade do
+                                    buffer</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O channel tem capacidade 2. Os
+                              primeiros dois envios (<code>10</code> e
+                              <code>20</code>) são absorvidos pelo buffer sem
+                              bloquear. O terceiro envio (<code
+                                 >ch &lt;- 30</code
+                              >) bloqueia porque o buffer está cheio e a
+                              goroutine principal é a única em execução —
+                              nenhuma outra goroutine pode receber. Resultado:
+                              deadlock. A correção seria usar
+                              <code>make(chan int, 3)</code> ou iniciar uma
+                              goroutine receptora antes dos envios.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod22-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'close'. Lembre-se do que acontece ao receber de um channel fechado e do que o segundo valor de retorno indica."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que são impressos por <code>v1</code>,
+                              <code>ok1</code>, <code>v2</code> e
+                              <code>ok2</code>?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">ch := make(chan string, 1)
+ch <- "olá"
+close(ch)
+
+v1, ok1 := <-ch
+v2, ok2 := <-ch
+
+fmt.Println(v1, ok1)
+fmt.Println(v2, ok2)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>olá true</code> / panic — receber de
+                                    channel fechado causa panic</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>olá true</code> / bloqueio — o
+                                    segundo receive aguarda mais valores</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>olá true</code> /
+                                    <code>&quot;&quot; false</code> — o primeiro
+                                    recebe o valor pendente; o segundo recebe o
+                                    zero value com ok=false indicando
+                                    fechamento</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>&quot;&quot; false</code> /
+                                    <code>&quot;&quot; false</code> — close
+                                    descarta os valores pendentes no
+                                    buffer</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>close</code> não descarta o
+                              buffer — apenas sinaliza que nada mais será
+                              enviado. O primeiro receive retira
+                              <code>"olá"</code> do buffer com
+                              <code>ok=true</code>. O segundo receive, com o
+                              buffer vazio e o channel fechado, retorna
+                              imediatamente com o zero value (<code>""</code>
+                              para string) e <code>ok=false</code>. Ignorar o
+                              <code>ok</code> neste segundo receive processaria
+                              a string vazia como dado real — um bug silencioso.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod22-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Direção de channels'. Lembre-se do que cada tipo direcional permite e proíbe."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual das afirmações sobre o código abaixo é
+                              correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func pipeline(in <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        for v := range in {
+            out <- v * 2
+        }
+        close(out)
+    }()
+    return out
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Erro de compilação — não é possível usar
+                                    <code>range</code> em um
+                                    <code>&lt;-chan int</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>close(out)</code> não é permitido
+                                    dentro de uma goroutine</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Funciona, mas há goroutine leak —
+                                    <code>out</code> nunca é fechado quando
+                                    <code>in</code> fecha</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Funciona corretamente —
+                                    <code>range in</code> termina quando
+                                    <code>in</code> é fechado, então
+                                    <code>close(out)</code> é chamado,
+                                    propagando o fim para o próximo
+                                    estágio</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Este é o padrão de pipeline idiomático
+                              em Go.
+                              <code>range in</code> itera até
+                              <code>in</code> ser fechado. Quando o loop
+                              termina, <code>close(out)</code> é chamado —
+                              fechando o channel de saída e sinalizando ao
+                              próximo consumidor que não há mais dados. A cadeia
+                              de fechamentos se propaga estágio por estágio. O
+                              <code>range</code> funciona perfeitamente em
+                              <code>&lt;-chan int</code> — direção
+                              somente-leitura ainda permite receber, o que é
+                              exatamente o que <code>range</code> faz.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 22
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod22-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Goroutine leak silenciosa</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo implementa uma busca com timeout.
+                              Ele funciona corretamente no caminho feliz, mas
+                              tem um problema grave no caminho de timeout. Qual
+                              é o problema e qual a correção mínima?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func buscarComTimeout(id int) (string, error) {
+    ch := make(chan string)  // unbuffered
+
+    go func() {
+        resultado := buscarNoBanco(id)  // operação lenta
+        ch <- resultado                 // pode bloquear para sempre
+    }()
+
+    select {
+    case r := <-ch:
+        return r, nil
+    case <-time.After(1 * time.Second):
+        return "", errors.New("timeout")
+    }
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Substituir <code>select</code> por um
+                                    <code>if</code> que verifica o channel antes
+                                    do timeout</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Mudar <code>make(chan string)</code> para
+                                    <code>make(chan string, 1)</code> — com
+                                    buffer de 1, a goroutine pode enviar e
+                                    encerrar mesmo que a função já tenha
+                                    retornado por timeout</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>defer close(ch)</code> no início
+                                    de <code>buscarComTimeout</code> para
+                                    garantir que o channel seja fechado</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Mover o <code>go func()</code> para fora da
+                                    função e passar o channel como
+                                    parâmetro</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O problema é goroutine leak. Quando há
+                              timeout, a função retorna — mas a goroutine ainda
+                              está rodando <code>buscarNoBanco</code>. Quando a
+                              busca termina, ela tenta
+                              <code>ch &lt;- resultado</code> em um channel
+                              unbuffered sem receptor (a função já saiu). A
+                              goroutine bloqueia para sempre, vazando. Com
+                              <code>make(chan string, 1)</code>, a goroutine
+                              pode depositar o resultado no buffer e encerrar
+                              normalmente, mesmo que ninguém vá lê-lo. O valor
+                              no buffer é descartado pelo garbage collector
+                              quando o channel perde todas as referências.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod22-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Fechar channel com múltiplos
+                              produtores</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código inicia 3 goroutines produtoras que enviam
+                              para o mesmo channel e cada uma tenta fechá-lo ao
+                              terminar. O que acontece em runtime e qual a forma
+                              correta de estruturar isso?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    ch := make(chan int)
+
+    for i := 0; i < 3; i++ {
+        go func(id int) {
+            ch <- id * 10
+            close(ch)  // cada produtor tenta fechar
+        }(i)
+    }
+
+    for v := range ch {
+        fmt.Println(v)
+    }
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>defer close(ch)</code> em vez de
+                                    <code>close(ch)</code> dentro de cada
+                                    goroutine — <code>defer</code> garante que
+                                    apenas o último fechamento acontece</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Verificar
+                                    <code>if ch != nil { close(ch) }</code>
+                                    antes de fechar — channels fechados viram
+                                    nil automaticamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Remover <code>close(ch)</code> das
+                                    goroutines e usar um
+                                    <code>sync.WaitGroup</code>; quando o
+                                    WaitGroup zerar, uma goroutine coordenadora
+                                    chama <code>close(ch)</code> — garantindo
+                                    fechamento único após todos os produtores
+                                    terminarem</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar um <code>sync.Mutex</code> para
+                                    proteger a chamada a
+                                    <code>close(ch)</code> dentro de cada
+                                    goroutine</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O código atual causa panic:
+                              <code>close of closed channel</code>. A primeira
+                              goroutine a terminar fecha o channel; as outras
+                              duas tentam fechar novamente — panic. Channels
+                              fechados não viram nil e não há
+                              <code>isClosed()</code> em Go (seria race
+                              condition). A solução idiomática: remover
+                              <code>close</code> dos produtores e usar um
+                              <code>sync.WaitGroup</code>. Uma goroutine
+                              separada faz <code>wg.Wait(); close(ch)</code> —
+                              ela espera todos os produtores terminarem e fecha
+                              o channel exatamente uma vez. Isso é o padrão
+                              fan-in que veremos no Módulo 23.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

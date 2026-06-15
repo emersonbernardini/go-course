@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Operadores em Go: aritméticos, relacionais, lógicos, bitwise, atribuição e precedência."
+      />
+      <title>Módulo 06 — Operadores · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="06">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 1 — Fundamentos
+                        </div>
+                        <h1 class="module-header__title">Operadores</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 06</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Operadores aritméticos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operadores aritméticos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Operadores aritméticos realizam cálculos
+                              matemáticos. Em Go, eles só funcionam entre
+                              operandos do <strong>mesmo tipo</strong>
+                              — sem conversão implícita, como vimos no módulo
+                              anterior.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores aritméticos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a, b := 10, 3
+
+fmt.Println(a + b)   // 13  — soma
+fmt.Println(a - b)   // 7   — subtração
+fmt.Println(a * b)   // 30  — multiplicação
+fmt.Println(a / b)   // 3   — divisão inteira (trunca)
+fmt.Println(a % b)   // 1   — módulo (resto da divisão)
+
+// Divisão inteira vs ponto flutuante
+fmt.Println(10 / 3)          // 3   — divisão inteira, trunca
+fmt.Println(10.0 / 3.0)      // 3.3333333333333335 — float64
+fmt.Println(float64(10) / 3) // 3.3333333333333335</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Operadores de incremento e decremento
+                           </h4>
+                           <p>
+                              Go tem <code>++</code> e <code>--</code>, mas com
+                              uma diferença importante em relação a C e Java:
+                              são <strong>instruções</strong>, não expressões.
+                              Você não pode usá-los em atribuições ou como parte
+                              de expressões maiores.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+x++  // x = 11 — instrução, não expressão
+x--  // x = 10
+
+// ERROS — não existem em Go:
+// y := x++   // não é expressão, não retorna valor
+// if x++ > 5 // não pode estar dentro de expressão
+// ++x        // não existe pré-incremento</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Operadores relacionais
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operadores relacionais</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Operadores relacionais comparam dois valores e
+                              sempre retornam um <code>bool</code>. São usados
+                              para tomar decisões em condicionais e laços — que
+                              estudaremos nos próximos módulos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores relacionais</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a, b := 10, 20
+
+fmt.Println(a == b)  // false — igual a
+fmt.Println(a != b)  // true  — diferente de
+fmt.Println(a < b)   // true  — menor que
+fmt.Println(a > b)   // false — maior que
+fmt.Println(a <= b)  // true  — menor ou igual
+fmt.Println(a >= b)  // false — maior ou igual</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comparação de strings
+                           </h4>
+                           <p>
+                              Strings podem ser comparadas com <code>==</code> e
+                              <code>!=</code>, além de <code>&lt;</code>,
+                              <code>&gt;</code>, etc., que comparam
+                              lexicograficamente (como em um dicionário, byte a
+                              byte):
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">fmt.Println("abc" == "abc")  // true
+fmt.Println("abc" < "abd")   // true — 'c' < 'd' lexicograficamente
+fmt.Println("B" < "a")       // true — maiúsculas têm código menor que minúsculas em ASCII</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Comparação requer mesmo tipo
+                                 </div>
+                                 <div class="callout__body">
+                                    Assim como operadores aritméticos,
+                                    relacionais exigem que os dois operandos
+                                    sejam do mesmo tipo. <code>1 == 1.0</code>
+                                    parece óbvio, mas em Go é um erro de
+                                    compilação:
+                                    <code>int</code> e <code>float64</code> são
+                                    tipos distintos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Operadores lógicos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operadores lógicos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Operadores lógicos combinam expressões booleanas.
+                              Go tem três: <code>&&</code> (AND),
+                              <code>||</code> (OR) e <code>!</code> (NOT).
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores lógicos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := true
+b := false
+
+fmt.Println(a && b)  // false — AND: verdadeiro se ambos forem true
+fmt.Println(a || b)  // true  — OR: verdadeiro se pelo menos um for true
+fmt.Println(!a)      // false — NOT: inverte o valor</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Avaliação em curto-circuito
+                           </h4>
+                           <p>
+                              Go usa avaliação em
+                              <strong>curto-circuito</strong> (<em
+                                 >short-circuit evaluation</em
+                              >): em uma expressão <code>&&</code>, se o lado
+                              esquerdo for <code>false</code>, o lado direito
+                              <em>não é avaliado</em>. Em <code>||</code>, se o
+                              lado esquerdo for <code>true</code>, o direito não
+                              é avaliado.
+                           </p>
+                           <p>
+                              Isso não é apenas uma otimização — é um
+                              comportamento que você pode (e deve) usar
+                              intencionalmente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Padrão comum: verifica se slice não é nil antes de acessar
+var s []int
+if s != nil && len(s) > 0 {
+    fmt.Println(s[0])
+}
+// Se s == nil, len(s) não é avaliado — sem panic
+
+// Padrão comum: usa valor default se condição falhar
+nome := ""
+if nome == "" || nome == "anônimo" {
+    nome = "visitante"
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Operadores bitwise
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operadores bitwise</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Operadores bitwise operam diretamente nos bits de
+                              um valor inteiro. São essenciais para programação
+                              de sistemas, protocolos de rede, manipulação de
+                              flags e otimizações específicas.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores bitwise</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">a := 0b1010  // 10 em decimal
+b := 0b1100  // 12 em decimal
+
+fmt.Printf("%04b\n", a&b)   // 1000 (8)  — AND bit a bit
+fmt.Printf("%04b\n", a|b)   // 1110 (14) — OR bit a bit
+fmt.Printf("%04b\n", a^b)   // 0110 (6)  — XOR bit a bit
+fmt.Printf("%04b\n", a&^b)  // 0010 (2)  — AND NOT (bit clear) — exclusivo de Go
+
+fmt.Println(a << 1)  // 20 — shift left: multiplica por 2
+fmt.Println(a >> 1)  // 5  — shift right: divide por 2</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso de uso real: flags de permissão
+                           </h4>
+                           <p>
+                              Vimos no módulo anterior como
+                              <code>iota</code> com shift cria flags. Aqui está
+                              o padrão completo de uso com operadores bitwise:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Perm uint8
+
+const (
+    Leitura  Perm = 1 << iota  // 0001
+    Escrita                     // 0010
+    Execucao                    // 0100
+)
+
+// Combinar permissões com OR
+permissao := Leitura | Escrita  // 0011
+
+// Verificar se tem uma permissão com AND
+if permissao&Leitura != 0 {
+    fmt.Println("pode ler")
+}
+
+// Remover uma permissão com AND NOT
+permissao = permissao &^ Escrita  // remove escrita: 0001
+
+// Adicionar uma permissão com OR
+permissao = permissao | Execucao  // adiciona execução: 0101</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Literais binários, octal e hexadecimal
+                                 </div>
+                                 <div class="callout__body">
+                                    Go aceita literais inteiros em diferentes
+                                    bases:
+                                    <code>0b1010</code> (binário),
+                                    <code>0o17</code> (octal),
+                                    <code>0xFF</code> (hexadecimal). Prefixos
+                                    <code>0b</code>, <code>0o</code> e
+                                    <code>0x</code>. Úteis ao trabalhar com
+                                    operações bitwise, endereços de memória ou
+                                    protocolos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Operadores de atribuição
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Operadores de atribuição</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Operadores de atribuição combinam uma operação com
+                              a atribuição do resultado à variável. São atalhos
+                              que tornam o código mais conciso sem perder
+                              clareza.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores de atribuição</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">x := 10
+
+x += 5   // x = x + 5  → 15
+x -= 3   // x = x - 3  → 12
+x *= 2   // x = x * 2  → 24
+x /= 4   // x = x / 4  → 6
+x %= 4   // x = x % 4  → 2
+
+// Atribuição bitwise
+x &= 0b1111   // x = x & 0b1111
+x |= 0b0001   // x = x | 0b0001
+x ^= 0b0011   // x = x ^ 0b0011
+x <<= 1       // x = x << 1
+x >>= 1       // x = x >> 1
+
+// Atribuição múltipla — troca de valores sem temporária
+a, b := 1, 2
+a, b = b, a
+fmt.Println(a, b)  // 2 1</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Atribuição não é expressão em Go
+                                 </div>
+                                 <div class="callout__body">
+                                    Em C é possível escrever
+                                    <code>if (x = getValor()) { }</code> —
+                                    atribuição dentro de condição. Em Go,
+                                    atribuição é uma instrução, não uma
+                                    expressão. Isso elimina o bug clássico de
+                                    escrever <code>=</code> quando queria
+                                    <code>==</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Precedência de operadores
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod06-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Precedência de operadores</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando uma expressão tem múltiplos operadores, a
+                              precedência determina a ordem de avaliação.
+                              Operadores com maior precedência são avaliados
+                              primeiro. Go tem 5 níveis de precedência para
+                              operadores binários:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Precedência
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Operadores
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          5 (maior)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          * / % &lt;&lt; &gt;&gt; & &^
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          4
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          + - | ^
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          3
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          == != &lt; &lt;= &gt; &gt;=
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          2
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          &amp;&amp;
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          1 (menor)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          ||
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >precedência na prática</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// * tem maior precedência que +
+resultado := 2 + 3*4   // 2 + 12 = 14  (não 20)
+
+// Parênteses forçam a ordem
+resultado2 := (2 + 3) * 4  // 5 * 4 = 20
+
+// && tem maior precedência que ||
+// a || b && c  é interpretado como  a || (b && c)
+x := true || false && false  // true || (false && false) = true || false = true
+
+// Condição composta comum
+idade := 25
+temCNH := true
+if idade >= 18 && temCNH {
+    fmt.Println("pode dirigir")
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Dica: use parênteses para clareza
+                                 </div>
+                                 <div class="callout__body">
+                                    Mesmo conhecendo a tabela de precedência,
+                                    use parênteses quando a expressão envolver
+                                    mais de dois operadores diferentes.
+                                    <code>(a + b) * c</code> é mais legível que
+                                    confiar na memória do leitor sobre
+                                    precedência. Código claro supera código
+                                    inteligente.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 06
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod06-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Operadores aritméticos'. Preste atenção no que acontece com divisão entre dois inteiros em Go."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o resultado de
+                              <code>fmt.Println(7 / 2, 7 % 2)</code>?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>3.5 1</code> — divisão retorna float
+                                    quando há resto</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>3 1</code> — divisão inteira trunca
+                                    para baixo; módulo retorna o resto</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>4 1</code> — divisão inteira
+                                    arredonda para o mais próximo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — <code>%</code> não
+                                    existe em Go</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>7 / 2</code> em inteiros é
+                              <code>3</code> (trunca, não arredonda).
+                              <code>7 % 2</code> é <code>1</code> (resto de 7 ÷
+                              2). Para obter <code>3.5</code>, converta antes:
+                              <code>float64(7) / 2</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod06-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Operadores lógicos'. Lembre-se do comportamento de curto-circuito e o que ele significa para a avaliação das expressões."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dado o código abaixo, a função
+                              <code>custosa()</code> é chamada?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">condicao := false
+if condicao && custosa() {
+    fmt.Println("executou")
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim — Go sempre avalia todos os operandos
+                                    de uma expressão</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não — como <code>condicao</code> é
+                                    <code>false</code>, o operador
+                                    <code>&&</code> faz curto-circuito e
+                                    <code>custosa()</code> nunca é chamada</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Depende do compilador — o comportamento não
+                                    é garantido</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Sim — <code>custosa()</code> é chamada mas
+                                    seu retorno é ignorado</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Com <code>&&</code>, se o operando
+                              esquerdo for <code>false</code>, o resultado já é
+                              <code>false</code>
+                              independente do direito. Go garante que o lado
+                              direito não é avaliado. Isso é o curto-circuito —
+                              comportamento definido pela especificação da
+                              linguagem, não pelo compilador.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod06-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Precedência de operadores'. Lembre-se qual nível de precedência && e || ocupam na tabela."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o valor de <code>x</code> após a expressão
+                              abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">x := true || false && false</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>false</code> — a expressão é avaliada
+                                    da esquerda para direita:
+                                    <code
+                                       >(true || false) && false = false</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>true</code> — <code>&&</code> tem
+                                    maior precedência que <code>||</code>,
+                                    então:
+                                    <code
+                                       >true || (false && false) = true || false
+                                       = true</code
+                                    ></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>false</code> — <code>||</code> tem
+                                    maior precedência que <code>&&</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — expressões com
+                                    <code>&&</code> e <code>||</code> precisam
+                                    de parênteses</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>&&</code> tem precedência 2 e
+                              <code>||</code> tem precedência 1, então
+                              <code>&&</code> é avaliado primeiro:
+                              <code>false && false = false</code>, e então
+                              <code>true || false = true</code>. Resultado:
+                              <code>true</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 06
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod06-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Incremento</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Por que o código abaixo não compila?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">x := 5
+y := x++
+fmt.Println(y)</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>x++</code> não pode ser usado em
+                                    variáveis do tipo <code>int</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Falta declarar o tipo de
+                                    <code>y</code> explicitamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>x++</code> em Go é uma instrução, não
+                                    uma expressão — não retorna valor e não pode
+                                    ser usado em atribuições</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>y</code> já está declarado
+                                    implicitamente quando <code>x</code> é
+                                    declarado</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Em C/Java, <code>y = x++</code> é
+                              válido porque <code>x++</code> é uma expressão que
+                              retorna o valor anterior de <code>x</code>. Em Go,
+                              <code>x++</code> é uma instrução sem valor de
+                              retorno. A solução é separá-los:
+                              <code>y := x</code> seguido de <code>x++</code>.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod06-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Operação bitwise</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um sistema de permissões tem as flags
+                              <code>Leitura = 1</code>,
+                              <code>Escrita = 2</code> e
+                              <code>Execucao = 4</code>. Um usuário tem
+                              <code>permissao = 7</code> (todas as permissões).
+                              Qual operação remove apenas a permissão de
+                              escrita?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >permissao = permissao - Escrita</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code
+                                       >permissao = permissao &^ Escrita</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >permissao = permissao ^ Escrita</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >permissao = permissao & Escrita</code
+                                    ></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O operador <code>&^</code> (AND NOT /
+                              bit clear) é o jeito idiomático de limpar bits em
+                              Go. <code>7 &^ 2</code> =
+                              <code>0b111 &^ 0b010</code> = <code>0b101</code> =
+                              5 (leitura + execução).
+                              <code>^ Escrita</code> sozinho funcionaria apenas
+                              em sistemas onde você tem certeza que o bit estava
+                              setado — <code>&^</code> é seguro
+                              independentemente do estado atual do bit.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

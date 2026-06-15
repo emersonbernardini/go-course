@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Métodos em Go: receivers por valor e por ponteiro, quando usar cada um e métodos em tipos não-struct."
+      />
+      <title>Módulo 16 — Métodos · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="16">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 5 — Tipos Compostos
+                        </div>
+                        <h1 class="module-header__title">Métodos</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 16</span>
+                           <span class="badge badge-default">3 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Receivers por valor vs por ponteiro
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod16-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Receivers por valor vs por ponteiro</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um método é uma função com um parâmetro especial
+                              chamado
+                              <strong>receiver</strong>, declarado entre
+                              <code>func</code>
+                              e o nome do método. O receiver define em qual tipo
+                              o método é chamado:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func (receiver Tipo) NomeDoMetodo(params) retorno {
+    // corpo
+}</code></pre>
+                           </div>
+
+                           <p>
+                              O receiver pode ser por valor ou por ponteiro — a
+                              diferença é análoga à passagem de argumentos por
+                              valor vs ponteiro:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >valor vs ponteiro</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Contador struct {
+    n int
+}
+
+// Receiver por valor — opera em cópia, não modifica o original
+func (c Contador) Valor() int {
+    return c.n
+}
+
+// Receiver por ponteiro — opera no original, pode modificar
+func (c *Contador) Incrementar() {
+    c.n++
+}
+
+func (c *Contador) Reset() {
+    c.n = 0
+}
+
+ct := Contador{}
+ct.Incrementar()  // Go passa &ct automaticamente
+ct.Incrementar()
+fmt.Println(ct.Valor())  // 2
+ct.Reset()
+fmt.Println(ct.Valor())  // 0</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Chamada automática: Go converte entre valor e
+                              ponteiro
+                           </h4>
+                           <p>
+                              Go converte automaticamente entre valor e ponteiro
+                              ao chamar métodos, desde que a variável seja
+                              endereçável. Ou seja, você não precisa escrever
+                              <code>(&amp;ct).Incrementar()</code> — Go faz isso
+                              por você:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">ct := Contador{}
+
+// Ambas as formas são equivalentes — Go converte automaticamente
+ct.Incrementar()       // Go trata como (&ct).Incrementar()
+(&ct).Incrementar()    // explícito, mas desnecessário
+
+// Exceção: valores não endereçáveis não podem ser convertidos
+// Contador{}.Incrementar()  // ERRO — literal não é endereçável</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Receiver por valor não modifica o original
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Ponto struct{ X, Y float64 }
+
+// Receiver por valor — retorna novo Ponto, não modifica o original
+func (p Ponto) Escalar(f float64) Ponto {
+    return Ponto{p.X * f, p.Y * f}
+}
+
+// Receiver por ponteiro — modifica in-place
+func (p *Ponto) EscalarInPlace(f float64) {
+    p.X *= f
+    p.Y *= f
+}
+
+p := Ponto{3, 4}
+p2 := p.Escalar(2)   // p inalterado, p2 = {6, 8}
+p.EscalarInPlace(2)  // p modificado para {6, 8}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Quando usar cada um
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod16-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Quando usar cada receiver</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A escolha entre receiver por valor e por ponteiro
+                              tem três critérios principais — e uma regra de
+                              consistência que os une:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Use receiver por ponteiro quando:
+                           </h4>
+                           <ul>
+                              <li>
+                                 <strong
+                                    >O método precisa modificar o
+                                    receptor</strong
+                                 >
+                                 — a razão mais óbvia e mais comum
+                              </li>
+                              <li>
+                                 <strong>A struct é grande</strong> — evita
+                                 cópia cara a cada chamada de método
+                              </li>
+                              <li>
+                                 <strong>Consistência</strong> — se qualquer
+                                 método do tipo usa ponteiro, todos devem usar
+                              </li>
+                           </ul>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Use receiver por valor quando:
+                           </h4>
+                           <ul>
+                              <li>
+                                 <strong
+                                    >O método não precisa modificar o
+                                    receptor</strong
+                                 >
+                                 e a struct é pequena
+                              </li>
+                              <li>
+                                 <strong
+                                    >O tipo é um tipo básico ou pequeno</strong
+                                 >
+                                 — <code>time.Time</code> usa receivers por
+                                 valor por exemplo
+                              </li>
+                              <li>
+                                 <strong
+                                    >Semântica de valor é intencional</strong
+                                 >
+                                 — como tipos imutáveis
+                              </li>
+                           </ul>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Regra de consistência — a mais importante
+                                 </div>
+                                 <div class="callout__body">
+                                    Se um tipo tem qualquer método com receiver
+                                    por ponteiro, todos os seus métodos devem
+                                    usar receiver por ponteiro — mesmo os que
+                                    não modificam o receptor. Misturar os dois
+                                    cria confusão sobre o comportamento de
+                                    atribuição e cópia, e causa problemas com
+                                    interfaces (o método set com ponteiro não
+                                    satisfaz interfaces quando o tipo é passado
+                                    por valor).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >consistência na prática</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Pilha struct {
+    items []int
+}
+
+// ✓ Consistente — todos usam ponteiro porque Push precisa modificar
+func (p *Pilha) Push(v int)  { p.items = append(p.items, v) }
+func (p *Pilha) Pop() int    { n := len(p.items)-1; v := p.items[n]; p.items = p.items[:n]; return v }
+func (p *Pilha) Tamanho() int { return len(p.items) }
+func (p *Pilha) Vazia() bool  { return len(p.items) == 0 }
+
+// ✗ Inconsistente — Tamanho e Vazia por valor, Push por ponteiro
+// Evite: gera confusão e quebra satisfação de interface</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Impacto na satisfação de interfaces
+                           </h4>
+                           <p>
+                              Este é o ponto mais sutil. Um método com receiver
+                              por ponteiro só está no <em>method set</em> de
+                              <code>*T</code>, não de <code>T</code>. Isso afeta
+                              diretamente quais interfaces um tipo satisfaz:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Stringer interface {
+    String() string
+}
+
+type Pessoa struct{ Nome string }
+
+// Receiver por ponteiro
+func (p *Pessoa) String() string { return p.Nome }
+
+var s Stringer
+
+s = &Pessoa{"Alice"}  // ✓ *Pessoa satisfaz Stringer
+// s = Pessoa{"Alice"}  // ✗ Pessoa (valor) não satisfaz Stringer
+                        //   — String() está no method set de *Pessoa, não de Pessoa
+
+// Com receiver por valor:
+// func (p Pessoa) String() string { return p.Nome }
+// s = Pessoa{"Alice"}   ✓ Pessoa satisfaz Stringer
+// s = &Pessoa{"Alice"}  ✓ *Pessoa também satisfaz (Go promove automaticamente)</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Métodos em tipos não-struct
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod16-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Métodos em tipos não-struct</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, qualquer tipo nomeado definido no mesmo
+                              pacote pode ter métodos — não apenas structs. Isso
+                              permite adicionar comportamento a tipos baseados
+                              em tipos básicos, slices, maps e funções.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Métodos em tipos baseados em primitivos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Tipo nomeado baseado em int
+type DiaSemana int
+
+const (
+    Domingo DiaSemana = iota
+    Segunda
+    Terca
+    Quarta
+    Quinta
+    Sexta
+    Sabado
+)
+
+func (d DiaSemana) String() string {
+    nomes := []string{"Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"}
+    if d < Domingo || d > Sabado {
+        return "Desconhecido"
+    }
+    return nomes[d]
+}
+
+func (d DiaSemana) EhFimDeSemana() bool {
+    return d == Domingo || d == Sabado
+}
+
+dia := Sexta
+fmt.Println(dia)                 // Sexta — usa String() automaticamente no fmt
+fmt.Println(dia.EhFimDeSemana()) // false</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Métodos em tipos baseados em slice
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Inteiros []int
+
+func (s Inteiros) Soma() int {
+    total := 0
+    for _, v := range s {
+        total += v
+    }
+    return total
+}
+
+func (s Inteiros) Filtrar(f func(int) bool) Inteiros {
+    var resultado Inteiros
+    for _, v := range s {
+        if f(v) {
+            resultado = append(resultado, v)
+        }
+    }
+    return resultado
+}
+
+nums := Inteiros{1, 2, 3, 4, 5, 6}
+pares := nums.Filtrar(func(n int) bool { return n%2 == 0 })
+fmt.Println(pares.Soma())  // 12 (2+4+6)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Métodos em tipos função — padrão http.HandlerFunc
+                           </h4>
+                           <p>
+                              O padrão mais famoso da stdlib:
+                              <code>http.HandlerFunc</code>
+                              é um tipo baseado em função que implementa a
+                              interface
+                              <code>http.Handler</code>. Isso permite usar
+                              funções comuns diretamente como handlers:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Como a stdlib implementa http.HandlerFunc
+type HandlerFunc func(ResponseWriter, *Request)
+
+// Método ServeHTTP — faz HandlerFunc satisfazer a interface http.Handler
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
+    f(w, r)  // chama a própria função como implementação
+}
+
+// Na prática: sua função vira um http.Handler sem criar struct
+func meuHandler(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "olá")
+}
+
+// http.HandlerFunc(meuHandler) adapta a função para a interface
+http.Handle("/", http.HandlerFunc(meuHandler))</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Restrição: apenas tipos do mesmo pacote
+                                 </div>
+                                 <div class="callout__body">
+                                    Você só pode declarar métodos em tipos
+                                    definidos no mesmo pacote. Não é possível
+                                    adicionar métodos a tipos de outros pacotes
+                                    — incluindo tipos da stdlib como
+                                    <code>int</code> ou
+                                    <code>string</code> diretamente. A solução é
+                                    criar um tipo nomeado local baseado no tipo
+                                    externo, como nos exemplos acima.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 16
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod16-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Quando usar cada receiver'. Lembre-se do impacto do tipo de receiver na satisfação de interfaces."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O tipo <code>Animal</code> abaixo satisfaz a
+                              interface <code>Descritivel</code> quando passado
+                              por valor?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Descritivel interface {
+    Descrever() string
+}
+
+type Animal struct{ Nome string }
+
+func (a *Animal) Descrever() string {
+    return "Animal: " + a.Nome
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim — Go converte automaticamente valor
+                                    para ponteiro ao verificar interfaces</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não — <code>Descrever</code> está no method
+                                    set de <code>*Animal</code>, não de
+                                    <code>Animal</code>; apenas
+                                    <code>*Animal</code> satisfaz a
+                                    interface</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Sim — receiver por ponteiro promove
+                                    automaticamente para o tipo valor</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Depende — funciona apenas se a variável for
+                                    endereçável</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Método com receiver
+                              <code>*Animal</code> está no method set de
+                              <code>*Animal</code>, não de <code>Animal</code>.
+                              <code>var d Descritivel = Animal{"Rex"}</code> é
+                              erro de compilação.
+                              <code>var d Descritivel = &Animal{"Rex"}</code>
+                              funciona. O inverso não é verdade: receiver por
+                              valor está no method set de ambos — valor e
+                              ponteiro.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod16-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Receivers por valor vs por ponteiro'. O que acontece quando um método com receiver por valor tenta modificar o receptor?"
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">O que é impresso?</p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Caixa struct{ valor int }
+
+func (c Caixa) Dobrar() {
+    c.valor *= 2
+}
+
+cx := Caixa{valor: 5}
+cx.Dobrar()
+fmt.Println(cx.valor)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>10</code> — o método modifica o valor
+                                    original</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>5</code> — receiver por valor recebe
+                                    cópia; modificar <code>c.valor</code> não
+                                    afeta <code>cx</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação — métodos não podem
+                                    modificar campos de structs</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>0</code> — o receiver por valor é
+                                    zerado antes da chamada</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Receiver por valor copia a struct
+                              inteira para o parâmetro <code>c</code>.
+                              <code>c.valor *= 2</code> modifica apenas a cópia
+                              local. <code>cx.valor</code> permanece 5. Para
+                              modificar o original, o receiver deveria ser
+                              <code>func (c *Caixa) Dobrar()</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod16-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Métodos em tipos não-struct'. Lembre-se da restrição sobre onde métodos podem ser declarados."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que o código abaixo não compila?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+func (n int) Dobro() int {
+    return n * 2
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Porque métodos não podem retornar o mesmo
+                                    tipo do receiver</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Porque <code>int</code> é imutável e não
+                                    pode ter métodos</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Porque <code>int</code> é definido no
+                                    pacote <code>builtin</code>, não no pacote
+                                    <code>main</code> — métodos só podem ser
+                                    declarados em tipos do mesmo pacote</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Porque tipos primitivos não podem ter
+                                    métodos em Go</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Go proíbe declarar métodos em tipos de
+                              outros pacotes.
+                              <code>int</code> pertence ao pacote
+                              <code>builtin</code>. A solução é criar um tipo
+                              nomeado local: <code>type MeuInt int</code> e
+                              então declarar
+                              <code>func (n MeuInt) Dobro() MeuInt</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 16
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod16-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Consistência de receiver</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O tipo abaixo mistura receivers por valor e por
+                              ponteiro. Qual é o problema e qual a solução
+                              correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">type Fila struct{ items []string }
+
+func (f *Fila) Enqueue(s string) { f.items = append(f.items, s) }
+func (f Fila) Tamanho() int      { return len(f.items) }
+func (f Fila) Vazia() bool       { return len(f.items) == 0 }</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não há problema — misturar receivers é
+                                    aceitável quando os métodos de leitura usam
+                                    valor</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >O problema é inconsistência: como
+                                    <code>Enqueue</code> usa ponteiro,
+                                    <code>Tamanho</code> e
+                                    <code>Vazia</code> também deveriam — caso
+                                    contrário <code>Fila</code> (valor) não
+                                    satisfará interfaces que incluam
+                                    <code>Enqueue</code>, criando confusão</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>Enqueue</code> deveria ser por valor
+                                    também — slices já são referências então
+                                    ponteiro é desnecessário</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O problema é que <code>Tamanho</code> e
+                                    <code>Vazia</code> não podem ser por valor
+                                    quando a struct contém um slice</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Como <code>Enqueue</code> usa
+                              <code>*Fila</code>, o method set completo está em
+                              <code>*Fila</code>. Uma interface que inclua todos
+                              os três métodos só seria satisfeita por
+                              <code>*Fila</code> — o que é esperado. Mas
+                              misturar os dois cria surpresas:
+                              <code>Fila</code> (valor) satisfaz uma interface
+                              com apenas
+                              <code>Tamanho</code>/<code>Vazia</code>, enquanto
+                              <code>*Fila</code> satisfaz qualquer interface.
+                              Uniformidade com <code>*Fila</code> em todos
+                              elimina essa assimetria.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod16-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Tipo não-struct com método</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual é a forma correta de adicionar um método
+                              <code>Celsius()</code> ao tipo
+                              <code>float64</code> que converta Fahrenheit para
+                              Celsius?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code
+                                       >func (f float64) Celsius() float64 {
+                                       return (f - 32) * 5 / 9 }</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>type Fahrenheit float64</code>
+                                    seguido de
+                                    <code
+                                       >func (f Fahrenheit) Celsius() float64 {
+                                       return float64((f - 32) * 5 / 9) }</code
+                                    ></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Não é possível — apenas structs podem ter
+                                    métodos em Go</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Estender <code>float64</code> com
+                                    <code
+                                       >extend float64 { func Celsius() float64
+                                       }</code
+                                    ></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Crie um tipo nomeado local (<code
+                                 >type Fahrenheit float64</code
+                              >) e declare o método nesse tipo. Isso resolve a
+                              restrição de pacote: <code>Fahrenheit</code> é
+                              definido no seu pacote, então você pode adicionar
+                              métodos a ele. O cast <code>float64(...)</code> no
+                              retorno é necessário pois a expressão tem tipo
+                              <code>Fahrenheit</code>, não <code>float64</code>.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

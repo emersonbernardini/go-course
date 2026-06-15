@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Testes em Go: pacote testing, testes unitários, benchmarks, tabela de testes, subtests e testify."
+      />
+      <title>Módulo 30 — testing · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="30">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">testing</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 30</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Anatomia de um teste em Go
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod30-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Anatomia de um teste em Go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go tem suporte a testes embutido no toolchain —
+                              sem dependências externas, sem configuração, sem
+                              framework. Um arquivo de teste é um arquivo
+                              <code>.go</code> comum com o sufixo
+                              <code>_test.go</code>; o compilador o ignora nos
+                              builds normais mas o inclui ao rodar
+                              <code>go test</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >math/soma.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package math
+
+func Soma(a, b int) int {
+    return a + b
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >math/soma_test.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package math  // mesmo package — acessa símbolos não exportados também
+
+import "testing"
+
+// Assinatura obrigatória: Test + nome descritivo, recebe *testing.T
+func TestSoma(t *testing.T) {
+    resultado := Soma(2, 3)
+    esperado  := 5
+
+    if resultado != esperado {
+        // t.Errorf: marca falha e continua o teste
+        t.Errorf("Soma(2,3) = %d; esperado %d", resultado, esperado)
+    }
+}
+</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >rodando testes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash">go test ./...             # todos os pacotes do módulo
+go test ./math/...        # pacote específico
+go test -v ./math/        # verbose: mostra cada Test* executado
+go test -run TestSoma     # filtra por nome (regex)
+go test -count=1 ./...    # desabilita cache — sempre reexecuta</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              t.Error vs t.Fatal vs t.Log
+                           </h4>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Método
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Comportamento
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Use quando
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          t.Error / t.Errorf
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Marca falha, continua executando
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Checar múltiplas condições
+                                          independentes
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          t.Fatal / t.Fatalf
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Marca falha, interrompe o teste
+                                          imediatamente
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Pré-condição falhou — próximos asserts
+                                          não fazem sentido
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          t.Skip / t.Skipf
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Pula o teste, marca como SKIP
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Dependência externa ausente, feature
+                                          flag desligada
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          t.Log / t.Logf
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Só aparece com <code>-v</code> ou em
+                                          testes que falharam
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Contexto de debug sem poluir saída
+                                          normal
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Pacote _test: teste de caixa preta
+                                 </div>
+                                 <div class="callout__body">
+                                    Arquivos <code>_test.go</code> podem
+                                    declarar <code>package math_test</code> (com
+                                    sufixo <code>_test</code>) em vez de
+                                    <code>package math</code>. Isso força o
+                                    teste a usar apenas a API pública do pacote
+                                    — como um consumidor externo faria. É a
+                                    forma idiomática de testar a interface
+                                    pública e garantir que ela é suficiente sem
+                                    expor internos.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Table-driven tests e subtests
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod30-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Table-driven tests e subtests</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Escrever um <code>TestFunc</code> por caso de
+                              entrada leva a código repetitivo e difícil de
+                              expandir. O padrão idiomático em Go é o
+                              <strong>table-driven test</strong>: uma slice de
+                              structs onde cada entrada define um cenário, e um
+                              único loop executa todos. Combinado com
+                              <code>t.Run</code>, cada caso vira um
+                              <em>subtest</em>
+                              — isolado, nomeado e executável individualmente.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >table-driven test completo</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func TestDividir(t *testing.T) {
+    casos := []struct {
+        nome     string
+        a, b     float64
+        esperado float64
+        erro     bool
+    }{
+        {"positivos", 10, 2, 5, false},
+        {"negativo dividendo", -10, 2, -5, false},
+        {"divisão por zero", 10, 0, 0, true},
+        {"resultado fracionário", 7, 2, 3.5, false},
+    }
+
+    for _, tc := range casos {
+        tc := tc  // captura a variável — necessário antes de Go 1.22
+        t.Run(tc.nome, func(t *testing.T) {
+            t.Parallel()  // subtests podem rodar em paralelo entre si
+
+            resultado, err := Dividir(tc.a, tc.b)
+
+            if tc.erro {
+                if err == nil {
+                    t.Fatal("esperava erro, mas não houve nenhum")
+                }
+                return
+            }
+            if err != nil {
+                t.Fatalf("erro inesperado: %v", err)
+            }
+            if resultado != tc.esperado {
+                t.Errorf("Dividir(%g, %g) = %g; esperado %g",
+                    tc.a, tc.b, resultado, tc.esperado)
+            }
+        })
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >executar subtest específico</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># -run aceita /subtest para filtrar dentro de um test
+go test -run TestDividir/divisão_por_zero -v
+
+# Espaços no nome viram underscores no filtro
+go test -run TestDividir/resultado_fracionário -v</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    tc := tc antes de Go 1.22 — captura de loop
+                                 </div>
+                                 <div class="callout__body">
+                                    Em Go anterior a 1.22, variáveis de loop são
+                                    compartilhadas entre iterações. Sem
+                                    <code>tc := tc</code> dentro do loop, todos
+                                    os subtests paralelos capturariam a mesma
+                                    variável e veriam o último valor da slice ao
+                                    executar. Go 1.22 mudou a semântica de loop
+                                    para criar uma nova variável por iteração —
+                                    mas em código que precisa ser compatível com
+                                    versões anteriores, o
+                                    <code>tc := tc</code> ainda é necessário.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Benchmarks
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod30-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Benchmarks</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>testing</code> inclui suporte
+                              nativo a benchmarks: funções prefixadas com
+                              <code>Benchmark</code> que o runtime executa
+                              repetidamente, calibrando o número de iterações
+                              até obter uma medição estável. Sem biblioteca
+                              externa, sem setup manual.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >benchmark de duas implementações</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Assinatura: Benchmark + nome, recebe *testing.B
+func BenchmarkConcatPlus(b *testing.B) {
+    lista := gerarLista(1000)
+
+    b.ResetTimer()  // descarta o tempo de setup (gerarLista)
+
+    for i := 0; i < b.N; i++ {  // b.N é calibrado pelo runtime
+        resultado := ""
+        for _, s := range lista {
+            resultado += s
+        }
+        _ = resultado  // evita que o compilador elimine o código (dead code)
+    }
+}
+
+func BenchmarkConcatBuilder(b *testing.B) {
+    lista := gerarLista(1000)
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+        var sb strings.Builder
+        for _, s := range lista {
+            sb.WriteString(s)
+        }
+        _ = sb.String()
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >rodando e comparando benchmarks</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># -bench=. executa todos os Benchmark*, -benchmem inclui alocações
+go test -bench=. -benchmem ./...
+
+# Output típico:
+# BenchmarkConcatPlus-8     3000    412330 ns/op    523456 B/op    999 allocs/op
+# BenchmarkConcatBuilder-8  50000    28541 ns/op      4096 B/op      1 allocs/op
+
+# Comparar antes/depois de uma otimização com benchstat
+go test -bench=. -count=10 > antes.txt
+# (faz a mudança)
+go test -bench=. -count=10 > depois.txt
+benchstat antes.txt depois.txt</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              b.ReportAllocs e b.SetBytes
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func BenchmarkProcessar(b *testing.B) {
+    dados := make([]byte, 1024*1024)  // 1MB
+    b.SetBytes(int64(len(dados)))     // informa o tamanho processado por iteração
+    b.ReportAllocs()                  // equivalente a -benchmem só para este bench
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+        _ = processar(dados)
+    }
+    // Output inclui: MB/s — útil para benchmarks de I/O e serialização
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Benchmarks não rodam com go test ./... por
+                                    padrão
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>go test ./...</code> executa apenas
+                                    funções <code>Test*</code>. Para rodar
+                                    benchmarks, você precisa de
+                                    <code>-bench=.</code> (ou um regex
+                                    específico). Isso evita que benchmarks
+                                    lentos atrasem o CI toda vez. O sufixo
+                                    <code>-8</code> no output indica que o
+                                    runtime usou
+                                    <code>GOMAXPROCS=8</code> (número de CPUs).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — TestMain, helpers e fixtures
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod30-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>TestMain, helpers e fixtures</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando um pacote de testes precisa de setup e
+                              teardown globais — subir um banco de dados de
+                              testes, criar um diretório temporário, iniciar um
+                              servidor mock — o ponto de entrada é
+                              <code>TestMain</code>. Ele substitui o
+                              <code>main</code> padrão dos testes e dá controle
+                              total sobre o ciclo de vida.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >TestMain com setup e teardown</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">var testDB *sql.DB
+
+func TestMain(m *testing.M) {
+    // Setup: executado uma vez antes de todos os testes do pacote
+    var err error
+    testDB, err = sql.Open("postgres", os.Getenv("TEST_DSN"))
+    if err != nil {
+        log.Fatalf("setup: abrir banco: %v", err)
+    }
+    if err = migrar(testDB); err != nil {
+        log.Fatalf("setup: migrar: %v", err)
+    }
+
+    // m.Run() executa todos os Test*, Benchmark* e Example* do pacote
+    codigo := m.Run()
+
+    // Teardown: executado depois de todos os testes
+    testDB.Close()
+    limparBanco()
+
+    os.Exit(codigo)  // propaga o exit code — 0=passou, 1=falhou
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Funções helper com t.Helper()
+                           </h4>
+                           <p>
+                              Ao extrair lógica de assert para uma função
+                              auxiliar, as mensagens de falha apontam para a
+                              linha da função helper — não para onde ela foi
+                              chamada. <code>t.Helper()</code> resolve isso:
+                              marca a função como auxiliar e faz o stack trace
+                              apontar para o chamador.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >helper com t.Helper()</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ t.Helper() faz a falha apontar para quem chamou assertEqual
+func assertEqual(t *testing.T, got, want any) {
+    t.Helper()
+    if got != want {
+        t.Errorf("got %v; want %v", got, want)
+    }
+}
+
+// t.TempDir() cria um diretório temporário limpo automaticamente após o teste
+func TestProcessarArquivo(t *testing.T) {
+    dir := t.TempDir()  // removido pelo cleanup automático — sem os.RemoveAll manual
+
+    caminho := filepath.Join(dir, "entrada.csv")
+    os.WriteFile(caminho, []byte("a,b\n1,2\n"), 0644)
+
+    resultado, err := ProcessarArquivo(caminho)
+    if err != nil {
+        t.Fatalf("erro inesperado: %v", err)
+    }
+    assertEqual(t, len(resultado), 1)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    t.Cleanup: teardown por teste, não global
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>t.Cleanup(func())</code> registra uma
+                                    função que roda quando o teste (ou subtest)
+                                    termina — seja passando ou falhando. É o
+                                    equivalente do <code>defer</code> para
+                                    testes, com a vantagem de poder ser chamado
+                                    de dentro de helpers sem que o helper
+                                    precise saber sobre o ciclo de vida do
+                                    teste. Substituiu o padrão
+                                    <code>defer teardown()</code> manual em
+                                    código moderno.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — testify e mocks
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod30-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>testify e mocks</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A stdlib de <code>testing</code> é deliberadamente
+                              minimalista — sem <code>assert.Equal</code>, sem
+                              mocks embutidos. Para a maioria dos projetos em
+                              produção, a biblioteca <code>testify</code>
+                              (<code>github.com/stretchr/testify</code>) é o
+                              complemento padrão de facto: assertions legíveis,
+                              suites de testes e mocks.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              testify/assert e testify/require
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >assert vs require</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+)
+
+func TestCriarUsuario(t *testing.T) {
+    u, err := CriarUsuario("ana@email.com", "senha123")
+
+    // require: equivale a t.Fatal — interrompe se falhar
+    // Use para pré-condições: se err != nil, os asserts abaixo não fazem sentido
+    require.NoError(t, err)
+    require.NotNil(t, u)
+
+    // assert: equivale a t.Error — continua mesmo se falhar
+    // Use para checar múltiplos campos independentes
+    assert.Equal(t, "ana@email.com", u.Email)
+    assert.NotEmpty(t, u.ID)
+    assert.True(t, u.CriadoEm.Before(time.Now()))
+
+    // Comparação de structs com diff legível no output de falha
+    esperado := &Usuario{Email: "ana@email.com", Ativo: true}
+    assert.Equal(t, esperado, u, "usuário criado difere do esperado")
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Mocks com testify/mock
+                           </h4>
+                           <p>
+                              Mocks permitem testar uma unidade isolada
+                              substituindo suas dependências por implementações
+                              controladas. Em Go, isso é feito via interfaces: a
+                              dependência real implementa uma interface, e no
+                              teste você passa um mock que implementa a mesma
+                              interface.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >mock de repositório</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Interface que o serviço depende
+type UsuarioRepo interface {
+    BuscarPorEmail(email string) (*Usuario, error)
+}
+
+// Mock gerado manualmente (ou via mockery/moq)
+type MockUsuarioRepo struct {
+    mock.Mock  // embutido de testify/mock
+}
+
+func (m *MockUsuarioRepo) BuscarPorEmail(email string) (*Usuario, error) {
+    args := m.Called(email)
+    // args.Get(0) retorna any — type assertion necessária
+    if u, ok := args.Get(0).(*Usuario); ok {
+        return u, args.Error(1)
+    }
+    return nil, args.Error(1)
+}
+
+// Uso no teste
+func TestLogin(t *testing.T) {
+    repo := new(MockUsuarioRepo)
+
+    // Configura o mock: quando BuscarPorEmail("ana") for chamado,
+    // retorna este usuário e nil como erro
+    usuario := &Usuario{Email: "ana@email.com", SenhaHash: hashSenha("abc123")}
+    repo.On("BuscarPorEmail", "ana@email.com").Return(usuario, nil)
+
+    svc := NovoAuthService(repo)
+    ok, err := svc.Login("ana@email.com", "abc123")
+
+    require.NoError(t, err)
+    assert.True(t, ok)
+    repo.AssertExpectations(t)  // falha se alguma chamada esperada não ocorreu
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Mocks testam o contrato, não a implementação
+                                 </div>
+                                 <div class="callout__body">
+                                    Mocks são poderosos mas têm um custo: eles
+                                    acoplam o teste aos detalhes de chamada da
+                                    dependência. Se a implementação mudar
+                                    internamente sem mudar o comportamento
+                                    observável, os mocks quebram. Prefira
+                                    <strong>fakes</strong> (implementações em
+                                    memória da interface) quando possível — são
+                                    mais robustos e mais próximos do
+                                    comportamento real. Use mocks para
+                                    dependências com efeitos colaterais difíceis
+                                    de replicar (envio de email, chamadas
+                                    externas).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 30
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod30-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Anatomia de um teste em Go'. Atenção na diferença entre t.Error e t.Fatal e o que cada um faz com a execução do teste após ser chamado."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um teste chama
+                              <code>t.Errorf("valor incorreto")</code> e depois
+                              continua executando mais verificações. O teste
+                              aparece como <code>FAIL</code> no output. Qual
+                              afirmação descreve corretamente esse
+                              comportamento?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >É um bug — <code>t.Errorf</code> deveria
+                                    encerrar o teste imediatamente como
+                                    <code>t.Fatalf</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >É o comportamento correto —
+                                    <code>t.Errorf</code> marca o teste como
+                                    falho mas continua a execução, permitindo
+                                    coletar múltiplas falhas em uma única
+                                    rodada</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>t.Errorf</code> e
+                                    <code>t.Fatalf</code> têm comportamento
+                                    idêntico — a diferença é apenas no formato
+                                    da mensagem</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O teste continuou porque
+                                    <code>t.Errorf</code> foi chamado em uma
+                                    goroutine separada</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>t.Errorf</code> marca o teste
+                              como falho internamente mas
+                              <strong>não interrompe</strong> a execução — é
+                              equivalente a setar uma flag de falha e continuar.
+                              Isso é intencional: você pode verificar 10 campos
+                              de uma struct e ver todos os que falharam de uma
+                              vez, em vez de consertar um por vez. Use
+                              <code>t.Fatalf</code> quando uma falha torna os
+                              próximos asserts sem sentido (ex: o objeto
+                              retornado é nil).
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod30-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Benchmarks'. Preste atenção no papel de b.N e o que acontece se você não usar b.ResetTimer quando há setup antes do loop."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O que está errado no benchmark abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func BenchmarkParseJSON(b *testing.B) {
+    dados, _ := os.ReadFile("testdata/grande.json")  // 50MB
+
+    for i := 0; i < b.N; i++ {
+        var resultado map[string]any
+        json.Unmarshal(dados, &resultado)
+    }
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O benchmark está correto —
+                                    <code>os.ReadFile</code> fora do loop é
+                                    exatamente o padrão recomendado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O tempo de <code>os.ReadFile</code> (I/O de
+                                    disco em 50MB) é incluído na medição — sem
+                                    <code>b.ResetTimer()</code> após o setup, as
+                                    primeiras iterações de calibração contaminam
+                                    a métrica com o custo da leitura</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O erro ignorado de
+                                    <code>os.ReadFile</code> pode fazer o
+                                    benchmark medir
+                                    <code>json.Unmarshal</code> de um slice
+                                    nil</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>b.N</code> não pode ser usado com
+                                    arquivos grandes — o benchmark vai causar
+                                    OOM na calibração</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O timer começa quando a função
+                              <code>Benchmark*</code> é chamada. O
+                              <code>os.ReadFile</code> ocorre uma única vez, mas
+                              acontece <em>enquanto o timer está rodando</em> —
+                              nas primeiras iterações de calibração, o custo de
+                              I/O é incluído na média. Com um arquivo de 50MB,
+                              isso pode distorcer significativamente a medição
+                              do <code>json.Unmarshal</code>. A correção é
+                              adicionar <code>b.ResetTimer()</code> após o
+                              <code>os.ReadFile</code>. O erro ignorado é um
+                              problema secundário real, mas não é o bug de
+                              medição da questão.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod30-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Table-driven tests e subtests'. A captura de variável de loop em Go tem um comportamento específico com goroutines e subtests paralelos."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Em Go anterior a 1.22, o que acontece se
+                              <code>t.Parallel()</code> for chamado dentro de
+                              <code>t.Run</code> sem <code>tc := tc</code>?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">for _, tc := range casos {
+    t.Run(tc.nome, func(t *testing.T) {
+        t.Parallel()
+        // usa tc.entrada e tc.esperado
+    })
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Funciona corretamente —
+                                    <code>t.Run</code> captura o valor de
+                                    <code>tc</code> automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>t.Parallel()</code> exige a captura
+                                    explícita com <code>tc := tc</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Todos os subtests executam com o valor de
+                                    <code>tc</code> do último elemento da slice
+                                    — a closure captura a variável por
+                                    referência, e quando os subtests rodam em
+                                    paralelo o loop já terminou</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Race condition detectada pelo
+                                    <code>-race</code> detector — os subtests
+                                    modificam
+                                    <code>tc</code> concorrentemente</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>t.Parallel()</code> suspende o
+                              subtest até que o test pai termine de chamar todos
+                              os <code>t.Run</code>. Nesse ponto, o loop já
+                              terminou e <code>tc</code> aponta para o último
+                              elemento. Todos os subtests leem o mesmo
+                              <code>tc</code> — o último da slice — produzindo
+                              resultados incorretos sem nenhum erro de
+                              compilação ou runtime óbvio. O fix é
+                              <code>tc := tc</code> dentro do loop para criar
+                              uma cópia local por iteração. Em Go 1.22+, cada
+                              iteração do loop já tem sua própria variável.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sim quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 30
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod30-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Falha silenciosa no TestMain</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O <code>TestMain</code> abaixo tem um bug sutil
+                              que faz os testes sempre reportarem sucesso, mesmo
+                              quando falham. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func TestMain(m *testing.M) {
+    setup()
+    m.Run()  // retorno ignorado
+    teardown()
+    os.Exit(0)  // sempre sai com sucesso
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>teardown()</code> é chamado antes de
+                                    <code>os.Exit</code> — o teardown pode
+                                    limpar evidências de falha antes que o CI as
+                                    capture</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    ><code>m.Run()</code> retorna o exit code
+                                    (0=passou, 1=falhou) mas esse valor é
+                                    descartado — o <code>os.Exit(0)</code> fixo
+                                    faz o processo sempre reportar sucesso ao
+                                    CI, mesmo com testes falhando. A correção é
+                                    <code>os.Exit(m.Run())</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>setup()</code> pode entrar em panic
+                                    antes de <code>m.Run()</code> — o
+                                    <code>teardown()</code> nunca é chamado em
+                                    caso de panic no setup</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>os.Exit</code> dentro de
+                                    <code>TestMain</code> não é permitido —
+                                    causa comportamento indefinido no framework
+                                    de testes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>m.Run()</code> executa todos os
+                              testes e retorna <code>0</code> se todos passaram,
+                              <code>1</code> se algum falhou. Ao ignorar esse
+                              retorno e usar <code>os.Exit(0)</code> fixo, o
+                              processo sempre reporta sucesso — o CI verde mesmo
+                              com 50 testes falhando. Esse é um dos bugs mais
+                              perigosos em suites de teste: silencioso, não
+                              detectável pelo próprio Go, e destrói a confiança
+                              no pipeline. O padrão correto é sempre
+                              <code>os.Exit(m.Run())</code>, que propaga o
+                              código de saída real.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod30-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Mock vs Fake</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um serviço de pedidos depende de uma interface
+                              <code>EstoqueRepo</code> com os métodos
+                              <code>Reservar(id, qty)</code> e
+                              <code>Liberar(id, qty)</code>. Você precisa testar
+                              a lógica de rollback: se
+                              <code>Reservar</code> falhar, o serviço deve
+                              chamar <code>Liberar</code>. Qual abordagem é mais
+                              adequada?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Implementar um banco de dados de testes
+                                    real e verificar o estado após cada operação
+                                    — testes de integração são mais confiáveis
+                                    que mocks</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar um fake em memória
+                                    (<code>MapEstoqueRepo</code>) que implementa
+                                    <code>EstoqueRepo</code> — o fake rastreia
+                                    reservas e liberações internamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Usar um mock (<code>testify/mock</code>)
+                                    configurado para retornar erro em
+                                    <code>Reservar</code> e depois verificar com
+                                    <code>AssertCalled(t, "Liberar", ...)</code>
+                                    — o teste precisa verificar que uma chamada
+                                    específica ocorreu, não o estado
+                                    resultante</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>t.Parallel()</code> para rodar
+                                    os dois cenários (com e sem falha)
+                                    simultaneamente e comparar os
+                                    resultados</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Este é um caso onde mock é a ferramenta
+                              certa. O que você quer verificar não é o
+                              <em>estado</em> do estoque, mas o
+                              <em>comportamento</em> do serviço: ele chamou
+                              <code>Liberar</code> após a falha? Com um fake em
+                              memória, você precisaria inspecionar estado
+                              interno ou adicionar contadores — essencialmente
+                              reimplementando um mock manualmente. Com
+                              <code>testify/mock</code>, você configura
+                              <code
+                                 >repo.On("Reservar",
+                                 ...).Return(ErrEstoqueInsuficiente)</code
+                              >
+                              e depois
+                              <code
+                                 >repo.AssertCalled(t, "Liberar", id, qty)</code
+                              >
+                              — testando exatamente o contrato comportamental do
+                              serviço.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

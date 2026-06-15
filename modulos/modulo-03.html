@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Entenda a anatomia de um programa Go: pacotes, importações, função main, arquivos .go e como o compilador lê o código."
+      />
+      <title>Módulo 03 — Estrutura de um programa Go · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <!-- Header e Sidebar injetados pelo app.js -->
+
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="03">
+                  <div class="content-body">
+                     <!-- CABEÇALHO DO MÓDULO -->
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 1 — Fundamentos
+                        </div>
+                        <h1 class="module-header__title">
+                           Estrutura de um programa Go
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 03</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <!-- PROGRESSO DO MÓDULO -->
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Pacotes
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod03-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Pacotes: a unidade fundamental de Go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Em Go, todo código pertence a um
+                              <strong>pacote</strong>. Um pacote é um
+                              agrupamento de arquivos <code>.go</code> que vivem
+                              no mesmo diretório e compartilham o mesmo
+                              namespace. É a menor unidade de organização e
+                              reutilização de código na linguagem.
+                           </p>
+                           <p>
+                              A declaração de pacote é
+                              <strong>obrigatória</strong> e deve ser a primeira
+                              linha de código de qualquer arquivo Go — antes de
+                              qualquer importação ou declaração.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >qualquer-arquivo.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package nome_do_pacote  // sempre a primeira linha</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O pacote main é especial
+                           </h4>
+                           <p>
+                              Vimos no módulo anterior que
+                              <code>package main</code> instrui o compilador a
+                              gerar um binário executável. Todos os outros nomes
+                              de pacote produzem <strong>bibliotecas</strong> —
+                              código reutilizável que pode ser importado por
+                              outros pacotes, mas não executado diretamente.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >math/operacoes.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package math  // biblioteca — não gera executável, pode ser importada</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main  // executável — exige func main()</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Regra: todos os arquivos de um diretório pertencem
+                              ao mesmo pacote
+                           </h4>
+                           <p>
+                              Em Go,
+                              <strong
+                                 >todos os arquivos <code>.go</code> dentro de
+                                 um mesmo diretório devem declarar o mesmo nome
+                                 de pacote</strong
+                              >. O compilador trata o diretório inteiro como uma
+                              unidade — é como se todos os arquivos fossem um
+                              único arquivo gigante do ponto de vista de
+                              visibilidade de símbolos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >estrutura de diretório</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>meu-projeto/
+├── main.go          → package main
+├── handlers.go      → package main  ✓ mesmo pacote
+└── utils.go         → package main  ✓ mesmo pacote
+
+# ERRO: arquivos no mesmo diretório com pacotes diferentes
+meu-projeto/
+├── main.go          → package main
+└── helpers.go       → package utils  ✗ erro de compilação</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Convenção de nome de pacote
+                           </h4>
+                           <p>
+                              Por convenção, o nome do pacote deve ser igual ao
+                              nome do diretório que o contém. Letras minúsculas,
+                              sem underscores, sem hífens. Nomes curtos e
+                              descritivos. Essa é a convenção da comunidade Go —
+                              o compilador não a força, mas
+                              <code>go vet</code> avisa quando ela é violada.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >convenção nome = diretório</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code>projeto/
+├── main.go               → package main
+├── http/
+│   └── server.go         → package http    ✓
+├── database/
+│   └── connection.go     → package database ✓
+└── utils/
+    └── strings.go        → package utils   ✓</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Exceção: pacotes _test
+                                 </div>
+                                 <div class="callout__body">
+                                    Existe uma exceção à regra de pacote único
+                                    por diretório: arquivos de teste podem usar
+                                    o sufixo <code>_test</code> no nome do
+                                    pacote (ex: <code>package math_test</code>).
+                                    Isso permite testes de caixa-preta no mesmo
+                                    diretório. Veremos em detalhes no Módulo 30.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Importações
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod03-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Importações</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Para usar código de outro pacote, você precisa
+                              <strong>importá-lo</strong> com a palavra-chave
+                              <code>import</code>. As importações ficam logo
+                              após a declaração de pacote e antes de qualquer
+                              outro código.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Formas de declarar importações
+                           </h4>
+                           <p>
+                              Go aceita duas sintaxes para importações —
+                              individual e em bloco. A forma em bloco é
+                              fortemente preferida quando há mais de um pacote:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >formas de import</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Forma individual — aceitável, mas verbosa
+import "fmt"
+import "os"
+import "strconv"
+
+// Forma em bloco — preferida pela comunidade Go
+import (
+    "fmt"
+    "os"
+    "strconv"
+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O caminho de importação
+                           </h4>
+                           <p>
+                              O que fica entre as aspas não é o nome do pacote —
+                              é o
+                              <strong>caminho de importação</strong> (<em
+                                 >import path</em
+                              >). Para pacotes da stdlib, é um caminho simples
+                              como <code>"fmt"</code> ou
+                              <code>"net/http"</code>. Para pacotes externos,
+                              inclui o domínio do repositório:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >caminhos de importação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    // Pacotes da stdlib — caminho simples
+    "fmt"
+    "os"
+    "net/http"
+    "encoding/json"
+
+    // Pacote externo — caminho com domínio
+    "github.com/user/meu-pacote"
+)</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Caminho vs nome do pacote
+                                 </div>
+                                 <div class="callout__body">
+                                    O caminho <code>"net/http"</code> importa o
+                                    pacote cujo nome é <code>http</code>. Você o
+                                    usa como <code>http.ListenAndServe()</code>,
+                                    não como
+                                    <code>net/http.ListenAndServe()</code>. O
+                                    que está após a última barra é o nome do
+                                    pacote — o que você usa no código.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Aliases de importação
+                           </h4>
+                           <p>
+                              Você pode dar um nome alternativo a um pacote
+                              importado. Isso é útil quando dois pacotes têm o
+                              mesmo nome, ou quando o nome padrão é muito longo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >aliases de importação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    // Alias comum: pacote externo com nome conflitante
+    meuhttp "github.com/user/http"
+    "net/http"
+
+    // Alias de conveniência
+    stdjson "encoding/json"
+
+    // Blank identifier: importa apenas pelos efeitos colaterais (init())
+    // O pacote é executado mas seus símbolos não ficam acessíveis
+    _ "github.com/lib/pq"  // registra driver PostgreSQL
+)
+
+func main() {
+    http.ListenAndServe(":8080", nil)   // stdlib
+    meuhttp.DoSomething()               // pacote externo
+    stdjson.Marshal(nil)                // alias
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              A regra de ouro: importação não usada é erro
+                           </h4>
+                           <p>
+                              Já mencionamos no módulo anterior, mas vale
+                              reforçar com mais precisão: se você importar um
+                              pacote e não usar <em>nenhum</em> dos seus
+                              símbolos exportados no arquivo atual, o compilador
+                              recusa compilar. Isso não é um aviso — é um erro
+                              fatal.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >erros de importação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "os"    // ERRO: importado e não usado
+)
+
+func main() {
+    fmt.Println("ok")
+    // os não é usado em lugar nenhum
+}
+
+// Erro: ./main.go:5:2: "os" imported and not used</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ordenação das importações
+                           </h4>
+                           <p>
+                              A convenção Go é organizar as importações em
+                              grupos separados por linha em branco, na seguinte
+                              ordem:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ordenação convencional</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    // 1. Pacotes da stdlib
+    "fmt"
+    "net/http"
+    "os"
+
+    // 2. Pacotes externos (third-party)
+    "github.com/gorilla/mux"
+    "go.uber.org/zap"
+
+    // 3. Pacotes internos do próprio projeto
+    "meu-projeto/internal/database"
+    "meu-projeto/pkg/auth"
+)</code></pre>
+                           </div>
+
+                           <p>
+                              O <code>gofmt</code> ordena importações
+                              alfabeticamente dentro de cada grupo, mas não cria
+                              os grupos automaticamente. A ferramenta
+                              <code>goimports</code> faz ambas as coisas:
+                              organiza em grupos e adiciona/remove importações
+                              conforme necessário.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — A função main
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod03-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>A função main e o ponto de entrada</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando um programa Go é iniciado, o runtime busca
+                              exatamente uma função:
+                              <code>func main()</code> no
+                              <code>package main</code>. Ela é o
+                              <strong>ponto de entrada</strong> — a primeira
+                              função do seu código que executa.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Assinatura obrigatória
+                           </h4>
+                           <p>
+                              A função <code>main</code> tem uma assinatura
+                              fixa: não aceita parâmetros e não retorna valores.
+                              Isso é diferente de C, onde <code>main</code> pode
+                              receber <code>argc</code> e <code>argv</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >assinatura correta e errada</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ Correto
+func main() {
+    // ...
+}
+
+// ✗ Errado — main não aceita parâmetros
+func main(args []string) {
+    // erro de compilação
+}
+
+// ✗ Errado — main não retorna valores
+func main() int {
+    return 0  // erro de compilação
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Como acessar argumentos da linha de comando
+                           </h4>
+                           <p>
+                              Se <code>main</code> não recebe argumentos, como
+                              acessar o que o usuário passa na linha de comando?
+                              Via o pacote <code>os</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >argumentos via os.Args</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    // os.Args é um slice de strings
+    // os.Args[0] = caminho do próprio executável
+    // os.Args[1:] = argumentos passados pelo usuário
+    args := os.Args
+
+    fmt.Println("Programa:", args[0])
+
+    if len(args) > 1 {
+        fmt.Println("Primeiro argumento:", args[1])
+    }
+}
+
+// Executando: ./programa olá mundo
+// Saída:
+// Programa: ./programa
+// Primeiro argumento: olá</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O que acontece antes da main
+                           </h4>
+                           <p>
+                              Existe algo que executa <em>antes</em> da
+                              <code>main</code>: as funções <code>init()</code>.
+                              Cada arquivo pode ter uma ou mais funções
+                              <code>init()</code>, que são chamadas
+                              automaticamente pelo runtime na ordem em que os
+                              pacotes são inicializados.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ordem de execução</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func init() {
+    fmt.Println("1. init() executou")
+    // usado para: validar configurações, registrar drivers,
+    // inicializar variáveis que exigem lógica complexa
+}
+
+func main() {
+    fmt.Println("2. main() executou")
+}
+
+// Saída:
+// 1. init() executou
+// 2. main() executou</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Código de saída do programa
+                           </h4>
+                           <p>
+                              Quando <code>main</code> retorna normalmente, o
+                              programa termina com código de saída
+                              <code>0</code> (sucesso). Para sair com outro
+                              código — indicando erro para o sistema operacional
+                              — use <code>os.Exit()</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >código de saída</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    err := fazerAlgo()
+    if err != nil {
+        fmt.Fprintln(os.Stderr, "erro:", err)
+        os.Exit(1)  // código não-zero = falha
+    }
+    // saída normal = código 0 (sucesso)
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    os.Exit() não executa defers
+                                 </div>
+                                 <div class="callout__body">
+                                    Uma pegadinha importante: chamar
+                                    <code>os.Exit()</code> termina o programa
+                                    imediatamente, sem executar as funções
+                                    agendadas com <code>defer</code>.
+                                    Estudaremos <code>defer</code> no Módulo 13.
+                                    Por ora, saiba que
+                                    <code>os.Exit()</code> deve ser usado com
+                                    cuidado.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Arquivos .go
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod03-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Arquivos .go: anatomia e organização</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Um arquivo <code>.go</code> tem uma estrutura bem
+                              definida. Cada seção tem seu lugar e ordem
+                              obrigatória:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >anatomia completa de um arquivo .go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// 1. Comentário de cabeçalho (opcional, mas recomendado)
+// Package utils fornece funções auxiliares para o projeto.
+
+// 2. Declaração de pacote (obrigatória, sempre primeira)
+package utils
+
+// 3. Importações (logo após a declaração de pacote)
+import (
+    "fmt"
+    "strings"
+)
+
+// 4. Constantes no nível do pacote (opcional)
+const MaxTamanho = 100
+
+// 5. Variáveis no nível do pacote (opcional)
+var prefixoPadrao = "INFO"
+
+// 6. Tipos definidos (optional)
+type Config struct {
+    Nome  string
+    Valor int
+}
+
+// 7. Funções (incluindo init, se houver)
+func init() {
+    // inicialização do pacote
+}
+
+func Formatar(s string) string {
+    return strings.TrimSpace(s)
+}
+
+func Logar(msg string) {
+    fmt.Printf("[%s] %s\n", prefixoPadrao, msg)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Um pacote, múltiplos arquivos
+                           </h4>
+                           <p>
+                              Um pacote pode e deve ser dividido em múltiplos
+                              arquivos quando crescer. O compilador une todos os
+                              arquivos do pacote antes de compilar — como se
+                              fossem um único arquivo. Por isso, funções
+                              declaradas em
+                              <code>handlers.go</code> podem chamar funções de
+                              <code>utils.go</code>
+                              sem nenhuma importação:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >pacote dividido em arquivos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// arquivo: handlers.go
+package main
+
+func handleRequest() {
+    resultado := processar()  // chama função de outro arquivo do mesmo pacote
+    responder(resultado)
+}
+
+// arquivo: processamento.go
+package main
+
+func processar() string {
+    return "dados processados"
+}
+
+// arquivo: resposta.go
+package main
+
+import "fmt"
+
+func responder(s string) {
+    fmt.Println(s)
+}
+
+// Todos no mesmo diretório, mesmo package main.
+// O compilador junta tudo automaticamente.</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exportação: maiúscula vs minúscula
+                           </h4>
+                           <p>
+                              Go usa uma regra elegante e simples para controlar
+                              visibilidade:
+                              <strong
+                                 >identificadores que começam com letra
+                                 maiúscula são exportados</strong
+                              >
+                              (visíveis fora do pacote); identificadores com
+                              letra minúscula são privados ao pacote.
+                           </p>
+                           <p>
+                              Não existe palavra-chave <code>public</code> ou
+                              <code>private</code>
+                              em Go. A própria capitalização do nome já diz
+                              tudo.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >exportado vs privado</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package matematica
+
+// Exportados — visíveis fora do pacote
+const Pi = 3.14159
+func Somar(a, b int) int { return a + b }
+type Calculadora struct { ... }
+
+// Privados — visíveis apenas dentro do pacote
+const precisao = 6
+func validarEntrada(n int) bool { return n >= 0 }
+type estadoInterno struct { ... }
+
+// Uso em outro pacote:
+// matematica.Somar(1, 2)     ✓
+// matematica.validarEntrada(1) ✗ erro de compilação</code></pre>
+                           </div>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Por que isso é elegante
+                                 </div>
+                                 <div class="callout__body">
+                                    A capitalização como mecanismo de
+                                    visibilidade elimina a necessidade de
+                                    palavras-chave extras, torna a intenção
+                                    visível na leitura do código, e é verificada
+                                    pelo compilador — não apenas por convenção.
+                                    Ao ler código Go, você imediatamente sabe o
+                                    que é público e o que é privado pela
+                                    primeira letra.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Como o compilador lê o código
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod03-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Como o compilador lê o código</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Entender o que o compilador Go faz — e na qual
+                              ordem — explica muitos comportamentos que de outra
+                              forma pareceriam arbitrários. E explica por que a
+                              compilação é tão rápida.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ponto de partida: o grafo de dependências
+                           </h4>
+                           <p>
+                              O compilador Go começa lendo as declarações de
+                              <code>import</code> e constrói um
+                              <strong>grafo de dependências</strong> entre
+                              pacotes. Pacotes sem dependências são compilados
+                              primeiro; pacotes que dependem deles são
+                              compilados depois.
+                           </p>
+                           <p>
+                              A regra crucial:
+                              <strong
+                                 >Go não permite dependências circulares</strong
+                              >. Se o pacote A importa B, e B importa A, é um
+                              erro de compilação. Isso é proposital —
+                              dependências circulares são um sinal de
+                              arquitetura ruim e causam problemas reais em
+                              sistemas grandes.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >dependência circular — erro</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># pacote A importa pacote B
+# pacote B importa pacote A
+# → erro: import cycle not allowed</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Por que a compilação é tão rápida
+                           </h4>
+                           <p>
+                              O compilador de C/C++ precisa processar headers
+                              repetidamente para cada arquivo que os inclui. Go
+                              resolve isso de forma diferente: quando um pacote
+                              é compilado, ele exporta as informações
+                              necessárias para quem o importa em um formato
+                              binário otimizado.
+                           </p>
+                           <p>
+                              Isso significa que ao compilar o pacote A que
+                              importa B, o compilador já tem tudo que precisa de
+                              B em formato pré-processado — sem reprocessar o
+                              código-fonte de B novamente. Cada pacote é
+                              compilado exatamente uma vez.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ordem de declarações não importa
+                           </h4>
+                           <p>
+                              Diferente de C, onde você precisa declarar funções
+                              antes de usá-las,
+                              <strong
+                                 >em Go a ordem de declarações dentro de um
+                                 pacote não importa</strong
+                              >. O compilador faz duas passagens: primeiro
+                              coleta todas as declarações, depois verifica
+                              referências.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >ordem não importa</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    // Usa saudacao() mesmo ela estando declarada abaixo — sem problema
+    fmt.Println(saudacao("Go"))
+}
+
+// Declarada depois de main — totalmente válido
+func saudacao(nome string) string {
+    return "Olá, " + nome + "!"
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Ponto e vírgula automático
+                           </h4>
+                           <p>
+                              Go não usa ponto e vírgula ao final das linhas no
+                              código-fonte — mas internamente, o compilador os
+                              insere automaticamente. A regra é simples: se a
+                              última token de uma linha for um identificador,
+                              literal, ou um dos tokens <code>)</code>,
+                              <code>]</code>, <code>}</code>, o compilador
+                              insere <code>;</code> ao final.
+                           </p>
+                           <p>
+                              Isso explica por que a chave de abertura de um
+                              bloco
+                              <strong
+                                 >não pode ficar sozinha em uma linha</strong
+                              >
+                              — o compilador inseriria um ponto e vírgula antes
+                              dela:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >posição de chaves — obrigatória</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✓ Correto — chave na mesma linha
+func main() {
+    if true {
+        fmt.Println("ok")
+    }
+}
+
+// ✗ Errado — o compilador insere ; após main() e após true
+func main()
+{                        // erro: unexpected {
+    if true
+    {                    // erro: unexpected {
+        fmt.Println("ok")
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Não existe debate de estilo em Go
+                                 </div>
+                                 <div class="callout__body">
+                                    Em linguagens como C e Java, há guerras
+                                    intermináveis sobre onde colocar chaves. Em
+                                    Go, o compilador força a chave na mesma
+                                    linha — não há escolha. O
+                                    <code>gofmt</code> também garante isso.
+                                    Resultado: zero debate, 100% de uniformidade
+                                    em todo código Go do mundo.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Comentários
+                           </h4>
+                           <p>
+                              Go suporta dois estilos de comentário, idênticos
+                              ao C e à maioria das linguagens modernas:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >comentários</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Comentário de linha — do // até o fim da linha
+
+/*
+   Comentário de bloco — pode ocupar
+   múltiplas linhas
+*/
+
+// Comentários de documentação ficam imediatamente
+// antes da declaração que documentam, sem linha em branco:
+
+// Somar retorna a soma de dois inteiros.
+// Ambos os parâmetros podem ser negativos.
+func Somar(a, b int) int {
+    return a + b
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Comentários de documentação que precedem
+                              declarações exportadas são exibidos pelo comando
+                              <code>go doc</code> e na documentação online do
+                              pacote. Essa é a forma oficial de documentar APIs
+                              em Go — sem ferramentas extras, sem anotações
+                              especiais.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 03
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod03-q01"
+                        data-feedback-wrong="✗ Não exatamente. Reveja o tópico 'Pacotes'. Lembre-se da regra sobre todos os arquivos de um mesmo diretório."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um diretório contém três arquivos:
+                              <code>main.go</code>, <code>handlers.go</code> e
+                              <code>utils.go</code>. Qual afirmação sobre as
+                              declarações de pacote desses arquivos é correta?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Cada arquivo pode declarar um pacote
+                                    diferente — Go resolve os conflitos
+                                    automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Todos os três arquivos devem declarar o
+                                    mesmo nome de pacote — o compilador trata o
+                                    diretório inteiro como uma unidade</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Apenas <code>main.go</code> precisa de
+                                    declaração de pacote; os outros arquivos
+                                    herdam automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >O arquivo <code>utils.go</code> deve
+                                    declarar <code>package utils</code> por
+                                    convenção de nome</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Todos os arquivos <code>.go</code> de
+                              um diretório devem declarar o mesmo pacote. O
+                              compilador une todos eles antes de compilar —
+                              funções de <code>handlers.go</code> enxergam
+                              funções de <code>utils.go</code> sem importação,
+                              pois pertencem ao mesmo pacote.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod03-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Arquivos .go'. A resposta está na regra de capitalização que Go usa para controlar visibilidade."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dado o seguinte código no pacote
+                              <code>matematica</code>, quais identificadores
+                              podem ser acessados de fora do pacote?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">package matematica
+
+const pi = 3.14159
+const Euler = 2.71828
+func calcular(n int) int { return n * 2 }
+func Dobrar(n int) int { return n * 2 }
+type resultado struct { valor int }
+type Resultado struct { Valor int }</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Todos, pois Go não tem controle de
+                                    acesso</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Apenas <code>pi</code> e
+                                    <code>calcular</code>, pois têm nomes
+                                    simples</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Apenas <code>Euler</code>,
+                                    <code>Dobrar</code> e
+                                    <code>Resultado</code> — os que começam com
+                                    letra maiúscula</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Depende de uma declaração
+                                    <code>export</code> explícita</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Em Go, letra maiúscula = exportado
+                              (público); letra minúscula = privado ao pacote.
+                              <code>Euler</code>, <code>Dobrar</code> e
+                              <code>Resultado</code> são acessíveis de fora.
+                              <code>pi</code>, <code>calcular</code> e
+                              <code>resultado</code> são privados. Não existe
+                              palavra-chave <code>public</code> ou
+                              <code>private</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod03-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Como o compilador lê o código'. A resposta está no mecanismo de inserção automática de ponto e vírgula do compilador Go."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que o compilador Go exige que a chave de
+                              abertura
+                              <code>{</code> fique na mesma linha da declaração
+                              — e não na linha seguinte como é comum em C e
+                              Java?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >É apenas uma preferência estética dos
+                                    criadores de Go, sem razão técnica</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O compilador não consegue distinguir blocos
+                                    de expressões quando a chave está em outra
+                                    linha</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O compilador insere ponto e vírgula
+                                    automaticamente ao final de certas linhas;
+                                    se <code>{</code> estiver na linha seguinte,
+                                    um <code>;</code> seria inserido antes dela,
+                                    gerando erro de sintaxe</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Por limitação do parser — Go usa um parser
+                                    mais simples que não suporta chaves em
+                                    linhas separadas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O compilador Go insere
+                              <code>;</code> automaticamente ao final de linhas
+                              que terminam com identificadores, literais ou os
+                              tokens <code>)</code>, <code>]</code>,
+                              <code>}</code>. Se você escrever
+                              <code>func main()</code> e deixar
+                              <code>{</code> na próxima linha, o compilador
+                              insere <code>;</code> após o <code>)</code>,
+                              tornando a chave inesperada — erro de sintaxe.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 03
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod03-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Identificação de erro</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              O código abaixo não compila. Qual é a causa do
+                              erro?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import "fmt"
+
+func main() {
+    fmt.Println(mensagem())
+}
+
+// arquivo: mensagens.go — mesmo diretório
+package util
+
+func mensagem() string {
+    return "olá"
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A função <code>mensagem()</code> está em
+                                    letra minúscula e portanto não pode ser
+                                    chamada de outro arquivo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Os dois arquivos no mesmo diretório
+                                    declaram pacotes diferentes (<code
+                                       >main</code
+                                    >
+                                    e <code>util</code>) — em Go todos os
+                                    arquivos de um diretório devem ter o mesmo
+                                    nome de pacote</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Falta importar o arquivo
+                                    <code>mensagens.go</code> explicitamente em
+                                    <code>main.go</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A função <code>mensagem()</code> retorna
+                                    <code>string</code> mas
+                                    <code>fmt.Println</code> espera
+                                    <code>int</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Exato! Dois arquivos no mesmo diretório com
+                              nomes de pacote diferentes é um erro de
+                              compilação. A solução é mudar
+                              <code>package util</code> para
+                              <code>package main</code> em
+                              <code>mensagens.go</code>. A função
+                              <code>mensagem()</code> ser minúscula não é
+                              problema aqui — ela está no mesmo pacote, então é
+                              acessível.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod03-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Dependência circular</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma equipe estruturou seus pacotes da seguinte
+                              forma:
+                              <code>auth</code> importa <code>database</code>,
+                              <code>database</code> importa <code>config</code>,
+                              e <code>config</code> importa <code>auth</code>. O
+                              que acontece ao tentar compilar?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Compila normalmente — Go resolve
+                                    dependências circulares de forma
+                                    automática</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Compila, mas com um aviso sobre o ciclo de
+                                    dependências</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Erro de compilação:
+                                    <code>import cycle not allowed</code> — Go
+                                    proíbe dependências circulares para forçar
+                                    boa arquitetura</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Só falha em tempo de execução, quando os
+                                    pacotes tentam se inicializar</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Go detecta e recusa dependências
+                              circulares em tempo de compilação. A solução
+                              arquitetural é extrair as dependências
+                              compartilhadas para um terceiro pacote sem
+                              dependências próprias — por exemplo, mover para
+                              <code>config</code> apenas o que não depende de
+                              <code>auth</code>, ou criar um pacote
+                              <code>types</code> com interfaces que todos
+                              importam sem criar ciclo.
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- NAVEGAÇÃO ENTRE MÓDULOS -->
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

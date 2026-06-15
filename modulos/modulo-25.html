@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Stdlib essencial em Go: pacotes fmt, strings e strconv — formatação, manipulação de strings e conversão entre tipos."
+      />
+      <title>Módulo 25 — fmt, strings, strconv · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="25">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">
+                           fmt, strings, strconv
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 25</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — fmt: formatação e verbos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod25-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>fmt: formatação e verbos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>fmt</code> é a principal interface
+                              de saída e formatação de texto em Go. Suas três
+                              famílias de funções seguem uma convenção de
+                              nomenclatura consistente: funções com
+                              <code>f</code> no sufixo (como
+                              <code>Fprintf</code>) escrevem em um
+                              <code>io.Writer</code>; com <code>S</code> (como
+                              <code>Sprintf</code>) retornam uma string; sem
+                              sufixo (como <code>Println</code>) escrevem em
+                              <code>os.Stdout</code>.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >as três famílias</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Print: escreve em os.Stdout
+fmt.Print("sem newline")
+fmt.Println("com newline")          // adiciona \n
+fmt.Printf("formatado: %d\n", 42)
+
+// Sprint: retorna string (sem I/O)
+s := fmt.Sprintf("olá, %s! você tem %d msgs", nome, total)
+msg := fmt.Sprintln("linha")        // inclui \n no final
+
+// Fprint: escreve em qualquer io.Writer
+fmt.Fprintf(os.Stderr, "erro: %v\n", err)
+fmt.Fprintln(w, "resposta HTTP")    // w é um http.ResponseWriter</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Verbos de formatação
+                           </h4>
+                           <p>
+                              Os verbos <code>%v</code>, <code>%+v</code> e
+                              <code>%#v</code>
+                              são os mais usados no dia a dia — cobrem a maioria
+                              dos casos sem precisar especificar o tipo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >verbos essenciais</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Usuario struct {
+    Nome  string
+    Idade int
+}
+u := Usuario{"Ana", 30}
+
+fmt.Printf("%v\n",  u)   // {Ana 30}           — valor padrão
+fmt.Printf("%+v\n", u)   // {Nome:Ana Idade:30} — com nomes dos campos
+fmt.Printf("%#v\n", u)   // main.Usuario{Nome:"Ana", Idade:30} — sintaxe Go
+
+// Verbos específicos
+fmt.Printf("%T\n",  u)   // main.Usuario        — tipo do valor
+fmt.Printf("%d\n",  42)  // 42                  — inteiro decimal
+fmt.Printf("%f\n",  3.14)// 3.140000
+fmt.Printf("%.2f\n",3.14)// 3.14               — 2 casas decimais
+fmt.Printf("%s\n",  "x") // x                  — string
+fmt.Printf("%q\n",  "x") // "x"                — string com aspas (útil para debug)
+fmt.Printf("%x\n",  255) // ff                  — hexadecimal
+fmt.Printf("%b\n",  8)   // 1000                — binário
+fmt.Printf("%p\n",  &u)  // 0xc000... — endereço de memória (ponteiro)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              fmt.Errorf e wrapping
+                           </h4>
+                           <p>
+                              <code>fmt.Errorf</code> com o verbo
+                              <code>%w</code> cria um erro que envolve outro —
+                              permitindo que <code>errors.Is</code> e
+                              <code>errors.As</code> (módulo 18) atravessem a
+                              cadeia:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">err := buscarUsuario(id)
+if err != nil {
+    // %w envolve err — errors.Is(retorno, err) retorna true
+    return fmt.Errorf("processarPedido(%d): %w", id, err)
+}
+
+// %v também funciona, mas NÃO permite unwrap
+return fmt.Errorf("processarPedido(%d): %v", id, err)  // envolve como texto apenas</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Stringer: a interface que fmt usa
+                                 </div>
+                                 <div class="callout__body">
+                                    Quando <code>fmt</code> encontra um valor
+                                    com um método <code>String() string</code>,
+                                    ele chama esse método ao invés de usar a
+                                    formatação padrão. Isso é a interface
+                                    <code>fmt.Stringer</code>. Implementá-la em
+                                    seus tipos é a forma idiomática de controlar
+                                    como eles aparecem em logs e saídas.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — fmt: Scan e leitura de input
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod25-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>fmt: Scan e leitura de input</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A família <code>Scan</code> do <code>fmt</code> lê
+                              valores formatados de uma fonte de texto —
+                              <code>os.Stdin</code>, strings ou qualquer
+                              <code>io.Reader</code>. É a contraparte de
+                              <code>Print</code>: em vez de formatar e escrever,
+                              ela lê e parseia.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >lendo do Stdin e de strings</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Scan: lê do Stdin, separa por espaço/newline
+var nome string
+var idade int
+fmt.Scan(&nome, &idade)       // lê "Ana 30" → nome="Ana", idade=30
+
+// Scanf: com verbo de formato
+fmt.Scanf("%s tem %d anos", &nome, &idade)
+
+// Sscanf: lê de uma string (muito mais comum em código real)
+linha := "2024-01-15 ERROR banco desconectado"
+var data, nivel, msg string
+n, err := fmt.Sscanf(linha, "%s %s %s", &data, &nivel, &msg)
+// n = número de itens parseados com sucesso
+
+// Fscan: lê de qualquer io.Reader
+fmt.Fscan(os.Stdin, &nome)
+fmt.Fscan(strings.NewReader("42"), &n)</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    fmt.Scan raramente é a melhor escolha para
+                                    input real
+                                 </div>
+                                 <div class="callout__body">
+                                    Para leitura linha a linha de
+                                    <code>os.Stdin</code> ou arquivos,
+                                    <code>bufio.Scanner</code> (módulo 26) é
+                                    mais robusto e flexível.
+                                    <code>fmt.Sscanf</code> brilha para parsear
+                                    strings com formato conhecido — como logs ou
+                                    protocolos simples. Para input interativo de
+                                    usuário em CLIs, prefira bibliotecas como
+                                    <code>bufio.NewReader</code> ou
+                                    <code>os.Stdin</code> com
+                                    <code>ReadString</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — strings: manipulação de texto
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod25-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>strings: manipulação de texto</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Strings em Go são imutáveis — cada operação que
+                              "modifica" uma string cria uma nova. O pacote
+                              <code>strings</code> fornece as funções essenciais
+                              para busca, transformação, divisão e montagem de
+                              strings, todas operando sobre bytes UTF-8.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >funções mais usadas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "strings"
+
+s := "  Olá, Mundo!  "
+
+// Busca
+strings.Contains(s, "Mundo")          // true
+strings.HasPrefix(s, "  Olá")         // true
+strings.HasSuffix(s, "!  ")           // true
+strings.Index(s, "Mundo")             // 7 (índice em bytes)
+strings.Count(s, "o")                 // 1 (case-sensitive)
+
+// Transformação
+strings.ToUpper(s)                     // "  OLÁ, MUNDO!  "
+strings.ToLower(s)                     // "  olá, mundo!  "
+strings.TrimSpace(s)                   // "Olá, Mundo!"
+strings.Trim(s, " !")                  // "Olá, Mundo"
+strings.TrimLeft(s, " ")              // "Olá, Mundo!  "
+strings.Replace(s, "Mundo", "Go", 1)  // "  Olá, Go!  " (1 = max substituições)
+strings.ReplaceAll(s, "o", "0")       // substitui todas
+
+// Divisão e junção
+partes := strings.Split("a,b,c", ",")         // ["a", "b", "c"]
+partes  = strings.SplitN("a,b,c", ",", 2)     // ["a", "b,c"] — máximo 2 partes
+strings.Join([]string{"a", "b", "c"}, " - ")  // "a - b - c"
+strings.Fields("  foo  bar  baz  ")            // ["foo", "bar", "baz"] — split por espaços</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              strings.Builder — concatenação eficiente
+                           </h4>
+                           <p>
+                              Concatenar strings com <code>+</code> em loop cria
+                              uma nova string a cada iteração — O(n²) em tempo e
+                              memória. Para construir strings incrementalmente,
+                              <code>strings.Builder</code> acumula bytes em um
+                              buffer interno e produz a string final uma única
+                              vez:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Builder vs concatenação ingênua</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// ✗ O(n²): cada iteração copia toda a string acumulada
+resultado := ""
+for _, item := range lista {
+    resultado += item + ", "
+}
+
+// ✓ O(n): Builder acumula sem copiar
+var b strings.Builder
+b.Grow(len(lista) * 20)  // opcional: pré-aloca capacidade estimada
+
+for i, item := range lista {
+    if i > 0 {
+        b.WriteString(", ")
+    }
+    b.WriteString(item)
+}
+resultado := b.String()  // única alocação final</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              strings.NewReader e strings.Reader
+                           </h4>
+                           <p>
+                              <code>strings.NewReader</code> transforma uma
+                              string em um <code>io.Reader</code> — permitindo
+                              usar qualquer API que aceite um reader com uma
+                              string de teste, sem arquivos ou rede:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Testar uma função que processa io.Reader sem precisar de arquivo real
+func processarJSON(r io.Reader) (*Dados, error) { /* ... */ }
+
+dados, err := processarJSON(strings.NewReader(`{"nome":"Ana","idade":30}`))</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — strconv: conversão entre tipos
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod25-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>strconv: conversão entre tipos</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>strconv</code> é o pacote para converter
+                              entre strings e tipos primitivos: inteiros,
+                              floats, booleanos. Ele existe porque essas
+                              conversões são fundamentais (parsear query params,
+                              ler variáveis de ambiente, serializar valores
+                              simples) e merecem funções dedicadas com controle
+                              explícito de erro — diferente do
+                              <code>fmt.Sscanf</code>, que é mais genérico e
+                              mais lento.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >Atoi, Itoa e Parse*</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import "strconv"
+
+// Atoi / Itoa — os atalhos mais usados
+n, err := strconv.Atoi("42")    // string → int
+s := strconv.Itoa(42)           // int → string  (nunca retorna erro)
+
+// ParseInt — mais controle: base e tamanho de bits
+n64, err := strconv.ParseInt("ff", 16, 64)   // hex → int64 = 255
+n64, err  = strconv.ParseInt("-128", 10, 8)  // base 10, cabe em int8
+
+// ParseFloat
+f, err := strconv.ParseFloat("3.14159", 64)  // 64 bits de precisão
+
+// ParseBool — aceita "true", "false", "1", "0", "t", "f", "T", "F", "TRUE"...
+b, err := strconv.ParseBool("true")   // true, nil
+b, err  = strconv.ParseBool("sim")    // false, *NumError — "sim" não é reconhecido
+
+// FormatInt — int → string em qualquer base
+strconv.FormatInt(255, 16)   // "ff"
+strconv.FormatInt(8, 2)      // "1000"
+strconv.FormatFloat(3.14, 'f', 2, 64)  // "3.14" ('f'=decimal, 2=precisão)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tratando erros de conversão corretamente
+                           </h4>
+                           <p>
+                              As funções <code>Parse*</code> retornam
+                              <code>*strconv.NumError</code>
+                              em caso de falha — um erro concreto com informação
+                              sobre o que deu errado. Ignorar esse erro é uma
+                              das causas mais comuns de bugs silenciosos ao
+                              processar input externo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >parsear query params de HTTP</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func handleListar(w http.ResponseWriter, r *http.Request) {
+    // Input externo — NUNCA confie sem validar
+    paginaStr := r.URL.Query().Get("pagina")
+    if paginaStr == "" {
+        paginaStr = "1"
+    }
+
+    pagina, err := strconv.Atoi(paginaStr)
+    if err != nil {
+        http.Error(w, "parâmetro 'pagina' inválido", http.StatusBadRequest)
+        return
+    }
+    if pagina < 1 {
+        http.Error(w, "página deve ser >= 1", http.StatusBadRequest)
+        return
+    }
+
+    // Agora pagina é um int validado
+    resultados := db.Listar(pagina, 20)
+    // ...
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    strconv.Atoi vs fmt.Sscanf — escolha certa
+                                    para cada caso
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>strconv.Atoi("42")</code> é ~3× mais
+                                    rápido que
+                                    <code>fmt.Sscanf("42", "%d", &n)</code> para
+                                    converter um único inteiro. Use
+                                    <code>strconv</code> quando você sabe o tipo
+                                    e quer performance. Use
+                                    <code>fmt.Sscanf</code> quando precisa
+                                    parsear um formato misto com múltiplos
+                                    valores em uma string.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — unicode e strings multibyte
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod25-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>unicode e strings multibyte</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Strings em Go são sequências de bytes UTF-8 — não
+                              de caracteres. Um caractere como
+                              <code>ã</code> ocupa 2 bytes, um emoji ocupa 4.
+                              Indexar uma string com <code>s[i]</code> retorna
+                              um byte (<code>uint8</code>), não um caractere.
+                              Iterar com <code>for i, r := range s</code> itera
+                              sobre <strong>runes</strong> (code points
+                              Unicode), decodificando UTF-8 automaticamente — é
+                              a forma correta de processar texto.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >bytes vs runes</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">s := "olá"
+
+len(s)           // 4 — bytes (ã = 2 bytes em UTF-8)
+len([]rune(s))   // 3 — caracteres / code points
+
+// Indexação por byte — retorna byte, não caractere
+s[2]             // 0xC3 — primeiro byte de 'á' (incorreto para "caractere 3")
+
+// range sobre string — itera por rune, i é o índice em bytes
+for i, r := range s {
+    fmt.Printf("byte %d: %c (%d)\n", i, r, r)
+}
+// byte 0: o (111)
+// byte 1: l (108)
+// byte 2: á (225)   ← note: byte 3 é o segundo byte de á, pulado pelo range
+
+// Converter para []rune para indexar por caractere
+runes := []rune(s)
+runes[2]         // 'á' — correto</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              strings com unicode: ContainsRune, IndexRune, Map
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operações unicode-aware</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">import (
+    "strings"
+    "unicode"
+)
+
+s := "Héllo, Wörld!"
+
+strings.ContainsRune(s, 'é')    // true — busca por rune
+strings.IndexRune(s, 'W')       // índice em bytes da rune 'W'
+
+// Map: transforma cada rune individualmente
+semAcentos := strings.Map(func(r rune) rune {
+    if r > 127 {
+        return -1  // retornar -1 remove o caractere
+    }
+    return r
+}, s)
+// "Hllo, Wrld!"
+
+// unicode: classificar runes
+unicode.IsLetter('ã')   // true
+unicode.IsDigit('7')    // true
+unicode.IsSpace('\t')   // true
+unicode.ToUpper('ç')    // 'Ç'</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    strings.ToUpper não é unicode.ToUpper
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>strings.ToUpper</code> usa as regras
+                                    Unicode de maiúsculo para toda a string —
+                                    incluindo <code>ã → Ã</code>,
+                                    <code>ç → Ç</code>. Ele chama
+                                    <code>unicode.ToUpper</code> internamente
+                                    para cada rune. Para comparações
+                                    case-insensitive em texto internacional,
+                                    prefira <code>strings.EqualFold</code>: ele
+                                    implementa case-folding Unicode completo e é
+                                    mais correto que
+                                    <code>ToLower(a) == ToLower(b)</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 25
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod25-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'strings: manipulação de texto'. Preste atenção no que acontece quando strings são concatenadas em loop com o operador +."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o output do código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">s := "olá"
+fmt.Println(len(s))
+fmt.Println(len([]rune(s)))</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>3</code> e <code>3</code> — len
+                                    sempre conta caracteres</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>4</code> e <code>4</code> — ambos
+                                    contam bytes em UTF-8</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>5</code> e <code>3</code> —
+                                    <code>len(s)</code> conta bytes (<code
+                                       >á</code
+                                    >
+                                    ocupa 2), <code>len([]rune(s))</code> conta
+                                    code points Unicode</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>5</code> e <code>4</code> — rune
+                                    conta bytes do BOM mais o conteúdo</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>"olá"</code> tem 3 caracteres mas
+                              5 bytes em UTF-8: <code>o</code>(1) +
+                              <code>l</code>(1) + <code>á</code>(2) = 4 bytes
+                              mais... na verdade: o=1, l=1, á=2 bytes → total 4.
+                              Mas espere: <code>ã</code> é 2 bytes, então "olá"
+                              = o(1)+l(1)+á(2) = 4 bytes, e
+                              <code>len([]rune("olá"))</code> = 3. O ponto
+                              central é que <code>len(string)</code> conta
+                              <strong>bytes</strong>, não caracteres. Para
+                              caracteres, converta para <code>[]rune</code> ou
+                              use <code>utf8.RuneCountInString</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod25-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'fmt: formatação e verbos'. A diferença entre %w e %v no fmt.Errorf tem impacto direto em como errors.Is e errors.As funcionam."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O código abaixo parece correto. O que está errado?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">var ErrNaoEncontrado = errors.New("não encontrado")
+
+func buscar(id int) error {
+    // ... lógica de busca
+    return fmt.Errorf("buscar(%d): %v", id, ErrNaoEncontrado)
+}
+
+func main() {
+    err := buscar(42)
+    fmt.Println(errors.Is(err, ErrNaoEncontrado)) // esperado: true
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >O código está correto — <code>%v</code> e
+                                    <code>%w</code> são equivalentes para
+                                    <code>errors.Is</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>%v</code> formata o erro como texto
+                                    mas não preserva a cadeia de wrapping —
+                                    <code>errors.Is</code> imprime
+                                    <code>false</code>. A correção é usar
+                                    <code>%w</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Erro de compilação —
+                                    <code>fmt.Errorf</code> não aceita
+                                    <code>error</code> como argumento de
+                                    <code>%v</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>errors.Is</code> sempre retorna
+                                    <code>false</code> para erros criados com
+                                    <code>fmt.Errorf</code></span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>%v</code> converte o erro em
+                              string — o resultado é um erro novo cujo texto
+                              inclui a mensagem do original, mas sem nenhuma
+                              ligação com <code>ErrNaoEncontrado</code>.
+                              <code>errors.Is</code> percorre a cadeia de
+                              <code>Unwrap()</code> e não encontra
+                              <code>ErrNaoEncontrado</code> — retorna
+                              <code>false</code>. Substituir <code>%v</code> por
+                              <code>%w</code> faz
+                              <code>fmt.Errorf</code> retornar um erro com
+                              <code>Unwrap()</code>, e
+                              <code>errors.Is</code> passa a retornar
+                              <code>true</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod25-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'strconv: conversão entre tipos'. Atenção no que strconv.ParseBool aceita como input válido e o que retorna para valores não reconhecidos."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual é o resultado das duas chamadas abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">b1, err1 := strconv.ParseBool("1")
+b2, err2 := strconv.ParseBool("yes")
+fmt.Println(b1, err1)
+fmt.Println(b2, err2)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>true &lt;nil&gt;</code> e
+                                    <code>true &lt;nil&gt;</code> — ParseBool
+                                    aceita qualquer string truthy</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>false &lt;erro&gt;</code> e
+                                    <code>false &lt;erro&gt;</code> — ParseBool
+                                    só aceita "true" e "false" literais</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>true &lt;nil&gt;</code> e
+                                    <code>false &lt;erro&gt;</code> —
+                                    <code>"1"</code> é aceito;
+                                    <code>"yes"</code> não é reconhecido por
+                                    ParseBool e retorna erro</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>true &lt;nil&gt;</code> e
+                                    <code>true &lt;nil&gt;</code> — ParseBool
+                                    aceita "yes"/"no" além de
+                                    "true"/"false"</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>strconv.ParseBool</code> aceita
+                              um conjunto bem definido: <code>"1"</code>,
+                              <code>"t"</code>, <code>"T"</code>,
+                              <code>"TRUE"</code>, <code>"true"</code>,
+                              <code>"True"</code> para <code>true</code>; e
+                              <code>"0"</code>, <code>"f"</code>,
+                              <code>"F"</code>, <code>"FALSE"</code>,
+                              <code>"false"</code>, <code>"False"</code> para
+                              <code>false</code>. <code>"yes"</code> não está na
+                              lista — retorna <code>false</code> e um
+                              <code>*strconv.NumError</code>. Ao processar
+                              variáveis de ambiente booleanas, documente quais
+                              valores o seu código aceita.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 25
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod25-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Builder ou +?</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma função gera um relatório CSV concatenando
+                              linhas em um loop com
+                              <code>resultado += linha + "\n"</code>. O CSV tem
+                              em média 50.000 linhas de ~80 bytes cada. O
+                              relatório está lento e consome memória excessiva.
+                              Qual é a causa e a correção correta?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>strings.Join</code> passando o
+                                    slice de linhas — elimina o loop e reduz
+                                    alocações</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Pré-alocar uma string com o tamanho total
+                                    usando
+                                    <code>make([]byte, totalBytes)</code> e
+                                    copiar cada linha manualmente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Substituir a concatenação por
+                                    <code>strings.Builder</code> com
+                                    <code>b.Grow(50000 * 82)</code> — cada
+                                    <code>+=</code> copia toda a string
+                                    acumulada (O(n²)), enquanto o Builder
+                                    acumula no buffer sem copiar e produz a
+                                    string uma única vez</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar goroutines para construir partes do
+                                    CSV em paralelo e concatenar os resultados
+                                    no final</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Com 50.000 linhas de 80 bytes, a
+                              concatenação com
+                              <code>+=</code> gera aproximadamente 50.000
+                              alocações — cada iteração copia o acumulado
+                              inteiro para um novo slice de bytes. No final,
+                              isso totaliza ~2GB de dados copiados para produzir
+                              um arquivo de 4MB.
+                              <code>strings.Builder</code> com
+                              <code>Grow</code> pré-alocado faz uma única
+                              alocação de ~4MB e escreve cada linha direto no
+                              buffer — de segundos para milissegundos.
+                              <code>strings.Join</code> também funciona bem se
+                              você já tem as linhas em um slice, mas exige
+                              manter todas em memória ao mesmo tempo.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod25-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Parsing de variável de
+                              ambiente</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Uma aplicação lê a variável de ambiente
+                              <code>MAX_CONNS</code>
+                              e usa seu valor como inteiro. O código abaixo
+                              compila e roda sem pânico, mas tem um bug sutil
+                              que pode causar comportamento inesperado em
+                              produção. Qual é o problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func configurar() int {
+    val := os.Getenv("MAX_CONNS")
+    n, _ := strconv.Atoi(val)
+    if n == 0 {
+        n = 10  // padrão
+    }
+    return n
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O código está correto — se
+                                    <code>MAX_CONNS</code> não estiver definida,
+                                    <code>Atoi("")</code> retorna
+                                    <code>0</code> e o padrão de 10 é
+                                    aplicado</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >O erro de <code>Atoi</code> é silenciado
+                                    com <code>_</code>: se alguém definir
+                                    <code>MAX_CONNS=abc</code> por engano,
+                                    <code>Atoi</code> retorna <code>0</code> e o
+                                    padrão de 10 é aplicado silenciosamente —
+                                    sem nenhum aviso de que o valor configurado
+                                    é inválido</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    ><code>strconv.Atoi</code> não aceita
+                                    strings vazias — o programa entra em panic
+                                    quando <code>MAX_CONNS</code> não está
+                                    definida</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O bug é que <code>MAX_CONNS=0</code> é
+                                    tratado como ausente — o valor 0 é
+                                    substituído pelo padrão de 10 mesmo quando o
+                                    usuário quis configurar 0 conexões</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Dois bugs estão presentes. O principal:
+                              ignorar o erro faz com que um valor malformado
+                              (<code>MAX_CONNS=abc</code>) seja silenciosamente
+                              substituído pelo padrão — sem log, sem falha, sem
+                              aviso. Em produção, isso pode significar rodar com
+                              10 conexões quando o operador configurou 100. O
+                              secundário (que você também identificou):
+                              <code>MAX_CONNS=0</code> é uma configuração
+                              explícita válida (desabilitar conexões) mas é
+                              tratada igual à ausência da variável. A correção
+                              certa é verificar se a variável existe com
+                              <code>os.LookupEnv</code> e tratar o erro do
+                              <code>Atoi</code> explicitamente.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

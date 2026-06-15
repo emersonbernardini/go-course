@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Go Modules: go mod init, go.mod, go.sum, dependências externas, go get, go tidy e versionamento semântico."
+      />
+      <title>Módulo 20 — Go Modules · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="20">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 7 — Pacotes e Módulos
+                        </div>
+                        <h1 class="module-header__title">Go Modules</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 20</span>
+                           <span class="badge badge-default">5 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — go mod init
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod20-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>go mod init</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Antes de Go Modules (introduzido no Go 1.11,
+                              estabilizado no 1.13), o ecossistema dependia do
+                              <code>GOPATH</code> — uma única árvore de
+                              diretórios compartilhada por todos os projetos da
+                              máquina. Era impossível ter versões diferentes da
+                              mesma dependência em projetos distintos, e o
+                              repositório do código precisava estar em um
+                              caminho específico dentro do <code>GOPATH</code>.
+                              Go Modules resolveu tudo isso.
+                           </p>
+                           <p>
+                              Um módulo é uma coleção de pacotes Go com
+                              versionamento e gerenciamento de dependências. O
+                              ponto de entrada é o comando
+                              <code>go mod init</code>, que transforma um
+                              diretório qualquer em um módulo:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >terminal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Cria um novo projeto em qualquer diretório (fora do GOPATH)
+mkdir meu-projeto && cd meu-projeto
+go mod init github.com/usuario/meu-projeto
+
+# O argumento é o "module path" — o nome canônico do módulo
+# Convenção: usar o caminho do repositório onde o código vai ser publicado</code></pre>
+                           </div>
+
+                           <p>
+                              O
+                              <strong>module path</strong>
+                              (<code>github.com/usuario/meu-projeto</code>) não
+                              precisa existir como repositório para desenvolver
+                              localmente — mas precisa ser único e, por
+                              convenção, corresponder ao URL real de onde o
+                              código será hospedado. Isso permite que outros
+                              projetos importem seu módulo sem ambiguidade.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >estrutura após init</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash">meu-projeto/
+├── go.mod        ← criado pelo go mod init
+└── main.go       ← você cria</code></pre>
+                           </div>
+
+                           <p>
+                              Para projetos internos ou ferramentas pessoais que
+                              nunca serão publicadas, o module path pode ser
+                              qualquer string — por convenção usa-se algo como
+                              <code>example.com/meu-projeto</code> ou
+                              simplesmente <code>meu-projeto</code>. O que
+                              importa é que seja consistente.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Módulos substituem o GOPATH para projetos
+                                    novos
+                                 </div>
+                                 <div class="callout__body">
+                                    Com módulos, seu projeto pode estar em
+                                    qualquer diretório — não mais em
+                                    <code>$GOPATH/src/...</code>. O
+                                    <code>go.mod</code> é o que declara que
+                                    aquele diretório é um módulo. O compilador
+                                    detecta o módulo raiz lendo o
+                                    <code>go.mod</code> mais próximo na
+                                    hierarquia de diretórios.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — go.mod e go.sum
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod20-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>go.mod e go.sum</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O arquivo <code>go.mod</code> é o manifesto do
+                              módulo. Ele declara o module path, a versão mínima
+                              de Go necessária e as dependências diretas. O
+                              formato é simples e legível por humanos:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >go.mod</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">module github.com/usuario/meu-projeto
+
+go 1.22
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    github.com/jackc/pgx/v5 v5.5.4
+)
+
+// replace permite substituir uma dependência por uma local (útil para desenvolvimento)
+// replace github.com/usuario/lib => ../lib</code></pre>
+                           </div>
+
+                           <p>
+                              Cada linha em <code>require</code> especifica uma
+                              dependência e sua versão mínima requerida. Go usa
+                              o algoritmo
+                              <strong>MVS (Minimum Version Selection)</strong> —
+                              em vez de pegar sempre a versão mais nova, pega a
+                              versão mínima que satisfaz todos os requisitos do
+                              grafo de dependências. Isso torna builds
+                              <em>reproduzíveis por padrão</em>.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              go.sum — verificação criptográfica
+                           </h4>
+
+                           <p>
+                              O <code>go.sum</code> é gerado automaticamente e
+                              contém os hashes criptográficos de cada
+                              dependência e seu <code>go.mod</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >go.sum (trecho)</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">github.com/gin-gonic/gin v1.9.1 h1:4idEAncQnU5cB7BerypkHKpy/nc2zjouW5Wi/M2U5Z4=
+github.com/gin-gonic/gin v1.9.1/go.mod h1:hPrL7YrpYKXt5YId3A/Tnip5kqbEAP+KLuI3SUcPTeU=</code></pre>
+                           </div>
+
+                           <p>
+                              Cada entrada tem dois hashes: um para o conteúdo
+                              do módulo (<code>h1:</code>) e um para o
+                              <code>go.mod</code> da dependência. Se qualquer
+                              arquivo baixado não corresponder ao hash
+                              registrado, o build falha — prevenindo ataques de
+                              supply chain onde um pacote é modificado sem mudar
+                              a versão.
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Arquivo
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Responsabilidade
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Commitar?
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go.mod
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Declara dependências e versões mínimas
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          Sim, sempre
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          go.sum
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Hashes criptográficos para verificação
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          Sim, sempre
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nunca edite go.sum manualmente
+                                 </div>
+                                 <div class="callout__body">
+                                    O <code>go.sum</code> é gerenciado
+                                    automaticamente pelas ferramentas do Go.
+                                    Editar manualmente pode corromper a
+                                    verificação de integridade. Se o arquivo
+                                    ficar inconsistente, delete-o e execute
+                                    <code>go mod tidy</code> para regenerar.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Dependências externas
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod20-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Dependências externas</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Quando você importa um pacote externo no código, o
+                              Go não sabe automaticamente de onde baixá-lo. A
+                              dependência precisa ser declarada no
+                              <code>go.mod</code> antes de compilar. O fluxo
+                              normal é: escrever o import, depois rodar
+                              <code>go get</code> (ou <code>go mod tidy</code>)
+                              para resolver e registrar a dependência.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >main.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "github.com/fatih/color"  // pacote externo
+)
+
+func main() {
+    color.Green("Operação concluída com sucesso")
+    color.Red("Erro: %v", fmt.Errorf("conexão recusada"))
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Ao importar <code>github.com/fatih/color</code>, o
+                              Go resolve o módulo a partir do host declarado no
+                              import path. O cache local fica em
+                              <code>$GOPATH/pkg/mod</code> — baixado uma vez,
+                              reutilizado em todos os projetos da máquina que
+                              usarem a mesma versão.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Dependências indiretas
+                           </h4>
+                           <p>
+                              Quando uma dependência sua depende de outra, essa
+                              segunda é uma
+                              <strong>dependência indireta</strong>. Elas
+                              aparecem no <code>go.mod</code> com o comentário
+                              <code>// indirect</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >go.mod</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">require (
+    github.com/fatih/color v1.16.0           // direta: você importa
+    github.com/mattn/go-colorable v0.1.13    // indirect: dependência do color
+    github.com/mattn/go-isatty v0.0.20       // indirect: dependência do color
+    golang.org/x/sys v0.18.0                 // indirect: transitiva
+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Cache local de módulos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Ver onde ficam os módulos baixados
+go env GOMODCACHE
+# Normalmente: /home/usuario/go/pkg/mod
+
+# Limpar o cache (raramente necessário)
+go clean -modcache
+
+# Verificar dependências sem conexão à internet
+# (usando apenas o cache local)
+GOFLAGS="-mod=mod" go build</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    GOPROXY — de onde vêm os módulos
+                                 </div>
+                                 <div class="callout__body">
+                                    Por padrão,
+                                    <code
+                                       >GOPROXY=https://proxy.golang.org,direct</code
+                                    >. O Go tenta baixar pelo proxy oficial
+                                    primeiro (que tem cache global de módulos
+                                    públicos), e só vai diretamente ao
+                                    repositório se o proxy não tiver o módulo.
+                                    Para redes corporativas com acesso restrito,
+                                    é comum configurar um proxy privado.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — go get e go tidy
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod20-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>go get e go tidy</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>go get</code> e <code>go mod tidy</code> são
+                              os dois comandos centrais para gerenciar
+                              dependências. Eles têm papéis diferentes e
+                              complementares.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              go get — adicionar e atualizar dependências
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Adicionar uma dependência (versão mais recente compatível)
+go get github.com/fatih/color
+
+# Versão específica
+go get github.com/fatih/color@v1.16.0
+
+# Versão mínima (qualquer versão >= 1.15.0)
+go get github.com/fatih/color@>=v1.15.0
+
+# Última versão de um branch específico
+go get github.com/fatih/color@main
+
+# Remover uma dependência (rebaixa para não usada)
+go get github.com/fatih/color@none
+
+# Atualizar todas as dependências diretas para a versão mais recente compatível
+go get -u ./...</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    go get mudou de papel no Go 1.17+
+                                 </div>
+                                 <div class="callout__body">
+                                    Antes do Go 1.17, <code>go get</code> também
+                                    instalava binários (ferramentas de CLI).
+                                    Isso foi separado: para instalar uma
+                                    ferramenta, use <code>go install</code>. O
+                                    <code>go get</code> agora é exclusivamente
+                                    para gerenciar dependências de módulo.
+                                    Exemplo:
+                                    <code
+                                       >go install
+                                       golang.org/x/tools/gopls@latest</code
+                                    >.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              go mod tidy — sincronizar go.mod com o código
+                           </h4>
+                           <p>
+                              <code>go mod tidy</code> analisa todos os arquivos
+                              <code>.go</code> do módulo e ajusta o
+                              <code>go.mod</code> para refletir exatamente o que
+                              é necessário — adicionando o que falta e removendo
+                              o que não é mais usado:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Sincroniza go.mod e go.sum com o código atual
+go mod tidy
+
+# O que tidy faz:
+# 1. Varre todos os imports nos arquivos .go
+# 2. Adiciona dependências ausentes no go.mod
+# 3. Remove dependências que não são mais importadas
+# 4. Atualiza go.sum com os hashes corretos
+
+# Verificar se tidy seria necessário (sem modificar)
+go mod tidy -diff  # disponível a partir do Go 1.23</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Outros comandos úteis
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Listar todas as dependências (diretas e indiretas)
+go list -m all
+
+# Verificar por quê uma dependência está no go.mod
+go mod why github.com/fatih/color
+
+# Ver o grafo de dependências
+go mod graph
+
+# Baixar todas as dependências para o cache (sem compilar)
+go mod download
+
+# Verificar integridade das dependências já baixadas
+go mod verify</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Fluxo de trabalho recomendado em CI
+                                 </div>
+                                 <div class="callout__body">
+                                    Em pipelines de CI, rode
+                                    <code>go mod tidy</code> e verifique se o
+                                    <code>go.mod</code> e
+                                    <code>go.sum</code> não foram alterados. Se
+                                    forem, o desenvolvedor esqueceu de commitar
+                                    as atualizações das dependências. Isso evita
+                                    builds não-reproduzíveis em produção.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Versionamento semântico
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod20-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Versionamento semântico</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go Modules adota o
+                              <strong>SemVer (Semantic Versioning)</strong> como
+                              contrato formal entre quem mantém e quem usa um
+                              módulo. A versão tem o formato
+                              <code>vMAJOR.MINOR.PATCH</code>, onde cada número
+                              tem semântica precisa:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Componente
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Quando incrementar
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Exemplo
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          MAJOR
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Mudança incompatível com versões
+                                          anteriores (breaking change)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          v1 → v2
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-warning);
+                                          "
+                                       >
+                                          MINOR
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Nova funcionalidade, retrocompatível
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          v1.3 → v1.4
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-success);
+                                          "
+                                       >
+                                          PATCH
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Correção de bug, retrocompatível
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          v1.3.2 → v1.3.3
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Major versions — o caso especial do v2+
+                           </h4>
+                           <p>
+                              Go tem uma regra importante:
+                              <strong
+                                 >módulos com versão major ≥ 2 devem incluir o
+                                 sufixo <code>/v2</code> no module path</strong
+                              >. Isso é chamado de "major version suffix" e
+                              permite que um projeto importe v1 e v2 da mesma
+                              biblioteca simultaneamente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// go.mod da biblioteca na versão 2
+module github.com/usuario/lib/v2  // ← sufixo /v2 obrigatório
+
+go 1.22
+
+// -----------------------------------------------
+
+// go.mod de quem usa a biblioteca
+require (
+    github.com/usuario/lib v1.5.0      // v1 — sem sufixo
+    github.com/usuario/lib/v2 v2.3.1   // v2 — com sufixo /v2
+)
+
+// -----------------------------------------------
+
+// imports no código podem coexistir
+import (
+    libv1 "github.com/usuario/lib"
+    libv2 "github.com/usuario/lib/v2"
+)</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Versões pre-release e pseudo-versões
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Pre-release: sufixo após o patch
+v1.5.0-alpha.1
+v1.5.0-beta.2
+v1.5.0-rc.1
+
+# Pseudo-versão: gerada pelo Go para commits sem tag
+# formato: vX.Y.Z-YYYYMMDDHHMMSS-HASH
+v0.0.0-20240315120000-abc123def456
+
+# Quando usar pseudo-versão: dependência de commit específico (não recomendado em produção)
+go get github.com/usuario/lib@abc123def456</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    v0 não tem garantias de compatibilidade
+                                 </div>
+                                 <div class="callout__body">
+                                    Versões <code>v0.x.y</code> são
+                                    explicitamente instáveis — qualquer update
+                                    pode quebrar a API, mesmo em MINOR ou PATCH.
+                                    Isso é um sinal oficial de que a biblioteca
+                                    ainda não está pronta para produção. Use
+                                    <code>v0</code> ciente de que qualquer
+                                    <code>go get -u</code> pode introduzir
+                                    breaking changes.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 20
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod20-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'go.mod e go.sum'. Preste atenção no algoritmo que o Go usa para selecionar versões de dependências."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O módulo A requer a lib X v1.3.0. O módulo B
+                              também requer a lib X, mas na versão v1.5.0. Seu
+                              projeto depende de A e B. Qual versão da lib X
+                              será usada?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >v1.3.0 — Go prefere a versão mais antiga
+                                    para maior estabilidade</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >v1.5.0 — MVS (Minimum Version Selection)
+                                    usa a versão mínima que satisfaz todos os
+                                    requisitos, que neste caso é v1.5.0</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >A versão mais recente disponível no
+                                    registry — Go sempre atualiza
+                                    automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Erro de compilação — versões conflitantes
+                                    de uma dependência não são permitidas</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O MVS seleciona a versão
+                              <em>mínima</em> que satisfaz todos os requisitos
+                              do grafo. A v1.3.0 é insuficiente para B (que
+                              precisa de pelo menos v1.5.0), então v1.5.0 é a
+                              versão mínima que satisfaz ambos. Go não pega a
+                              versão mais nova disponível — só o mínimo
+                              necessário. Isso torna builds reproduzíveis.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod20-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Versionamento semântico'. Preste atenção na regra especial do Go para versões major v2 ou superior."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Uma biblioteca publicada em
+                              <code>github.com/user/cache</code> vai lançar uma
+                              versão v2 com breaking changes. Qual deve ser o
+                              module path correto no <code>go.mod</code> da
+                              biblioteca?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>github.com/user/cache</code> — apenas
+                                    a tag git v2.0.0 é suficiente para indicar a
+                                    nova versão</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>github.com/user/cache-v2</code> —
+                                    convenção de renomear o repositório</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>github.com/user/cache/v2</code> — o
+                                    sufixo <code>/v2</code> no module path é
+                                    obrigatório para versões major ≥ 2</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>github.com/user/cache@v2</code> — a
+                                    versão é sufixada ao module path com @</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Go exige que o module path inclua o
+                              sufixo
+                              <code>/v2</code>, <code>/v3</code>, etc. para
+                              versões major ≥ 2. Isso permite que consumidores
+                              importem v1 e v2 simultaneamente no mesmo binário
+                              sem conflito de nomes — tratando-as como módulos
+                              distintos. O import path nos arquivos
+                              <code>.go</code> também deve usar
+                              <code>github.com/user/cache/v2</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod20-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'go get e go tidy'. Há uma diferença importante entre o que cada comando faz com o go.mod."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Você removeu todos os imports de
+                              <code>github.com/fatih/color</code> do código, mas
+                              o pacote ainda aparece em <code>go.mod</code>.
+                              Qual comando resolve isso corretamente?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code
+                                       >go get github.com/fatih/color@none</code
+                                    >
+                                    — remove explicitamente a dependência</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>go mod tidy</code> — varre todos os
+                                    imports do projeto e remove do go.mod o que
+                                    não é mais usado</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Editar <code>go.mod</code> manualmente e
+                                    deletar a linha da dependência</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>go clean -cache</code> — limpa o
+                                    cache e força redetecção de
+                                    dependências</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>go mod tidy</code> é o comando
+                              correto — ele analisa os imports em todo o
+                              código-fonte e sincroniza o <code>go.mod</code>,
+                              removendo dependências que não são mais
+                              referenciadas. <code>go get @none</code> também
+                              funciona, mas exige saber o nome exato do pacote.
+                              <code>go mod tidy</code>
+                              faz o trabalho completo automaticamente, incluindo
+                              atualizar o
+                              <code>go.sum</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 20
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod20-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Diagnóstico de go.mod</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Seu CI falha com o erro abaixo. O
+                              <code>go.mod</code> tem a linha
+                              <code>require github.com/pkg/errors v0.9.0</code>,
+                              mas nenhum arquivo <code>.go</code> importa esse
+                              pacote. Qual é a causa e a solução correta?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                              </div>
+                              <pre><code data-lang="bash">$ go mod verify
+github.com/pkg/errors v0.9.0: missing go.sum entry for module...
+FAIL: go.sum is out of sync with go.mod</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Adicionar manualmente o hash de
+                                    <code>github.com/pkg/errors</code> ao
+                                    <code>go.sum</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Rodar
+                                    <code
+                                       >go get
+                                       github.com/pkg/errors@v0.9.0</code
+                                    >
+                                    para forçar o download e atualizar o
+                                    go.sum</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Rodar <code>go mod tidy</code>: vai remover
+                                    a dependência não utilizada do go.mod e
+                                    sincronizar o go.sum — resolvendo raiz e
+                                    sintoma ao mesmo tempo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Deletar <code>go.sum</code> e rodar
+                                    <code>go build</code> para regenerar do
+                                    zero</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! O problema tem duas camadas: a
+                              dependência está no
+                              <code>go.mod</code> sem ser usada, e o
+                              <code>go.sum</code> ficou dessincronizado.
+                              <code>go mod tidy</code> resolve ambos: remove
+                              <code>github.com/pkg/errors</code> do
+                              <code>go.mod</code> (porque nenhum import o
+                              referencia) e atualiza o <code>go.sum</code> de
+                              acordo. Deletar o <code>go.sum</code> manualmente
+                              é arriscado e desnecessário.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod20-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — replace e desenvolvimento
+                              local</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você mantém dois módulos:
+                              <code>github.com/empresa/api</code> e
+                              <code>github.com/empresa/core</code>. Está
+                              desenvolvendo uma feature que modifica
+                              <code>core</code> e precisa testá-la em
+                              <code>api</code> antes de publicar. Como
+                              configurar o go.mod de <code>api</code> para usar
+                              a versão local de <code>core</code>?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Copiar os arquivos de
+                                    <code>core</code> para dentro de
+                                    <code>api</code> temporariamente e ajustar
+                                    os imports</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Publicar uma versão pre-release de
+                                    <code>core</code> (ex: v1.2.0-dev) e fazer
+                                    <code>go get</code> dessa versão em
+                                    <code>api</code></span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Adicionar uma diretiva
+                                    <code>replace</code> no go.mod de
+                                    <code>api</code>:
+                                    <code
+                                       >replace github.com/empresa/core =&gt;
+                                       ../core</code
+                                    >
+                                    — aponta para o diretório local sem publicar
+                                    nada</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>GOPATH</code> mode
+                                    (<code>GO111MODULE=off</code>) para que Go
+                                    resolva os pacotes pelo sistema de
+                                    arquivos</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! A diretiva <code>replace</code> no
+                              <code>go.mod</code> é exatamente para esse cenário
+                              — desenvolvimento local de múltiplos módulos
+                              relacionados. O Go vai usar o diretório local
+                              (<code>../core</code>) em vez de baixar do proxy.
+                              Lembre-se de remover o <code>replace</code> antes
+                              de commitar o <code>go.mod</code> final ou de
+                              publicar a versão, caso contrário outros
+                              desenvolvedores precisarão ter a mesma estrutura
+                              de diretórios.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

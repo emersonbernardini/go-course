@@ -1,0 +1,1800 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="net/http em Go: servidor HTTP, handlers, middleware, cliente HTTP, timeouts e JSON sobre HTTP."
+      />
+      <title>Módulo 28 — net/http · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="28">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 9 — Stdlib Essencial
+                        </div>
+                        <h1 class="module-header__title">net/http</h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 28</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Intermediário</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — Servidor HTTP
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Servidor HTTP</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>net/http</code> da stdlib de Go é
+                              capaz de construir servidores HTTP prontos para
+                              produção —
+                              <strong>sem nenhuma dependência externa</strong>.
+                              Ao contrário de Python ou Node, o servidor de Go
+                              não é apenas para desenvolvimento: ele lida com
+                              multiplexação de conexões, keep-alive e goroutines
+                              por requisição nativamente.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              O servidor mais simples possível
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >servidor mínimo</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">package main
+
+import (
+    "fmt"
+    "net/http"
+)
+
+func main() {
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "olá, %s!", r.URL.Path[1:])
+    })
+
+    // ListenAndServe bloqueia e serve até erro fatal
+    if err := http.ListenAndServe(":8080", nil); err != nil {
+        log.Fatal(err)
+    }
+}</code></pre>
+                           </div>
+
+                           <p>
+                              <code>http.ListenAndServe(addr, handler)</code>
+                              aceita dois argumentos: o endereço a escutar e um
+                              <code>http.Handler</code>. Quando o segundo
+                              argumento é <code>nil</code>, usa o
+                              <strong>DefaultServeMux</strong> — o roteador
+                              global padrão, no qual
+                              <code>http.HandleFunc</code> registra rotas.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              ServeMux — roteador explícito
+                           </h4>
+                           <p>
+                              O <code>DefaultServeMux</code> é conveniente para
+                              exemplos, mas em código de produção você usa um
+                              <code>ServeMux</code>
+                              próprio. Isso evita que pacotes importados
+                              registrem rotas acidentalmente no mux global:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >mux explícito</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func main() {
+    mux := http.NewServeMux()
+
+    mux.HandleFunc("GET /healthz", handleHealth)
+    mux.HandleFunc("GET /api/usuarios", handleListarUsuarios)
+    mux.HandleFunc("POST /api/usuarios", handleCriarUsuario)
+    mux.HandleFunc("GET /api/usuarios/{id}", handleBuscarUsuario)
+
+    srv := &http.Server{
+        Addr:    ":8080",
+        Handler: mux,
+    }
+
+    log.Println("servidor iniciado em :8080")
+    if err := srv.ListenAndServe(); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("ok"))
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go 1.22: padrões de rota com método e
+                                    parâmetros
+                                 </div>
+                                 <div class="callout__body">
+                                    A partir do Go 1.22, o
+                                    <code>ServeMux</code> passou a suportar
+                                    prefixo de método HTTP (<code
+                                       >"GET /path"</code
+                                    >) e parâmetros de caminho
+                                    (<code>"{id}"</code>) diretamente, sem
+                                    dependências externas. Acesse o parâmetro
+                                    com <code>r.PathValue("id")</code>. Para
+                                    projetos que precisam de roteamento mais
+                                    avançado (wildcards, grupos, middleware por
+                                    rota), frameworks como <code>chi</code> ou
+                                    <code>gorilla/mux</code> ainda fazem
+                                    sentido.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Goroutine por requisição
+                           </h4>
+                           <p>
+                              O servidor de Go lança uma goroutine para cada
+                              requisição recebida. Isso significa que seu
+                              handler pode bloquear (I/O, banco de dados) sem
+                              travar o servidor, e que
+                              <strong
+                                 >handlers são chamados concorrentemente</strong
+                              >
+                              — qualquer estado compartilhado entre handlers
+                              precisa de sincronização.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >estado compartilhado — requer mutex</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Servidor struct {
+    mu       sync.Mutex
+    visitas  int
+}
+
+func (s *Servidor) handleContador(w http.ResponseWriter, r *http.Request) {
+    s.mu.Lock()
+    s.visitas++
+    v := s.visitas
+    s.mu.Unlock()
+    fmt.Fprintf(w, "visitas: %d", v)
+}
+
+func main() {
+    s := &Servidor{}
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET /contador", s.handleContador)
+    log.Fatal(http.ListenAndServe(":8080", mux))
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Handlers e http.HandlerFunc
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Handlers e http.HandlerFunc</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O coração do servidor de Go é a interface
+                              <code>http.Handler</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >definição da interface</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type Handler interface {
+    ServeHTTP(ResponseWriter, *Request)
+}</code></pre>
+                           </div>
+
+                           <p>
+                              Qualquer tipo que implemente
+                              <code>ServeHTTP</code> pode ser registrado como
+                              handler. <code>http.HandlerFunc</code> é um type
+                              adapter que converte uma função com a assinatura
+                              correta em um <code>http.Handler</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >HandlerFunc como type adapter</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// http.HandlerFunc é definido na stdlib como:
+type HandlerFunc func(ResponseWriter, *Request)
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) { f(w, r) }
+
+// Logo, qualquer func(ResponseWriter, *Request) pode virar um Handler:
+var h http.Handler = http.HandlerFunc(meuHandler)  // conversão explícita
+mux.Handle("/rota", h)
+
+// HandleFunc faz a conversão implicitamente:
+mux.HandleFunc("/rota", meuHandler)  // equivalente</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Handler como struct — injeção de dependências
+                           </h4>
+                           <p>
+                              Implementar a interface em uma struct é o padrão
+                              para injetar dependências (banco de dados, logger,
+                              configuração) nos handlers sem variáveis globais:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >handler com dependências injetadas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type UsuarioHandler struct {
+    repo   UsuarioRepo
+    logger *slog.Logger
+}
+
+func (h *UsuarioHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    switch r.Method {
+    case http.MethodGet:
+        h.listar(w, r)
+    case http.MethodPost:
+        h.criar(w, r)
+    default:
+        http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
+    }
+}
+
+func (h *UsuarioHandler) listar(w http.ResponseWriter, r *http.Request) {
+    usuarios, err := h.repo.Todos(r.Context())
+    if err != nil {
+        h.logger.Error("listar usuários", "erro", err)
+        http.Error(w, "erro interno", http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(usuarios)
+}
+
+// Wiring na main:
+func main() {
+    db := conectarDB()
+    logger := slog.Default()
+
+    mux := http.NewServeMux()
+    mux.Handle("/api/usuarios", &UsuarioHandler{
+        repo:   postgres.NewUsuarioRepo(db),
+        logger: logger,
+    })
+    log.Fatal(http.ListenAndServe(":8080", mux))
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              ResponseWriter — escrevendo respostas
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func handler(w http.ResponseWriter, r *http.Request) {
+    // 1. Defina headers ANTES de WriteHeader ou Write
+    w.Header().Set("Content-Type", "application/json")
+    w.Header().Set("X-Request-ID", r.Header.Get("X-Request-ID"))
+
+    // 2. Status code (padrão 200 se omitido)
+    w.WriteHeader(http.StatusCreated)  // 201
+
+    // 3. Body
+    w.Write([]byte(`{"status":"criado"}`))
+
+    // Atenção: após Write ou WriteHeader, headers não podem mais ser alterados
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Headers devem ser definidos antes do body
+                                 </div>
+                                 <div class="callout__body">
+                                    Em HTTP, o status code e os headers são
+                                    enviados antes do body. Em Go, a primeira
+                                    chamada a <code>w.Write()</code> ou
+                                    <code>w.WriteHeader()</code> envia os
+                                    headers. Qualquer
+                                    <code>w.Header().Set()</code> após isso é
+                                    silenciosamente ignorado. O padrão: headers
+                                    → WriteHeader → Write, nessa ordem.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Middleware
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Middleware</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Middleware em Go é uma função que recebe um
+                              <code>http.Handler</code> e retorna outro
+                              <code>http.Handler</code> — envolvendo o handler
+                              original com comportamento adicional. Isso é
+                              possível porque <code>http.Handler</code> é uma
+                              interface, e funções são valores de primeira
+                              classe em Go.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >assinatura padrão de middleware</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Tipo canônico: recebe Handler, retorna Handler
+type Middleware func(http.Handler) http.Handler</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Implementando middlewares reais
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >logging + autenticação + recover</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Logging: registra método, path e duração de cada requisição
+func comLogging(logger *slog.Logger) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            inicio := time.Now()
+            next.ServeHTTP(w, r)
+            logger.Info("requisição",
+                "método", r.Method,
+                "path", r.URL.Path,
+                "duração", time.Since(inicio),
+            )
+        })
+    }
+}
+
+// Autenticação: valida Bearer token no header Authorization
+func comAutenticacao(validar func(string) bool) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+            if !validar(token) {
+                http.Error(w, "não autorizado", http.StatusUnauthorized)
+                return  // interrompe a cadeia — next NÃO é chamado
+            }
+            next.ServeHTTP(w, r)
+        })
+    }
+}
+
+// Recovery: captura panics em handlers e retorna 500
+func comRecovery(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if r := recover(); r != nil {
+                log.Printf("panic recuperado: %v\n%s", r, debug.Stack())
+                http.Error(w, "erro interno", http.StatusInternalServerError)
+            }
+        }()
+        next.ServeHTTP(w, r)
+    })
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Compondo middlewares em cadeia
+                           </h4>
+                           <p>
+                              Middlewares são compostos envolvendo uns aos
+                              outros. A ordem importa: o middleware mais externo
+                              é executado primeiro na entrada e por último na
+                              saída:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >composição de cadeia</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Função utilitária para compor middlewares (aplicados de fora para dentro)
+func encadear(h http.Handler, ms ...func(http.Handler) http.Handler) http.Handler {
+    for i := len(ms) - 1; i >= 0; i-- {
+        h = ms[i](h)
+    }
+    return h
+}
+
+func main() {
+    logger := slog.Default()
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET /api/perfil", handlePerfil)
+
+    handler := encadear(mux,
+        comRecovery,                           // 1º a executar (mais externo)
+        comLogging(logger),                    // 2º
+        comAutenticacao(validarJWT),           // 3º (mais interno antes do mux)
+    )
+
+    log.Fatal(http.ListenAndServe(":8080", handler))
+}
+// Ordem de execução por requisição:
+// Recovery → Logging → Autenticação → Handler → Autenticação → Logging → Recovery</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Passando dados entre middlewares: context
+                                 </div>
+                                 <div class="callout__body">
+                                    Para passar dados de um middleware para o
+                                    handler (ex: o usuário autenticado extraído
+                                    do token), use
+                                    <code
+                                       >r.WithContext(context.WithValue(r.Context(),
+                                       chave, valor))</code
+                                    >
+                                    e recupere com
+                                    <code>r.Context().Value(chave)</code>. Use
+                                    tipos concretos como chave — nunca strings —
+                                    para evitar colisões entre pacotes.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Cliente HTTP
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Cliente HTTP</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              O pacote <code>net/http</code> inclui também um
+                              cliente HTTP completo. A função
+                              <code>http.Get</code> é conveniente para casos
+                              simples, mas em código de produção você sempre
+                              cria um <code>http.Client</code> próprio com
+                              timeouts configurados.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Fazendo requisições — o básico
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >GET simples</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">resp, err := http.Get("https://api.github.com/users/golang")
+if err != nil {
+    return fmt.Errorf("GET: %w", err)
+}
+defer resp.Body.Close()  // SEMPRE fechar o body
+
+if resp.StatusCode != http.StatusOK {
+    return fmt.Errorf("status inesperado: %d", resp.StatusCode)
+}
+
+body, err := io.ReadAll(resp.Body)
+if err != nil {
+    return fmt.Errorf("lendo body: %w", err)
+}
+fmt.Println(string(body))</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    resp.Body.Close() é mandatório
+                                 </div>
+                                 <div class="callout__body">
+                                    O body de uma resposta HTTP é uma conexão de
+                                    rede ativa. Se não for fechado, a conexão
+                                    permanece aberta e não retorna para o pool —
+                                    esgotando as conexões disponíveis com o
+                                    tempo. Use sempre
+                                    <code>defer resp.Body.Close()</code>
+                                    imediatamente após verificar o erro do
+                                    <code>http.Get</code> ou
+                                    <code>client.Do</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              http.NewRequest — controle total
+                           </h4>
+                           <p>
+                              Para requisições com método específico, headers
+                              customizados ou body, use
+                              <code>http.NewRequestWithContext</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >POST com body e headers</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func criarIssue(ctx context.Context, token, repo string, payload any) error {
+    body, err := json.Marshal(payload)
+    if err != nil {
+        return fmt.Errorf("marshal: %w", err)
+    }
+
+    req, err := http.NewRequestWithContext(ctx,
+        http.MethodPost,
+        fmt.Sprintf("https://api.github.com/repos/%s/issues", repo),
+        bytes.NewReader(body),
+    )
+    if err != nil {
+        return fmt.Errorf("criar request: %w", err)
+    }
+
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Authorization", "Bearer "+token)
+    req.Header.Set("Accept", "application/vnd.github+json")
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return fmt.Errorf("executar request: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusCreated {
+        b, _ := io.ReadAll(resp.Body)
+        return fmt.Errorf("API retornou %d: %s", resp.StatusCode, b)
+    }
+    return nil
+}</code></pre>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Timeouts e configuração do cliente
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Timeouts e configuração do cliente</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <code>http.DefaultClient</code> não tem timeout
+                              configurado. Em produção, uma requisição a uma API
+                              lenta pode bloquear a goroutine indefinidamente.
+                              Todo cliente HTTP em Go para produção deve ter
+                              timeouts explícitos.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >cliente configurado para produção</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// cliente criado uma vez e reutilizado — nunca criar por requisição
+var clienteHTTP = &http.Client{
+    Timeout: 10 * time.Second,  // timeout total da requisição (dial + TLS + headers + body)
+    Transport: &http.Transport{
+        DialContext: (&net.Dialer{
+            Timeout:   3 * time.Second,  // tempo máximo para estabelecer conexão TCP
+            KeepAlive: 30 * time.Second, // keep-alive de conexões no pool
+        }).DialContext,
+        TLSHandshakeTimeout:   5 * time.Second,  // tempo máximo para handshake TLS
+        ResponseHeaderTimeout: 5 * time.Second,  // tempo máximo aguardando headers de resposta
+        MaxIdleConns:          100,              // total de conexões idle no pool
+        MaxIdleConnsPerHost:   10,               // idle por host
+        IdleConnTimeout:       90 * time.Second, // tempo de vida de conexão idle
+    },
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Timeout por requisição com context
+                           </h4>
+                           <p>
+                              O campo <code>Timeout</code> do cliente define um
+                              limite global. Para timeouts por requisição (mais
+                              granular), use <code>context.WithTimeout</code> e
+                              <code>http.NewRequestWithContext</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >timeout por requisição</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">func buscarDados(ctx context.Context, url string) ([]byte, error) {
+    // timeout específico para esta requisição
+    ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+    defer cancel()
+
+    req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    resp, err := clienteHTTP.Do(req)
+    if err != nil {
+        // context.DeadlineExceeded se o timeout expirou
+        if errors.Is(err, context.DeadlineExceeded) {
+            return nil, fmt.Errorf("timeout ao buscar %s", url)
+        }
+        return nil, fmt.Errorf("buscarDados: %w", err)
+    }
+    defer resp.Body.Close()
+
+    return io.ReadAll(resp.Body)
+}</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Parâmetro
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          O que limita
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Valor típico
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          Client.Timeout
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Requisição inteira (dial + TLS + body)
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          10–30s
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          DialContext.Timeout
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Apenas estabelecimento TCP
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          3–5s
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          TLSHandshakeTimeout
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Negociação TLS/SSL
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          5s
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          ResponseHeaderTimeout
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Aguardando primeiro byte dos headers
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          5s
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Nunca criar http.Client por requisição
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>http.Client</code> mantém um pool
+                                    interno de conexões TCP reutilizáveis
+                                    (<code>http.Transport</code>). Criar um novo
+                                    cliente por requisição descarta o pool a
+                                    cada vez — forçando um novo handshake TCP e
+                                    TLS para cada chamada. Crie o cliente uma
+                                    vez como variável de pacote ou campo de
+                                    struct e reutilize.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — JSON sobre HTTP
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod28-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>JSON sobre HTTP</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              A combinação de <code>net/http</code> e
+                              <code>encoding/json</code>
+                              é o padrão para APIs REST em Go. O módulo 29
+                              detalha JSON em profundidade — aqui o foco é nos
+                              padrões de integração HTTP, que têm suas próprias
+                              armadilhas.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Decodificando o body de uma requisição
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >lendo JSON do body de uma requisição
+                                    POST</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type CriarUsuarioReq struct {
+    Nome  string `json:"nome"`
+    Email string `json:"email"`
+}
+
+func handleCriarUsuario(w http.ResponseWriter, r *http.Request) {
+    // Limitar tamanho do body — previne ataques de payload gigante
+    r.Body = http.MaxBytesReader(w, r.Body, 1<<20)  // 1 MB
+
+    var req CriarUsuarioReq
+    dec := json.NewDecoder(r.Body)
+    dec.DisallowUnknownFields()  // rejeita campos desconhecidos
+
+    if err := dec.Decode(&req); err != nil {
+        var maxBytesErr *http.MaxBytesError
+        switch {
+        case errors.As(err, &maxBytesErr):
+            http.Error(w, "payload muito grande", http.StatusRequestEntityTooLarge)
+        case err == io.EOF:
+            http.Error(w, "body vazio", http.StatusBadRequest)
+        default:
+            http.Error(w, "JSON inválido: "+err.Error(), http.StatusBadRequest)
+        }
+        return
+    }
+
+    // Validação de negócio
+    if req.Nome == "" || req.Email == "" {
+        http.Error(w, "nome e email são obrigatórios", http.StatusUnprocessableEntity)
+        return
+    }
+
+    usuario, err := criarUsuario(r.Context(), req.Nome, req.Email)
+    if err != nil {
+        http.Error(w, "erro interno", http.StatusInternalServerError)
+        return
+    }
+
+    responderJSON(w, http.StatusCreated, usuario)
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Utilitário para responder JSON
+                           </h4>
+                           <p>
+                              Um helper centraliza o padrão de resposta JSON e
+                              garante que o header
+                              <code>Content-Type</code> seja sempre definido:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// responderJSON serializa v como JSON e escreve na resposta
+func responderJSON(w http.ResponseWriter, status int, v any) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    if err := json.NewEncoder(w).Encode(v); err != nil {
+        // Neste ponto o status já foi enviado — apenas logamos
+        slog.Error("encoding JSON", "erro", err)
+    }
+}
+
+// Uso:
+responderJSON(w, http.StatusOK, map[string]any{
+    "usuarios": lista,
+    "total":    len(lista),
+})
+
+// Para erros JSON estruturados (padrão de API REST):
+type ErroResp struct {
+    Erro   string `json:"erro"`
+    Codigo string `json:"codigo,omitempty"`
+}
+
+func responderErro(w http.ResponseWriter, status int, mensagem, codigo string) {
+    responderJSON(w, status, ErroResp{Erro: mensagem, Codigo: codigo})
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Decodificando resposta JSON do cliente
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >cliente decodificando resposta JSON</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">type GitHubUser struct {
+    Login     string `json:"login"`
+    Nome      string `json:"name"`
+    Seguidores int   `json:"followers"`
+}
+
+func buscarUsuarioGitHub(ctx context.Context, login string) (*GitHubUser, error) {
+    req, _ := http.NewRequestWithContext(ctx, http.MethodGet,
+        "https://api.github.com/users/"+login, nil)
+    req.Header.Set("Accept", "application/vnd.github+json")
+
+    resp, err := clienteHTTP.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("buscarUsuarioGitHub: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("GitHub API %d: %s", resp.StatusCode, body)
+    }
+
+    // Decodificar diretamente do body — sem io.ReadAll intermediário
+    var u GitHubUser
+    if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
+        return nil, fmt.Errorf("decodificar resposta: %w", err)
+    }
+    return &u, nil
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    json.NewDecoder vs json.Unmarshal
+                                 </div>
+                                 <div class="callout__body">
+                                    <code
+                                       >json.NewDecoder(r.Body).Decode(&v)</code
+                                    >
+                                    lê o <code>io.Reader</code> diretamente —
+                                    sem carregar o body inteiro na memória
+                                    primeiro. <code>json.Unmarshal</code> exige
+                                    um <code>[]byte</code> completo em memória.
+                                    Para payloads HTTP, prefira o
+                                    <code>Decoder</code> — especialmente para
+                                    respostas grandes. O
+                                    <code>Decoder</code> também suporta
+                                    múltiplos valores JSON sequenciais no mesmo
+                                    stream.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 28
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod28-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Handlers e http.HandlerFunc'. Preste atenção na ordem das operações ao escrever uma resposta HTTP — especificamente quando os headers são enviados ao cliente."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O handler abaixo tem um bug: o header
+                              <code>Content-Type</code> não aparece na resposta.
+                              Por quê?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func handler(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Header().Set("Content-Type", "application/json")
+    w.Write([]byte(`{"ok":true}`))
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>w.Header().Set</code> deve ser
+                                    chamado após <code>w.Write</code> para que o
+                                    Go saiba o tamanho do body</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    ><code>w.WriteHeader</code> envia o status e
+                                    os headers imediatamente; qualquer
+                                    <code>w.Header().Set</code> após isso é
+                                    ignorado. Headers devem ser definidos antes
+                                    de <code>WriteHeader</code> ou
+                                    <code>Write</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O problema é usar
+                                    <code>http.StatusOK</code> — o Go define
+                                    <code>Content-Type</code> automaticamente
+                                    apenas para outros status codes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>w.Header()</code> retorna uma cópia
+                                    dos headers — a modificação não afeta a
+                                    resposta real</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto!
+                              <code>w.WriteHeader(http.StatusOK)</code>
+                              serializa e envia a linha de status HTTP e todos
+                              os headers acumulados até aquele momento. O
+                              <code>Set("Content-Type", ...)</code> vem depois —
+                              quando os headers já foram transmitidos. O Go não
+                              retorna erro: silenciosamente ignora a
+                              modificação. A correção: mover o
+                              <code>Header().Set</code> para antes do
+                              <code>WriteHeader</code>.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod28-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Cliente HTTP'. Preste atenção no que acontece com as conexões de rede quando resp.Body não é fechado — e o impacto acumulativo em um serviço de alta carga."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um microserviço faz centenas de chamadas por
+                              minuto a uma API externa. Após algumas horas em
+                              produção, começa a acumular erros "connection
+                              refused" e esgotamento de file descriptors. Qual é
+                              o bug mais provável no código abaixo?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func chamarAPI(url string) ([]byte, error) {
+    resp, err := clienteHTTP.Get(url)
+    if err != nil {
+        return nil, err
+    }
+    if resp.StatusCode != 200 {
+        return nil, fmt.Errorf("status %d", resp.StatusCode)
+    }
+    return io.ReadAll(resp.Body)
+}</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    ><code>clienteHTTP.Get</code> não é
+                                    thread-safe — goroutines concorrentes causam
+                                    race condition</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O cliente não tem timeout configurado —
+                                    requisições lentas acumulam goroutines
+                                    bloqueadas</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    ><code>resp.Body</code> nunca é fechado
+                                    quando <code>resp.StatusCode != 200</code> —
+                                    a conexão TCP fica aberta e não retorna ao
+                                    pool, esgotando file descriptors ao longo do
+                                    tempo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    ><code>io.ReadAll</code> não fecha o body
+                                    automaticamente após a leitura
+                                    completa</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! No caminho de erro (<code
+                                 >StatusCode != 200</code
+                              >), a função retorna sem fechar o body — deixando
+                              a conexão TCP aberta indefinidamente. O
+                              <code>defer resp.Body.Close()</code>
+                              deve ser colocado imediatamente após verificar o
+                              erro do
+                              <code>Get</code> — antes de qualquer verificação
+                              de status — para garantir fechamento em todos os
+                              caminhos de retorno. Curiosamente, a opção D
+                              também está incorreta: <code>io.ReadAll</code>
+                              não fecha o body — isso é responsabilidade do
+                              chamador.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod28-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Middleware'. Preste atenção na ordem de execução quando múltiplos middlewares são encadeados — especialmente a relação entre a ordem de registro e a ordem de execução."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Dado o código de encadeamento abaixo, qual é a
+                              ordem de execução quando uma requisição chega?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">handler := comRecovery(
+    comLogging(
+        comAutenticacao(mux),
+    ),
+)</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Autenticação → Logging → Recovery → mux →
+                                    Recovery → Logging → Autenticação</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >mux → Autenticação → Logging → Recovery (de
+                                    dentro para fora)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Recovery → Logging → Autenticação → mux →
+                                    Autenticação → Logging → Recovery (de fora
+                                    para dentro na entrada, de dentro para fora
+                                    na saída)</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Todos os middlewares executam em paralelo
+                                    antes do mux</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O middleware mais externo
+                              (<code>comRecovery</code>) é o primeiro a receber
+                              a requisição e o último a processar a resposta. É
+                              como camadas de uma cebola: a requisição entra de
+                              fora para dentro (Recovery → Logging →
+                              Autenticação → mux) e a resposta sai de dentro
+                              para fora. Isso explica por que Recovery deve ser
+                              o mais externo — ele precisa capturar panics de
+                              todos os outros middlewares e do handler.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 28
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod28-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Bug em produção</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um serviço em Go faz chamadas a três APIs externas
+                              para montar uma resposta composta. O código abaixo
+                              funciona em testes mas é lento em produção sob
+                              carga alta. Identifique o problema principal e a
+                              correção correta.
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">func handleDashboard(w http.ResponseWriter, r *http.Request) {
+    cliente := &http.Client{Timeout: 5 * time.Second}  // novo cliente por requisição
+
+    usuario, _ := buscarUsuario(cliente, r.Context())
+    pedidos, _ := buscarPedidos(cliente, r.Context())
+    notifs, _  := buscarNotificacoes(cliente, r.Context())
+
+    responderJSON(w, http.StatusOK, map[string]any{
+        "usuario": usuario,
+        "pedidos": pedidos,
+        "notifs":  notifs,
+    })
+}</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Aumentar o timeout do cliente para 30
+                                    segundos para evitar erros nas três
+                                    chamadas</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Tratar os erros ignorados com
+                                    <code>_</code> — os panics causados pelos
+                                    nil returns estão degradando o serviço</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Dois problemas: (1) criar
+                                    <code>http.Client</code> por requisição
+                                    descarta o pool de conexões TCP, forçando
+                                    handshake a cada chamada — use um cliente
+                                    global. (2) as três chamadas são sequenciais
+                                    — usar <code>errgroup</code> ou goroutines
+                                    com WaitGroup para executá-las em
+                                    paralelo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar
+                                    <code>http.DefaultClient</code> diretamente
+                                    — é otimizado pelo runtime e evita o
+                                    overhead de criação do Transport</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Dois problemas distintos. O primeiro:
+                              cada requisição ao dashboard cria um
+                              <code>http.Client</code> com um novo
+                              <code>Transport</code> — descartando o pool de
+                              conexões. Sob carga, isso multiplica handshakes
+                              TCP e TLS desnecessários. Solução: cliente como
+                              variável de pacote ou campo de struct, criado uma
+                              vez. O segundo: as três chamadas externas são
+                              feitas em série (soma dos timeouts).
+                              Paralelizá-las com
+                              <code>golang.org/x/sync/errgroup</code>
+                              reduz a latência total para o máximo das três, não
+                              a soma. A opção D seria uma melhora parcial
+                              (resolve o pool), mas
+                              <code>http.DefaultClient</code> não tem timeout —
+                              perigoso em produção.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod28-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Decisão de design</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você está construindo uma API REST em Go. Precisa
+                              que todas as rotas sob <code>/api/</code> exijam
+                              autenticação, mas a rota
+                              <code>/healthz</code> deve ser pública. Qual é a
+                              abordagem idiomática em Go com
+                              <code>ServeMux</code>?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Verificar o path dentro do middleware de
+                                    autenticação:
+                                    <code
+                                       >if strings.HasPrefix(r.URL.Path,
+                                       "/api/") { validar... }</code
+                                    >
+                                    — rota pública passa automaticamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Criar dois sub-mux separados: um público
+                                    (registra <code>/healthz</code>) e um
+                                    protegido (registra rotas
+                                    <code>/api/</code>). Aplicar o middleware de
+                                    autenticação apenas ao mux protegido e
+                                    montar ambos no mux raiz</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Aplicar o middleware de autenticação
+                                    globalmente e adicionar uma lista de
+                                    exceções (<code>whitelist</code>) de paths
+                                    que o middleware deve ignorar</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Duplicar o handler de
+                                    <code>/healthz</code> em dois registros — um
+                                    com e um sem autenticação — deixando o
+                                    ServeMux escolher o mais específico</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Usar sub-mux separados é o padrão
+                              idiomático em Go porque mantém cada grupo de rotas
+                              com seu próprio conjunto de middlewares — sem
+                              lógica condicional dentro do middleware. A
+                              abordagem com whitelist (opção C) é frágil:
+                              qualquer nova rota pública exige editar o
+                              middleware, e a lógica de exceção cresce
+                              indefinidamente. Com sub-mux:
+                              <code
+                                 >mux.Handle("/api/",
+                                 comAutenticacao(apiMux))</code
+                              >
+                              e
+                              <code
+                                 >mux.HandleFunc("/healthz", handleHealth)</code
+                              >
+                              — cada rota tem exatamente os middlewares que
+                              precisa, sem acoplamento.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

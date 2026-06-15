@@ -1,0 +1,1710 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="Build tags e compilação condicional em Go: sintaxe //go:build, constraints de SO e arquitetura, tags customizadas, arquivos condicionais e casos de uso reais."
+      />
+      <title>Módulo 33 — Build tags e compilação condicional · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="33">
+                  <div class="content-body">
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 10 — Tópicos Avançados
+                        </div>
+                        <h1 class="module-header__title">
+                           Build tags e compilação condicional
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 33</span>
+                           <span class="badge badge-default">6 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Avançado</span
+                           >
+                        </div>
+                     </header>
+
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O que são build tags
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que são build tags</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              <strong>Build tags</strong> (também chamadas de
+                              <em>build constraints</em>) são instruções que
+                              dizem ao compilador Go se um arquivo deve ou não
+                              ser incluído numa compilação. Em vez de usar
+                              diretivas de pré-processador como
+                              <code>#ifdef</code> do C, Go aplica a seleção no
+                              nível de arquivo inteiro: um arquivo ou é
+                              compilado, ou é ignorado completamente.
+                           </p>
+                           <p>
+                              Isso resolve problemas reais em projetos que
+                              precisam de comportamento diferente por
+                              plataforma, ambiente ou configuração — como código
+                              específico para Linux versus Windows,
+                              implementações de desenvolvimento versus produção,
+                              ou funcionalidades opcionais que só devem existir
+                              em certas builds.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe moderna — Go 1.17+</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build linux
+
+package main
+
+// Este arquivo inteiro só é compilado quando GOOS=linux
+// Pode conter qualquer código Go válido</code></pre>
+                           </div>
+
+                           <p>
+                              A diretiva <code>//go:build</code> deve ser a
+                              <strong>primeira linha não-vazia</strong> do
+                              arquivo, antes até da declaração
+                              <code>package</code>. Uma linha em branco deve
+                              separar a diretiva do restante do arquivo — isso
+                              diferencia a constraint de um comentário de
+                              documentação comum.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              A sintaxe legada — antes do Go 1.17
+                           </h4>
+                           <p>
+                              Antes do Go 1.17 a sintaxe era um comentário
+                              especial com
+                              <code>// +build</code>. Ela ainda é reconhecida
+                              pelo toolchain, mas foi depreciada em favor de
+                              <code>//go:build</code>:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >sintaxe legada (depreciada)</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// +build linux
+
+package main
+
+// Problemas da sintaxe antiga:
+// 1. Silenciosamente ignorada se não houver linha em branco após ela
+// 2. Operadores booleanos com sintaxe confusa (vírgula = OR, espaço = AND)
+// 3. Difícil de distinguir de comentários normais
+// 4. Fácil de esquecer a linha em branco obrigatória</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    gofmt sincroniza as duas sintaxes
+                                    automaticamente
+                                 </div>
+                                 <div class="callout__body">
+                                    Em arquivos que contêm apenas
+                                    <code>//go:build</code>, o
+                                    <code>gofmt</code> (Go 1.17+) adiciona
+                                    automaticamente o equivalente em
+                                    <code>// +build</code> para compatibilidade
+                                    retroativa com toolchains antigos. Em
+                                    arquivos com apenas a sintaxe legada, o
+                                    <code>gofmt</code> adiciona a nova. Em
+                                    projetos novos, escreva apenas
+                                    <code>//go:build</code> e deixe o
+                                    <code>gofmt</code> cuidar da
+                                    compatibilidade.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — Constraints de SO e arquitetura
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Constraints de SO e arquitetura</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              As constraints mais comuns são as de sistema
+                              operacional (<code>GOOS</code>) e arquitetura de
+                              CPU (<code>GOARCH</code>). O compilador Go define
+                              automaticamente essas tags com base no ambiente de
+                              compilação — ou nos valores explicitamente
+                              passados via variáveis de ambiente para
+                              cross-compilation.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Valores de GOOS reconhecidos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Listar todos os GOOS e GOARCH suportados
+go tool dist list
+
+# Valores mais comuns de GOOS:
+# linux, windows, darwin (macOS), freebsd, openbsd, netbsd
+# android, ios, js (WebAssembly), wasip1 (WASI)
+
+# Valores mais comuns de GOARCH:
+# amd64 (x86-64), arm64 (Apple Silicon / ARM 64-bit)
+# 386 (x86-32), arm (ARM 32-bit), mips, mips64, riscv64, wasm</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Expressões booleanas nas constraints
+                           </h4>
+                           <p>
+                              A sintaxe <code>//go:build</code> usa expressões
+                              booleanas completas com operadores familiares —
+                              muito mais legível que a sintaxe legada:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >operadores booleanos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build linux
+// Compila apenas em Linux
+
+//go:build linux || darwin
+// Compila em Linux OU macOS (qualquer Unix-like)
+
+//go:build linux && amd64
+// Compila apenas em Linux com CPU x86-64
+
+//go:build !windows
+// Compila em qualquer SO exceto Windows
+
+//go:build (linux || darwin) && amd64
+// Compila em Linux ou macOS, mas apenas com x86-64
+
+//go:build linux && (amd64 || arm64)
+// Linux com x86-64 ou ARM64 (ex: Raspberry Pi 64-bit)</code></pre>
+                           </div>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-5) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Sintaxe nova (<code>//go:build</code>)
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Sintaxe legada (<code>// +build</code
+                                          >)
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Significado
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          A &amp;&amp; B
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          // +build A B
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          AND — ambos obrigatórios
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          A || B
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          // +build A,B
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          OR — qualquer um
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          !A
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                          "
+                                       >
+                                          // +build !A
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          NOT — exceto este
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    A lógica invertida da sintaxe legada era
+                                    fonte de bugs
+                                 </div>
+                                 <div class="callout__body">
+                                    Na sintaxe legada, espaço significa AND e
+                                    vírgula significa OR — o oposto do que a
+                                    maioria das linguagens usa. Era trivial
+                                    escrever
+                                    <code>// +build linux windows</code>
+                                    pensando em "Linux ou Windows" quando na
+                                    verdade significa "Linux E Windows"
+                                    (impossível simultaneamente, arquivo nunca
+                                    compilado). A nova sintaxe
+                                    <code>//go:build linux || windows</code> é
+                                    inequívoca.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Tags customizadas
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Tags customizadas</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Além das tags predefinidas de SO e arquitetura,
+                              você pode definir suas próprias tags e ativá-las
+                              com a flag <code>-tags</code> do compilador. Tags
+                              customizadas permitem controlar quais partes do
+                              código são incluídas com base em critérios de
+                              negócio, ambiente ou produto — sem alterar o
+                              código-fonte.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >arquivo com tag customizada</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build premium
+
+package pagamento
+
+// Este arquivo só é compilado quando -tags premium for passado
+// Sem a flag, este arquivo inteiro é ignorado
+
+func processarPagamentoAvancado(valor float64) error {
+    // Lógica exclusiva do plano premium
+    return integrarGatewayExterno(valor)
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >ativando tags na compilação</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Compilar sem nenhuma tag customizada
+go build ./...
+
+# Compilar com uma tag
+go build -tags premium ./...
+
+# Múltiplas tags separadas por vírgula
+go build -tags "premium debug" ./...
+# ou equivalente (Go 1.17+)
+go build -tags premium,debug ./...
+
+# Rodar testes com tag
+go test -tags integration ./...
+
+# Verificar quais arquivos seriam compilados com determinadas tags
+go list -f '{{.GoFiles}}' -tags premium ./pacote/</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tags predefinidas pela stdlib e toolchain
+                           </h4>
+                           <p>
+                              O toolchain define algumas tags automaticamente
+                              que você pode usar em constraints sem precisar
+                              passá-las manualmente:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tags automáticas</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build go1.21
+// Compila apenas se a versão do compilador for Go 1.21 ou superior
+// Útil para usar APIs introduzidas em versões específicas
+
+//go:build go1.18
+// Habilitar código que usa generics (introduzidos no Go 1.18)
+
+//go:build cgo
+// Compila apenas quando CGO está habilitado (linkagem com C)
+// Automaticamente false quando GONOSUMCHECK ou CGO_ENABLED=0
+
+//go:build !cgo
+// Alternativa pura Go quando CGO não está disponível</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Convenção de nomes para tags customizadas
+                                 </div>
+                                 <div class="callout__body">
+                                    Tags customizadas devem usar apenas letras,
+                                    dígitos, underscores e hífens — e por
+                                    convenção são escritas em minúsculas. Evite
+                                    nomes que colidam com tags do sistema: não
+                                    use nomes de SO (<code>linux</code>,
+                                    <code>windows</code>), arquiteturas
+                                    (<code>amd64</code>) ou versões
+                                    (<code>go1.21</code>). Use nomes descritivos
+                                    de domínio: <code>integration</code>,
+                                    <code>e2e</code>, <code>production</code>,
+                                    <code>premium</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Seleção por nome de arquivo
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Seleção por nome de arquivo</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Além das diretivas <code>//go:build</code>, o
+                              compilador Go reconhece automaticamente sufixos
+                              nos nomes dos arquivos para aplicar constraints de
+                              SO e arquitetura — sem nenhum comentário no
+                              código. Essa convenção é usada extensivamente na
+                              própria stdlib do Go e é a forma preferida quando
+                              o arquivo inteiro é específico de plataforma.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Padrões de nomes reconhecidos
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >sufixos automáticos</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Padrão: *_GOOS.go
+signal_linux.go      # compilado apenas em Linux
+signal_windows.go    # compilado apenas em Windows
+signal_darwin.go     # compilado apenas em macOS
+
+# Padrão: *_GOARCH.go
+asm_amd64.go         # compilado apenas em x86-64
+asm_arm64.go         # compilado apenas em ARM64
+
+# Padrão: *_GOOS_GOARCH.go — ambos precisam corresponder
+syscall_linux_amd64.go   # Linux + x86-64
+syscall_darwin_arm64.go  # macOS + Apple Silicon
+
+# Arquivos de teste com sufixo também funcionam
+cache_linux_test.go  # teste específico de Linux</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Exemplo prático — implementação por plataforma
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >estrutura de pacote cross-platform</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash">internal/processo/
+├── processo.go          # interface pública — compilado em todas as plataformas
+├── processo_linux.go    # implementação Linux (usa /proc)
+├── processo_darwin.go   # implementação macOS (usa sysctl)
+└── processo_windows.go  # implementação Windows (usa WinAPI)</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >processo.go — interface comum</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// processo.go — compilado em todas as plataformas
+package processo
+
+// ListarPIDs é declarada em cada arquivo de plataforma
+// Esta função existe em processo_linux.go, processo_darwin.go, processo_windows.go
+// Cada plataforma fornece sua própria implementação
+func ListarTodos() ([]Info, error) {
+    return listarPIDs()  // chamada à função definida no arquivo de plataforma
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >processo_linux.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Sem //go:build — o nome do arquivo já aplica a constraint
+package processo
+
+import (
+    "os"
+    "strconv"
+    "strings"
+)
+
+func listarPIDs() ([]Info, error) {
+    // Implementação Linux: lê /proc para listar processos
+    entradas, err := os.ReadDir("/proc")
+    if err != nil {
+        return nil, err
+    }
+    var lista []Info
+    for _, e := range entradas {
+        if _, err := strconv.Atoi(e.Name()); err == nil {
+            lista = append(lista, Info{PID: e.Name()})
+        }
+    }
+    return lista, nil
+}</code></pre>
+                           </div>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Sufixo de nome e //go:build podem coexistir
+                                    — mas não conflitar
+                                 </div>
+                                 <div class="callout__body">
+                                    Um arquivo chamado
+                                    <code>foo_linux.go</code> com
+                                    <code>//go:build linux && amd64</code> será
+                                    compilado apenas em Linux <em>e</em> amd64 —
+                                    a constraint mais restritiva vence
+                                    (interseção). Isso é útil para restringir
+                                    ainda mais um arquivo já limitado pelo nome.
+                                    Mas cuidado: um arquivo
+                                    <code>foo_linux.go</code> com
+                                    <code>//go:build windows</code>
+                                    nunca será compilado — as constraints são
+                                    aplicadas com AND.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 5 — Integração com go build e go test
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t05">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Integração com go build e go test</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Build tags integram com todas as ferramentas do
+                              toolchain Go. Entender como inspecionar, depurar e
+                              usar tags corretamente nos comandos do dia a dia é
+                              essencial para evitar surpresas onde código é
+                              silenciosamente excluído da build.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Inspecionando o que será compilado
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Listar arquivos Go que seriam incluídos na build atual
+go list -f '{{.GoFiles}}' ./pacote/
+
+# Com tags customizadas
+go list -f '{{.GoFiles}}' -tags integration ./...
+
+# Listar arquivos ignorados (excluídos pelas constraints)
+go list -f '{{.IgnoredGoFiles}}' ./pacote/
+
+# Ver todas as informações de build de um pacote
+go list -json ./pacote/
+
+# Verificar quais tags estão ativas no ambiente atual
+go env GOARCH GOOS CGO_ENABLED GOVERSION
+
+# Cross-compilation: compilar para Linux a partir de macOS
+GOOS=linux GOARCH=amd64 go build -o app-linux ./cmd/app/
+
+# Verificar que a build funciona sem executar (apenas compilar)
+GOOS=windows go build ./...</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Testes com build tags
+                           </h4>
+                           <p>
+                              Um padrão muito comum é separar testes de
+                              integração (que precisam de banco de dados, rede
+                              ou serviços externos) dos testes unitários rápidos
+                              usando uma tag:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >db_integration_test.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build integration
+
+package repositorio_test
+
+import (
+    "testing"
+    "os"
+)
+
+// Este teste só roda quando: go test -tags integration ./...
+// go test ./...  → ignora este arquivo completamente
+
+func TestBuscarUsuarioNoPostgres(t *testing.T) {
+    dsn := os.Getenv("DATABASE_URL")
+    if dsn == "" {
+        t.Skip("DATABASE_URL não definida — pulando teste de integração")
+    }
+
+    db, err := conectar(dsn)
+    if err != nil {
+        t.Fatalf("falha ao conectar: %v", err)
+    }
+    defer db.Close()
+
+    usuario, err := BuscarPorID(db, "user-123")
+    if err != nil {
+        t.Fatalf("erro inesperado: %v", err)
+    }
+    if usuario.Email != "test@exemplo.com" {
+        t.Errorf("email incorreto: got %q, want %q", usuario.Email, "test@exemplo.com")
+    }
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >comandos no CI/CD</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Pipeline rápido — apenas testes unitários (sem -tags)
+go test ./...
+
+# Pipeline completo — inclui testes de integração
+go test -tags integration -timeout 120s ./...
+
+# Rodar apenas testes E2E em ambiente específico
+go test -tags "integration e2e" -run TestFluxoCompleto ./...
+
+# Verificar se o código compila para múltiplas plataformas (sem executar)
+GOOS=linux   go build ./...
+GOOS=darwin  go build ./...
+GOOS=windows go build ./...</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    go vet também respeita build tags
+                                 </div>
+                                 <div class="callout__body">
+                                    <code>go vet</code>,
+                                    <code>staticcheck</code> e ferramentas de
+                                    análise estática também respeitam build
+                                    tags. Se você rodar
+                                    <code>go vet ./...</code> sem
+                                    <code>-tags integration</code>, arquivos
+                                    marcados com essa tag não serão analisados.
+                                    Inclua as tags relevantes no pipeline de
+                                    lint para garantir que todo o código é
+                                    verificado:
+                                    <code>go vet -tags integration ./...</code>.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 6 — Casos de uso reais
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod33-t06">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Casos de uso reais</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Build tags não são um recurso de nicho — aparecem
+                              em quase todo projeto Go de médio porte. Conhecer
+                              os padrões consolidados evita reinventar soluções
+                              para problemas comuns.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso 1 — Stub para desenvolvimento local
+                           </h4>
+                           <p>
+                              Quando integrar com um serviço externo (pagamento,
+                              e-mail, SMS) é inviável em desenvolvimento, uma
+                              implementação stub pode substituir a real com base
+                              em tag:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >email_real.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build !dev
+
+package notificacao
+
+import "github.com/empresa/sendgrid"
+
+func Enviar(para, assunto, corpo string) error {
+    return sendgrid.Send(para, assunto, corpo)
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >email_dev.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build dev
+
+package notificacao
+
+import "log/slog"
+
+// Em desenvolvimento: apenas loga, não envia e-mail real
+func Enviar(para, assunto, corpo string) error {
+    slog.Info("e-mail simulado", "para", para, "assunto", assunto)
+    return nil
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="bash"># Desenvolvimento: usa o stub (sem chamadas reais ao Sendgrid)
+go run -tags dev ./cmd/server/
+
+# Produção: compila com a implementação real
+go build -o servidor ./cmd/server/</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso 2 — Embeder banco de dados de fusos com
+                              timetzdata
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >tzdata.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build timetzdata
+
+package main
+
+// Importar time/tzdata embute o banco de fusos no binário (~450KB)
+// Necessário em containers sem tzdata instalado (alpine, scratch)
+// Ativado com: go build -tags timetzdata ./...
+import _ "time/tzdata"</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso 3 — Excluir arquivo da build permanentemente
+                           </h4>
+                           <p>
+                              Um padrão especial:
+                              <code>//go:build ignore</code> exclui o arquivo de
+                              qualquer build, inclusive das ferramentas de
+                              análise. É usado para scripts auxiliares,
+                              geradores de código e exemplos que ficam no
+                              repositório mas não devem ser compilados como
+                              parte do pacote:
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >gerar_mocks.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build ignore
+
+// Este arquivo é um script gerador — nunca compilado como parte do pacote
+// Executado manualmente: go run gerar_mocks.go
+//
+// Ou via go:generate:
+//go:generate go run gerar_mocks.go
+
+package main
+
+import (
+    "os"
+    "text/template"
+)
+
+func main() {
+    // Gera mocks para testes a partir de interfaces
+    tmpl := template.Must(template.ParseFiles("mock.tmpl"))
+    f, _ := os.Create("mocks_generated.go")
+    defer f.Close()
+    tmpl.Execute(f, carregarInterfaces())
+}</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Caso 4 — Feature flags em tempo de compilação
+                           </h4>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >metrics_prometheus.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build prometheus
+
+package metrics
+
+import "github.com/prometheus/client_golang/prometheus"
+
+var requestsTotal = prometheus.NewCounterVec(
+    prometheus.CounterOpts{Name: "http_requests_total"},
+    []string{"method", "path", "status"},
+)
+
+func init() {
+    prometheus.MustRegister(requestsTotal)
+}
+
+func RecordRequest(method, path string, status int) {
+    requestsTotal.WithLabelValues(method, path, fmt.Sprint(status)).Inc()
+}</code></pre>
+                           </div>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >metrics_noop.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">//go:build !prometheus
+
+package metrics
+
+// Implementação vazia quando Prometheus não está habilitado
+// O compilador elimina estas chamadas (dead code elimination)
+func RecordRequest(method, path string, status int) {}</code></pre>
+                           </div>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Compilação condicional vs configuração em
+                                    runtime
+                                 </div>
+                                 <div class="callout__body">
+                                    Build tags são decisões em tempo de
+                                    compilação — o código excluído não existe no
+                                    binário. Isso é diferente de flags de
+                                    configuração em runtime
+                                    (<code>os.Getenv</code>, flags de linha de
+                                    comando), onde o código existe mas pode ser
+                                    desativado. Use build tags quando quiser
+                                    garantia de que o código (e suas
+                                    dependências) não existam no binário de
+                                    produção — eliminando surface area de
+                                    segurança, tamanho do binário e dependências
+                                    transitivas desnecessárias.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 33
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod33-q01"
+                        data-feedback-wrong="✗ Reveja o tópico 'Constraints de SO e arquitetura'. Preste atenção nos operadores booleanos da nova sintaxe e o que cada um significa."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Em quais plataformas o arquivo abaixo será
+                              compilado?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin: var(--space-4) 0"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                              </div>
+                              <pre><code data-lang="go">//go:build (linux || darwin) && !arm64
+
+package main</code></pre>
+                           </div>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Apenas Linux — <code>darwin</code> é
+                                    excluído pelo <code>!arm64</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Linux e macOS em qualquer arquitetura — o
+                                    <code>!arm64</code> é aplicado apenas a
+                                    <code>darwin</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Linux e macOS em qualquer arquitetura
+                                    exceto ARM64 — a expressão é: (linux OU
+                                    darwin) E (não arm64); exclui Apple Silicon
+                                    e ARM Linux</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Qualquer plataforma que não seja ARM64 — o
+                                    <code>linux || darwin</code> é ignorado pela
+                                    precedência de operadores</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! A expressão
+                              <code>(linux || darwin) &amp;&amp; !arm64</code>
+                              é avaliada da esquerda para a direita com a
+                              precedência normal: primeiro o grupo entre
+                              parênteses (linux OU darwin), depois AND com NOT
+                              arm64. O resultado: qualquer Linux ou macOS, desde
+                              que a arquitetura não seja ARM64. Isso exclui Macs
+                              com Apple Silicon (darwin/arm64) e Raspberry Pi
+                              64-bit (linux/arm64), mas inclui Linux amd64,
+                              Linux 386, macOS amd64 (Intel), etc.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod33-q02"
+                        data-feedback-wrong="✗ Reveja o tópico 'Seleção por nome de arquivo'. Preste atenção em como o compilador interpreta sufixos nos nomes de arquivos e como eles interagem com diretivas //go:build."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              O arquivo <code>servidor_linux.go</code> contém a
+                              diretiva <code>//go:build linux || windows</code>.
+                              Em quais plataformas ele será compilado?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Linux e Windows — a diretiva
+                                    <code>//go:build</code> sobrescreve o sufixo
+                                    do nome do arquivo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Apenas Windows — o sufixo
+                                    <code>_linux</code> é ignorado quando há uma
+                                    diretiva explícita no arquivo</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Apenas Linux — as duas constraints são
+                                    aplicadas com AND: (sufixo = linux) E
+                                    (diretiva = linux || windows) → interseção é
+                                    somente linux</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Nunca compilado — ter ao mesmo tempo sufixo
+                                    de SO e diretiva
+                                    <code>//go:build</code> causa erro de
+                                    compilação</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! O sufixo <code>_linux</code> no nome do
+                              arquivo e a diretiva <code>//go:build</code> são
+                              aplicados simultaneamente com AND — a interseção
+                              vence. O sufixo impõe: somente Linux. A diretiva
+                              impõe: Linux ou Windows. A interseção de {linux} ∩
+                              {linux, windows} = {linux}. O arquivo é compilado
+                              apenas em Linux. Windows é coberto pela diretiva
+                              mas excluído pelo sufixo. Esse tipo de combinação
+                              costuma ser um bug — a diretiva
+                              <code>//go:build linux || windows</code> em um
+                              arquivo <code>_linux.go</code> é redundante na
+                              parte Linux e ineficaz na parte Windows.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod33-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Casos de uso reais'. Preste atenção no significado de //go:build ignore e quando ele é usado."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Por que um arquivo com
+                              <code>//go:build ignore</code> e
+                              <code>package main</code> pode coexistir em um
+                              diretório que já tem outro
+                              <code>package main</code> sem causar erro de
+                              compilação?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Go permite múltiplos arquivos
+                                    <code>package main</code> no mesmo diretório
+                                    desde que tenham funções
+                                    <code>main</code> diferentes</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >O compilador trata
+                                    <code>package main</code> em arquivos com
+                                    <code>//go:build ignore</code> como
+                                    <code>package ignore</code>
+                                    automaticamente</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >O arquivo com
+                                    <code>//go:build ignore</code> é
+                                    completamente excluído da compilação — o
+                                    compilador nem o lê como parte do pacote; é
+                                    como se o arquivo não existisse para o
+                                    <code>go build</code></span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Causa erro de compilação — dois arquivos
+                                    <code>package main</code> no mesmo diretório
+                                    nunca são permitidos, independente de build
+                                    tags</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! <code>//go:build ignore</code> usa a
+                              tag especial <code>ignore</code> — que nunca é
+                              definida pelo toolchain nem pode ser passada via
+                              <code>-tags</code>. A constraint nunca é
+                              satisfeita, portanto o arquivo é completamente
+                              excluído da compilação. O compilador não o
+                              processa, não verifica conflitos de pacote, não
+                              analisa imports. É exatamente por isso que scripts
+                              geradores, exemplos standalone e arquivos
+                              <code>//go:generate</code> podem viver no mesmo
+                              diretório de um pacote sem conflitar — para o
+                              compilador, eles simplesmente não existem.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 33
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod33-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Diagnóstico de arquivo nunca
+                              compilado</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Um colega adicionou suporte a Windows no arquivo
+                              abaixo, mas em nenhuma plataforma o código é
+                              incluído na build. O CI em Linux não compila o
+                              arquivo, e em Windows também não. Qual é o
+                              problema?
+                           </p>
+                           <div
+                              class="code-block"
+                              style="margin-bottom: var(--space-5)"
+                           >
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >clipboard_windows.go</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// +build linux windows
+
+//go:build linux
+
+package clipboard</code></pre>
+                           </div>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >A sintaxe legada <code>// +build</code> e a
+                                    nova <code>//go:build</code> não podem
+                                    coexistir no mesmo arquivo — o compilador
+                                    rejeita o arquivo</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O sufixo <code>_windows</code> no nome do
+                                    arquivo já aplica a constraint de Windows; a
+                                    diretiva <code>//go:build linux</code> é
+                                    redundante e deve ser removida</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >As duas diretivas são aplicadas com AND: a
+                                    legada pede (linux OR windows) e a nova pede
+                                    (linux); a interseção é apenas linux —
+                                    Windows nunca é incluído. Além disso, o
+                                    sufixo <code>_windows</code> no nome exige
+                                    Windows, criando uma interseção vazia:
+                                    nenhuma plataforma compila o arquivo.
+                                    Correção: remover a diretiva
+                                    <code>//go:build linux</code> e deixar
+                                    apenas o sufixo do nome</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >O arquivo não tem função
+                                    <code>main</code> — arquivos de plataforma
+                                    específica precisam definir funções para
+                                    serem incluídos</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Há dois problemas sobrepostos.
+                              Primeiro: as duas diretivas (<code
+                                 >// +build linux windows</code
+                              >
+                              e <code>//go:build linux</code>) são aplicadas com
+                              AND — a interseção é apenas Linux, excluindo
+                              Windows. Segundo: o sufixo
+                              <code>_windows</code> no nome do arquivo exige que
+                              a plataforma seja Windows — mas a diretiva
+                              restringe a Linux. A interseção de {windows} ∩
+                              {linux} é vazia: o arquivo nunca compila em
+                              nenhuma plataforma. A correção é remover ambas as
+                              diretivas de comentário e confiar apenas no sufixo
+                              <code>_windows.go</code> para a constraint de
+                              plataforma.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod33-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Separar testes de integração</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Você quer que <code>go test ./...</code> rode
+                              apenas testes unitários rápidos (sem dependências
+                              externas), e que testes que precisam de banco de
+                              dados real só sejam executados em CI com o comando
+                              <code>go test -tags integration ./...</code>. Qual
+                              é a abordagem correta para o arquivo de testes de
+                              integração?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Colocar os testes de integração em um
+                                    subdiretório separado
+                                    (<code>integration/</code>) e rodar com
+                                    <code>go test ./integration/...</code> — sem
+                                    precisar de build tags</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>t.Skip()</code> no início de
+                                    cada teste de integração verificando uma
+                                    variável de ambiente — se
+                                    <code>RUN_INTEGRATION</code> não estiver
+                                    definida, o teste é pulado</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Adicionar
+                                    <code>//go:build integration</code> como
+                                    primeira linha do arquivo de testes — o
+                                    arquivo inteiro é excluído de
+                                    <code>go test ./...</code> e incluído apenas
+                                    com <code>-tags integration</code>; é a
+                                    abordagem mais limpa pois elimina o overhead
+                                    de compilar e registrar os testes
+                                    desnecessariamente</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Usar <code>//go:build !short</code> nos
+                                    testes de integração e rodar os unitários
+                                    com <code>go test -short ./...</code> — a
+                                    flag <code>-short</code> automaticamente
+                                    exclui arquivos com essa tag</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! <code>//go:build integration</code> no
+                              arquivo de testes é a abordagem canônica em
+                              projetos Go. O arquivo inteiro é excluído da
+                              compilação sem a tag — os testes não aparecem em
+                              <code>go test ./...</code> nem geram overhead de
+                              compilação. As alternativas têm desvantagens:
+                              subdiretório funciona mas separa os testes da
+                              lógica que testam; <code>t.Skip()</code>
+                              ainda compila e registra os testes (overhead de
+                              build + necessidade de importar dependências
+                              pesadas como drivers de banco); e
+                              <code>!short</code> é uma convenção diferente — a
+                              flag <code>-short</code> é passada para o código
+                              do teste via <code>testing.Short()</code>, não
+                              exclui arquivos com build tags.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>

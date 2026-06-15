@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="pt-BR" data-page="module">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="O que é Go, por que foi criado, sua filosofia e casos de uso reais."
+      />
+      <title>Módulo 01 — O que é Go e por que existe · GoCourse</title>
+      <link rel="stylesheet" href="../css/style.css" />
+   </head>
+   <body>
+      <div id="app" class="app-shell">
+         <!-- Header e Sidebar injetados pelo app.js -->
+
+         <main class="app-main">
+            <div class="module-page">
+               <div class="module-main" data-module="01">
+                  <div class="content-body">
+                     <!-- CABEÇALHO DO MÓDULO -->
+                     <header class="module-header">
+                        <div class="module-header__block">
+                           Bloco 0 — Fundação
+                        </div>
+                        <h1 class="module-header__title">
+                           O que é Go e por que existe
+                        </h1>
+                        <div class="module-header__meta">
+                           <span class="badge badge-default">Módulo 01</span>
+                           <span class="badge badge-default">4 tópicos</span>
+                           <span class="badge badge-default"
+                              >Nível: Iniciante</span
+                           >
+                        </div>
+                     </header>
+
+                     <!-- PROGRESSO DO MÓDULO -->
+                     <div class="module-progress-inline">
+                        <span class="module-progress-inline__label"
+                           >Progresso do módulo</span
+                        >
+                        <div class="progress-bar module-progress-inline__bar">
+                           <div
+                              class="progress-bar__fill"
+                              style="width: 0%"
+                           ></div>
+                        </div>
+                        <span class="module-progress-inline__pct">0%</span>
+                     </div>
+
+                     <!-- ================================================
+                 TÓPICO 1 — O problema que Go resolve
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod01-t01">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O problema que Go veio resolver</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Para entender Go, é preciso primeiro entender o
+                              contexto em que ele nasceu. Em 2007, o Google
+                              enfrentava desafios sérios de engenharia de
+                              software em escala: sistemas com milhões de linhas
+                              de código, dezenas de equipes, e tempos de
+                              compilação que chegavam a durar
+                              <strong>45 minutos</strong>. As linguagens
+                              disponíveis na época resolviam alguns problemas,
+                              mas criavam outros.
+                           </p>
+
+                           <p>
+                              Veja o dilema que os engenheiros do Google
+                              enfrentavam:
+                           </p>
+
+                           <div
+                              class="card card--flat"
+                              style="margin: var(--space-6) 0"
+                           >
+                              <table
+                                 style="
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    font-size: var(--text-sm);
+                                 "
+                              >
+                                 <thead>
+                                    <tr>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Linguagem
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Ponto forte
+                                       </th>
+                                       <th
+                                          style="
+                                             text-align: left;
+                                             padding: var(--space-3);
+                                             color: var(--color-text-muted);
+                                             font-weight: var(
+                                                --weight-semibold
+                                             );
+                                             border-bottom: 1px solid
+                                                var(--color-border);
+                                          "
+                                       >
+                                          Problema
+                                       </th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          C / C++
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Performance máxima
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          Compilação lenta, complexidade enorme,
+                                          gerência manual de memória
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          Java
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                          "
+                                       >
+                                          Robustez, ecossistema maduro
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             border-bottom: 1px solid
+                                                var(--color-border-subtle);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          Verbosidade extrema, JVM pesada,
+                                          concorrência difícil
+                                       </td>
+                                    </tr>
+                                    <tr>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             font-family: var(--font-mono);
+                                             color: var(--color-primary);
+                                          "
+                                       >
+                                          Python
+                                       </td>
+                                       <td style="padding: var(--space-3)">
+                                          Produtividade, legibilidade
+                                       </td>
+                                       <td
+                                          style="
+                                             padding: var(--space-3);
+                                             color: var(--color-error);
+                                          "
+                                       >
+                                          Lento demais para sistemas críticos,
+                                          GIL limita concorrência real
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+
+                           <p>
+                              Robert Griesemer, Rob Pike e Ken Thompson — três
+                              lendas da computação — estavam esperando uma
+                              compilação longa quando decidiram:
+                              <em>"Vamos criar uma linguagem nova."</em>
+                              O objetivo era combinar o que havia de melhor em
+                              cada mundo: a performance de C, a legibilidade de
+                              Python e suporte nativo a concorrência.
+                           </p>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Curiosidade histórica
+                                 </div>
+                                 <div class="callout__body">
+                                    Ken Thompson co-criou o Unix e a linguagem B
+                                    (predecessor do C). Rob Pike trabalhou no
+                                    desenvolvimento do Unix no Bell Labs. Go foi
+                                    projetada por pessoas que literalmente
+                                    construíram as fundações da computação
+                                    moderna.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 2 — O que é Go
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod01-t02">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>O que é Go, tecnicamente</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Go (também chamado de Golang) é uma linguagem de
+                              programação de propósito geral, compilada,
+                              estaticamente tipada e com coleta de lixo
+                              automática (garbage collection). Foi lançada
+                              publicamente em 2009 e alcançou a versão 1.0 em
+                              2012.
+                           </p>
+
+                           <p>
+                              Vamos dissecar cada característica com cuidado:
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Compilada
+                           </h4>
+                           <p>
+                              Diferente de Python ou JavaScript, que são
+                              interpretados em tempo de execução, Go é
+                              <strong
+                                 >compilada diretamente para código de
+                                 máquina</strong
+                              >. Isso significa que antes de executar seu
+                              programa, o compilador Go transforma seu código em
+                              instruções binárias nativas do sistema
+                              operacional.
+                           </p>
+                           <p>
+                              O resultado é um único arquivo executável, sem
+                              dependências externas, que roda diretamente no
+                              sistema. Isso traz performance próxima à de C e
+                              implantação extremamente simples.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">bash</span>
+                                 <span class="code-block__filename"
+                                    >terminal</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code># Compila o programa e gera um binário
+go build meu_programa.go
+
+# O resultado é um executável independente
+./meu_programa
+# Sem Node.js, sem Python, sem JVM — só o binário</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Estaticamente tipada
+                           </h4>
+                           <p>
+                              Em Go,
+                              <strong
+                                 >o tipo de cada variável é definido em tempo de
+                                 compilação</strong
+                              >
+                              e não pode mudar. O compilador verifica todos os
+                              tipos antes mesmo de o programa rodar. Isso
+                              elimina uma categoria inteira de bugs que em
+                              linguagens dinâmicas só aparecem em produção.
+                           </p>
+
+                           <div class="callout callout--warning">
+                              <div class="callout__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Tipagem estática vs dinâmica
+                                 </div>
+                                 <div class="callout__body">
+                                    Em Python você pode fazer
+                                    <code>x = 42</code> e depois
+                                    <code>x = "olá"</code> — a mesma variável
+                                    muda de tipo. Em Go isso é um erro de
+                                    compilação. A disciplina de tipos parece
+                                    restritiva no começo, mas previne bugs sutis
+                                    em sistemas grandes.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Garbage Collection
+                           </h4>
+                           <p>
+                              Go gerencia a memória automaticamente. Você não
+                              precisa alocar e liberar memória manualmente como
+                              em C/C++. O garbage collector do Go roda de forma
+                              concorrente com o programa, causando pausas
+                              mínimas — geralmente abaixo de 1 milissegundo.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Concorrência nativa
+                           </h4>
+                           <p>
+                              Go foi projetada desde o início para concorrência.
+                              Enquanto em Java ou Python você luta com threads
+                              pesadas e locks complexos, Go oferece
+                              <strong>goroutines</strong> — funções que rodam de
+                              forma concorrente com overhead mínimo — e
+                              <strong>channels</strong> para comunicação segura
+                              entre elas. Estudaremos isso em detalhes no Bloco
+                              8.
+                           </p>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 3 — Filosofia da linguagem
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod01-t03">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>A filosofia de Go</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Entender a filosofia de Go é tão importante quanto
+                              aprender sua sintaxe. Go faz escolhas
+                              deliberadamente opinionadas — e muitas delas
+                              parecem estranhas para quem vem de outras
+                              linguagens. Cada uma tem uma razão sólida.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Simplicidade acima de tudo
+                           </h4>
+                           <p>
+                              Go tem intencionalmente poucas funcionalidades.
+                              Não há herança de classes, não há sobrecarga de
+                              operadores, não há exceções no sentido
+                              tradicional, não há genéricos antes da versão
+                              1.18. Cada feature omitida foi uma decisão
+                              consciente.
+                           </p>
+                           <p>
+                              A lógica é:
+                              <em
+                                 >menos features significa menos formas de fazer
+                                 a mesma coisa, o que significa código mais
+                                 uniforme e mais fácil de ler em qualquer base
+                                 de código.</em
+                              >
+                           </p>
+
+                           <div class="callout callout--success">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Princípio do Go
+                                 </div>
+                                 <div class="callout__body">
+                                    "Existe apenas uma forma correta de fazer X
+                                    em Go." Quando qualquer desenvolvedor abre
+                                    um projeto Go desconhecido, o código parece
+                                    familiar. Isso não é acidente — é filosofia.
+                                 </div>
+                              </div>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Legibilidade como valor máximo
+                           </h4>
+                           <p>
+                              Go inclui uma ferramenta chamada
+                              <code>gofmt</code> que formata automaticamente
+                              todo código Go em um estilo padrão. Não existe
+                              debate sobre indentação, posição de chaves ou
+                              espaçamento — o <code>gofmt</code> decide, e todos
+                              obedecem.
+                           </p>
+                           <p>
+                              Em todo projeto Go do mundo, o estilo é idêntico.
+                              Um desenvolvedor Go no Brasil lê código Go escrito
+                              no Japão sem atrito visual algum.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Erros são valores, não exceções
+                           </h4>
+                           <p>
+                              Go não tem <code>try/catch</code>. Quando uma
+                              função pode falhar, ela retorna dois valores: o
+                              resultado e um erro. O chamador é obrigado a
+                              verificar o erro explicitamente. Isso parece
+                              verboso no começo, mas torna o fluxo de erros
+                              completamente visível — nenhum erro silencioso,
+                              nenhum comportamento surpresa.
+                           </p>
+
+                           <div class="code-block">
+                              <div class="code-block__header">
+                                 <span class="code-block__lang">go</span>
+                                 <span class="code-block__filename"
+                                    >exemplo conceitual</span
+                                 >
+                                 <button class="code-block__copy">
+                                    Copiar
+                                 </button>
+                              </div>
+                              <pre><code data-lang="go">// Em Go, erros são retornados explicitamente
+resultado, err := fazerAlgo()
+if err != nil {
+    // trate o erro aqui — não tem como ignorar sem querer
+}
+
+// Não existe isso em Go:
+// try {
+//     resultado = fazerAlgo()
+// } catch (e) { ... }</code></pre>
+                           </div>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Compilação rápida como requisito
+                           </h4>
+                           <p>
+                              Os criadores de Go tinham 45 minutos de compilação
+                              em mente quando projetaram o sistema de
+                              importações. Em Go, um projeto de centenas de
+                              milhares de linhas compila em segundos. Isso não é
+                              um efeito colateral — foi uma meta de design desde
+                              o dia um.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-primary);
+                              "
+                           >
+                              Tooling como parte da linguagem
+                           </h4>
+                           <p>
+                              Go vem com uma suite de ferramentas oficiais que
+                              resolvem problemas que em outras linguagens exigem
+                              ecossistemas inteiros de terceiros:
+                           </p>
+
+                           <ul>
+                              <li><code>go build</code> — compila o projeto</li>
+                              <li><code>go test</code> — executa testes</li>
+                              <li><code>go fmt</code> — formata o código</li>
+                              <li>
+                                 <code>go vet</code> — detecta erros comuns
+                              </li>
+                              <li><code>go doc</code> — gera documentação</li>
+                              <li>
+                                 <code>go mod</code> — gerencia dependências
+                              </li>
+                           </ul>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 TÓPICO 4 — Quando usar (e quando não usar) Go
+                 ================================================ -->
+                     <section class="topic-section" data-topic-id="mod01-t04">
+                        <div class="topic-header">
+                           <div class="topic-check">
+                              <svg
+                                 width="12"
+                                 height="12"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="white"
+                                 stroke-width="3"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              >
+                                 <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                           </div>
+                           <h2>Quando usar Go — e quando não usar</h2>
+                        </div>
+                        <div class="topic-content">
+                           <p>
+                              Toda linguagem tem seu domínio de excelência.
+                              Conhecer onde Go brilha e onde ela não é a melhor
+                              escolha é sinal de maturidade técnica.
+                           </p>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-success);
+                              "
+                           >
+                              Go é excelente para:
+                           </h4>
+
+                           <ul>
+                              <li>
+                                 <strong>APIs e servidores web</strong> — a
+                                 biblioteca padrão inclui um servidor HTTP de
+                                 produção. Docker, Kubernetes e GitHub CLI são
+                                 escritos em Go.
+                              </li>
+                              <li>
+                                 <strong
+                                    >CLIs (ferramentas de linha de
+                                    comando)</strong
+                                 >
+                                 — o binário único sem dependências é ideal para
+                                 distribuição de ferramentas.
+                              </li>
+                              <li>
+                                 <strong>Microsserviços</strong> — baixo uso de
+                                 memória, startup rápido, concorrência nativa.
+                              </li>
+                              <li>
+                                 <strong>Infraestrutura e DevOps</strong> —
+                                 Terraform, Prometheus, Consul, etcd, Caddy —
+                                 todos em Go.
+                              </li>
+                              <li>
+                                 <strong>Sistemas de alto throughput</strong> —
+                                 processamento de streams, proxies, gateways.
+                              </li>
+                           </ul>
+
+                           <h4
+                              style="
+                                 margin: var(--space-6) 0 var(--space-3);
+                                 color: var(--color-error);
+                              "
+                           >
+                              Go não é a melhor escolha para:
+                           </h4>
+
+                           <ul>
+                              <li>
+                                 <strong
+                                    >Computação científica / machine
+                                    learning</strong
+                                 >
+                                 — Python domina com NumPy, PyTorch, TensorFlow.
+                                 Go não tem ecossistema equivalente.
+                              </li>
+                              <li>
+                                 <strong>Interfaces gráficas desktop</strong> —
+                                 Go tem suporte limitado para GUIs. Prefira Rust
+                                 + Tauri, Python + Qt, ou plataformas nativas.
+                              </li>
+                              <li>
+                                 <strong
+                                    >Scripts rápidos e automações
+                                    simples</strong
+                                 >
+                                 — Python e Shell são mais ágeis para tarefas
+                                 pontuais. Go exige compilação mesmo para
+                                 scripts.
+                              </li>
+                              <li>
+                                 <strong
+                                    >Sistemas em tempo real com latência
+                                    sub-microsegundo</strong
+                                 >
+                                 — o garbage collector, mesmo eficiente,
+                                 introduz pausas imprevisíveis. Para isso, Rust
+                                 ou C.
+                              </li>
+                              <li>
+                                 <strong>Aplicações mobile</strong> — Go tem
+                                 suporte experimental via gomobile, mas
+                                 Swift/Kotlin são as ferramentas certas aqui.
+                              </li>
+                           </ul>
+
+                           <div class="callout callout--info">
+                              <div class="callout__icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></div>
+                              <div class="callout__content">
+                                 <div class="callout__title">
+                                    Go no mundo real
+                                 </div>
+                                 <div class="callout__body">
+                                    Projetos de referência escritos em Go:
+                                    <strong>Docker</strong> (containers),
+                                    <strong>Kubernetes</strong> (orquestração),
+                                    <strong>Terraform</strong> (infra como
+                                    código),
+                                    <strong>Prometheus</strong> (monitoramento),
+                                    <strong>Hugo</strong> (gerador de sites),
+                                    <strong>CockroachDB</strong> (banco de dados
+                                    distribuído), <strong>GitHub CLI</strong>,
+                                    <strong>Caddy</strong> (servidor web).
+                                 </div>
+                              </div>
+                           </div>
+
+                           <button class="mark-read-btn">
+                              Marcar como lido
+                           </button>
+                        </div>
+                     </section>
+
+                     <!-- ================================================
+                 QUIZ — Módulo 01
+                 ================================================ -->
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod01-q01"
+                        data-feedback-wrong="✗ Não exatamente. Reveja o tópico 'O problema que Go veio resolver'. O foco estava em compilação lenta, complexidade de código e dificuldade com concorrência — não em OOP ou GUIs."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 1 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Go foi criado para resolver um problema específico
+                              enfrentado pelo Google. Qual era o principal
+                              problema?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Falta de uma linguagem com orientação a
+                                    objetos moderna</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Dificuldade em criar interfaces gráficas
+                                    complexas</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Compilação extremamente lenta, complexidade
+                                    de código e dificuldade com concorrência em
+                                    sistemas de grande escala</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Ausência de garbage collection nas
+                                    linguagens existentes</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Os engenheiros do Google enfrentavam
+                              compilações de até 45 minutos, complexidade enorme
+                              no código e dificuldade em escrever sistemas
+                              concorrentes. Go foi projetado especificamente
+                              para atacar esses três problemas simultaneamente.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod01-q02"
+                        data-feedback-wrong="✗ Não exatamente. Reveja o tópico 'O que é Go, tecnicamente'. Go é estaticamente tipado — o compilador verifica os tipos antes da execução, não em tempo de execução."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 2 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Qual das seguintes afirmações descreve
+                              corretamente o sistema de tipos de Go?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Go é dinamicamente tipado: o tipo de uma
+                                    variável é determinado em tempo de
+                                    execução</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Go é estaticamente tipado: o tipo é
+                                    verificado pelo compilador antes da
+                                    execução</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Go não possui sistema de tipos — qualquer
+                                    valor pode ser atribuído a qualquer
+                                    variável</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Go usa tipagem opcional: você pode declarar
+                                    tipos ou deixar o runtime decidir</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Go é estaticamente tipado. O compilador
+                              verifica todos os tipos antes da execução. Isso
+                              elimina uma categoria inteira de bugs que em
+                              linguagens dinâmicas só aparecem em produção,
+                              muitas vezes em momentos críticos.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <div
+                        class="quiz-block"
+                        data-quiz-id="mod01-q03"
+                        data-feedback-wrong="✗ Reveja o tópico 'Quando usar Go'. Go não tem ecossistema de ML comparável ao Python — PyTorch, NumPy e TensorFlow não existem em Go. A escolha da linguagem deve considerar o ecossistema disponível."
+                     >
+                        <div class="quiz-block__header">
+                           <span class="quiz-block__label"
+                              >Quiz · Questão 3 de 3</span
+                           >
+                           <span class="badge badge-primary"
+                              >Verificação de entendimento</span
+                           >
+                        </div>
+                        <div class="quiz-block__body">
+                           <p class="quiz-question">
+                              Um desenvolvedor precisa construir um sistema de
+                              machine learning com redes neurais e vai usar
+                              bibliotecas como PyTorch. Go é a escolha mais
+                              adequada para esse projeto?
+                           </p>
+                           <div class="quiz-options">
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">A</span>
+                                 <span
+                                    >Sim, Go é excelente para machine learning
+                                    pois compila para código nativo e é muito
+                                    rápido</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="true">
+                                 <span class="quiz-option__marker">B</span>
+                                 <span
+                                    >Não, Go não tem ecossistema equivalente ao
+                                    Python para ML. Python com PyTorch é a
+                                    escolha certa para esse domínio</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">C</span>
+                                 <span
+                                    >Sim, desde que o desenvolvedor importe
+                                    PyTorch via go get</span
+                                 >
+                              </button>
+                              <button class="quiz-option" data-correct="false">
+                                 <span class="quiz-option__marker">D</span>
+                                 <span
+                                    >Tanto faz — qualquer linguagem moderna
+                                    serve igualmente bem para ML</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="quiz-feedback">
+                              ✓ Correto! Conhecer os limites de uma linguagem é
+                              tão importante quanto conhecer seus pontos fortes.
+                              Go é fraco em ML/ciência de dados — Python domina
+                              esse domínio com um ecossistema maduro e
+                              específico. Usar a ferramenta certa para o
+                              problema certo é marca de um bom engenheiro.
+                           </div>
+                        </div>
+                        <div class="quiz-block__footer">
+                           <span class="quiz-score"></span>
+                           <button class="btn btn-primary btn-sm quiz-submit">
+                              Confirmar resposta
+                           </button>
+                        </div>
+                     </div>
+
+                     <!-- ================================================
+                 EXERCÍCIOS — Módulo 01
+                 ================================================ -->
+                     <div class="exercise-block" data-exercise-id="mod01-e01">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 1 — Análise de cenário</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Leia o cenário abaixo e escolha a alternativa que
+                              melhor descreve por que Go seria ou não seria uma
+                              boa escolha:
+                              <br /><br />
+                              <strong>Cenário:</strong> Uma startup precisa
+                              criar um serviço que receba 100.000 requisições
+                              HTTP por segundo, processe cada uma em paralelo, e
+                              retorne uma resposta em menos de 10ms. O time tem
+                              3 engenheiros e precisa lançar em 2 meses.
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Go não é adequado pois o garbage collector
+                                    causaria pausas maiores que 10ms</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Go é altamente adequado: concorrência
+                                    nativa com goroutines, servidor HTTP na
+                                    stdlib, performance próxima a C, e sintaxe
+                                    simples que permite equipes pequenas moverem
+                                    rápido</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Go poderia ser usado, mas Java com Spring
+                                    seria muito mais adequado para alto
+                                    throughput</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Go não serve pois não possui biblioteca
+                                    HTTP nativa — seria necessário usar um
+                                    framework externo</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Excelente! Este cenário descreve exatamente o
+                              domínio onde Go brilha: alta concorrência, baixa
+                              latência, servidor HTTP, equipe pequena, prazo
+                              curto. O GC moderno do Go tem pausas abaixo de
+                              1ms, não 10ms. Sistemas como o backend do YouTube
+                              usam Go exatamente para casos assim.
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="exercise-block" data-exercise-id="mod01-e02">
+                        <div class="exercise-block__header">
+                           <span class="exercise-block__label"
+                              >Exercício 2 — Identificação de
+                              características</span
+                           >
+                           <span class="badge badge-warning"
+                              >Aplicação prática</span
+                           >
+                        </div>
+                        <div class="exercise-block__body">
+                           <p class="exercise-block__description">
+                              Qual das alternativas abaixo lista corretamente
+                              <strong>apenas</strong>
+                              características verdadeiras de Go?
+                           </p>
+                           <div class="exercise-options">
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Interpretada, tipagem dinâmica, herança de
+                                    classes, garbage collection</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Compilada, tipagem dinâmica, try/catch
+                                    nativo, gerência manual de memória</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="true"
+                              >
+                                 <span
+                                    >Compilada, tipagem estática, garbage
+                                    collection, concorrência nativa com
+                                    goroutines</span
+                                 >
+                              </button>
+                              <button
+                                 class="exercise-option"
+                                 data-correct="false"
+                              >
+                                 <span
+                                    >Compilada, tipagem estática, herança
+                                    múltipla de classes, sem garbage
+                                    collection</span
+                                 >
+                              </button>
+                           </div>
+                           <div class="exercise-feedback">
+                              ✓ Correto! Go é compilada + tipagem estática + GC
+                              + goroutines. Go não tem tipagem dinâmica, não tem
+                              try/catch, não tem herança de classes, e não exige
+                              gerência manual de memória. Cada um desses "nãos"
+                              é uma decisão deliberada de design.
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- NAVEGAÇÃO ENTRE MÓDULOS -->
+                     <div class="module-nav"></div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+
+      <script type="module" src="../app/main.js"></script>
+   </body>
+</html>
