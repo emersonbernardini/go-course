@@ -6,26 +6,30 @@ export const Highlight = {
          .replace(/</g, '&lt;')
          .replace(/>/g, '&gt;')
 
-      // Números (antes dos saves para não conflitar com placeholders)
-      out = out.replace(
-         /\b(\d+(?:\.\d+)?)\b/g,
-         '<span class="tok-number">$1</span>',
-      )
-
-      // Guarda strings e comentários como placeholders para não serem
-      // afetados pelas substituições de keywords/types abaixo
+      // Guarda strings e comentários como placeholders ANTES de qualquer
+      // outra substituição (números, keywords, types), para que o conteúdo
+      // interno deles nunca seja tocado.
+      // Marcador não pode ser puramente numérico: \b\d+\b casaria os
+      // dígitos do índice do placeholder e corromperia o restore.
       const saved = []
       const save = match => {
          saved.push(match)
-         return `\x00${saved.length - 1}\x00`
+         return `\x00P${saved.length - 1}Q\x00`
       }
 
-      // Strings (backtick e aspas duplas)
+      // Strings (backtick e aspas duplas) — precisa vir antes dos
+      // comentários: uma string pode conter "//" ou "/*" (ex: URLs).
       out = out.replace(/(`[^`]*`|"(?:[^"\\]|\\.)*")/g, save)
       // Comentários de bloco
       out = out.replace(/(\/\*[\s\S]*?\*\/)/g, save)
       // Comentários de linha
       out = out.replace(/(\/\/[^\n]*)/g, save)
+
+      // Números (agora seguro: strings/comentários já viraram placeholders)
+      out = out.replace(
+         /\b(\d+(?:\.\d+)?)\b/g,
+         '<span class="tok-number">$1</span>',
+      )
 
       // Keywords Go
       const keywords = [
@@ -109,7 +113,7 @@ export const Highlight = {
       )
 
       // Restaura strings e comentários com suas classes
-      out = out.replace(/\x00(\d+)\x00/g, (_, i) => {
+      out = out.replace(/\x00P(\d+)Q\x00/g, (_, i) => {
          const val = saved[+i]
          const cls =
             val.startsWith('//') || val.startsWith('/*')

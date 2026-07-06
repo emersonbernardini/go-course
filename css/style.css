@@ -810,7 +810,9 @@ code {
 .code-block pre {
    padding: var(--space-5);
    overflow-x: auto;
-   font-size: var(--text-sm);
+   white-space: pre-wrap;
+   overflow-wrap: break-word;
+   font-size: var(--text-xs);
    line-height: 1.7;
    scrollbar-width: thin;
    scrollbar-color: var(--color-border) transparent;
@@ -1910,8 +1912,6 @@ code {
       grid-template-columns: repeat(4, 1fr);
    }
 
-
-
    .app-header__progress-wrap {
       display: flex;
    }
@@ -1942,5 +1942,4 @@ code {
 
 /* Large Desktop — 1280px */
 @media (min-width: 1280px) {
-
 }
